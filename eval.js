@@ -47,10 +47,9 @@ weights_manager.loadPng();
 
 
 
-class EV extends BOARD_OPERATION{
+class EV extends CONSTANTS {
 	constructor(arg){
-		super(arg);
-
+		super();
 		this.buffer = weights_manager.buffer;
 		this.weights = new Int8Array(this.buffer);
 
@@ -681,32 +680,6 @@ class EV extends BOARD_OPERATION{
 		
 	}
 	
-	/*
-	//重みを単一の配列に直して、toPngを呼ぶ
-	exportPng(){
-        const d2p = new data2png();
-		d2p.width = 6561/3;
-		const newarr = new Uint8ClampedArray(this.weights.length);
-		for(let i=0;i<this.weights.length;i++){
-			newarr[i] = this.weights[i] + 128;
-		}
-        d2p.toPng(newarr);
-	}
-	
-    selectPng(){
-        const that = this;
-        const func = function(){
-			const newarr = new Int8Array(d2p.array.length);
-			for(let i=0;i<d2p.array.length;i++){
-				newarr[i] = d2p.array[i] - 128;
-			}
-            that.weights = newarr;
-        }
-        const d2p = new data2png();
-        d2p.selectPng(func);
-    }*/
-    
-    
     int2float(){
 		this.temp_weights = this.weights;
 		this.weights = new Float32Array(6561*this.num_phase*this.num_shape);
@@ -774,16 +747,3 @@ function line(){
 	console.log(lineb, linew);
 }
 
-
-/*
-
-var b = master.generateNode(54);
-master.render(b);
-counter = 0;
-var e1 = master.ai.negaAlpha_last(b,-100,100);
-console.log(`negaAlpha read node ${counter}`);
-var e2 = master.ai.negaScout(b, -100, 100, 3);
-var e3 = master.ai.negaScout_last(b, -100, 100);
-console.log(e1, e2, e3);
-
-*/

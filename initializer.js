@@ -44,7 +44,10 @@
 		}else if(master.mode==='analysis'){
 			master.analysis(b*8+a+1);
 		}else{
-			master.play(b*8+a+1);
+			const e = b*8+a+1;
+			const hand1 = e<33? 1<<(32-e) : 0;
+			const hand2 = e<33? 0 : 1<<(64-e);
+			master.play(hand1, hand2);
 		}
 		
 	});
