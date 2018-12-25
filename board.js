@@ -86,6 +86,9 @@ class BOARD {
 	set setBoard(arr_){
 		const arr = new Int8Array(65);
 		
+		//reset board array
+		this.boardArray[0] = this.boardArray[1] = this.boardArray[2] = this.boardArray[3] = 0;
+		
 		for(let i=1;i<65;i++){
 			if(arr_[i]===1){
 				arr[i] = 1;
@@ -394,17 +397,17 @@ class BOARD {
 
 	state(){
 		
-		const legalhand = this.legalHand([0, 0]);
+		const legalhand = this.legalHand();
 		
 		if(legalhand[0]|legalhand[1]){
 			return 1;
 		}
 		
 		this.boardArray[4] *= -1;
-		this.legalHand(legalhand);
+		const legalhand_ = this.legalHand(legalhand);
 		this.boardArray[4] *= -1;
 		
-		if(legalhand[0]|legalhand[1]){
+		if(legalhand_[0]|legalhand_[1]){
 			return 2;
 		}else{
 			return 3;

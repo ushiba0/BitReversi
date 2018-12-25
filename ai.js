@@ -270,7 +270,7 @@ class AI extends EV {
 		}
 		
 		boardArray[4] *= -1;
-		legalHand(boardArray, legalhand);
+		this.legalHand(boardArray, legalhand);
 		boardArray[4] *= -1;
 		
 		if(legalhand[0]|legalhand[1]){
@@ -305,7 +305,7 @@ class AI extends EV {
 
 	negaScout(board, alpha, beta, depth){
 		let num_readnode = 0;
-		const argnode = new BOARD(board.boardArray);
+		const board_array = new Array(...board.boardArray);
 		const board_array_buffer = new ArrayBuffer(24);
 		const b32a = new Int32Array(board_array_buffer, 0, 6);
 		const b8a = new Uint8Array(board_array_buffer, 0, 24);
@@ -401,7 +401,7 @@ class AI extends EV {
 			}
 		}
 
-		const evaluation = search(argnode.boardArray, alpha, beta, depth);
+		const evaluation = search(board_array, alpha, beta, depth);
 		this.num_readnode = num_readnode;
 		return evaluation;
 	}
@@ -430,7 +430,7 @@ class AI extends EV {
 		while(legalhand[1]){
 			bit = -legalhand[1] & legalhand[1];
 			//
-			const childNode = new BOARD(this.boardArray);
+			const childNode = new BOARD(board.boardArray);
 			childNode.placeAndTurnStones(0, bit);
 			value = -this.negaScout(childNode, alpha, beta, depth);
 			childNode.e = value; childNode.hand = [0, bit];

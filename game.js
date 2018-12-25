@@ -69,17 +69,35 @@ class GRAPHIC extends CONSTANTS{
 		}
 	}
 
-	visualizeEvaluation(alpha=-100,beta=100){
-		const evals = this.cpuHand(this.now,true,alpha,beta);
+	visualizeEvaluation(node=0, alpha=-100,beta=100){
+		if(!node){
+			node = this.now;
+		}
+		const evals = ai.cpuHand(node, alpha, beta);
+		if(evals[0]===undefined){
+			return;
+		}
 		const d0 = evals[0][0];
 		d3.select('#board').selectAll('text').remove();
 		d3.select('#board').selectAll('text').data(evals).enter().append('text').attr({
 			x:(d)=>{
-				const x = d[1]%8===0 ? 7 : d[1]%8-1;
+				const hand = d.hand;
+				let put = 0;
+				if(hand[0]<0){put = 1;}
+				else if(hand[0]>0){put = 32-Math.log2(hand[0]);}
+				if(hand[1]<0){put = 33;}
+				else if(hand[1]>0){put = 64-Math.log2(hand[1]);}
+				const x = put%8===0 ? 7 : put%8-1;
 				return size/4+size*x+x+size/8;
 			},
 			y:(d)=>{
-				const y = Math.ceil(d[1]/8)-1;
+				const hand = d.hand;
+				let put = 0;
+				if(hand[0]<0){put = 1;}
+				else if(hand[0]>0){put = 32-Math.log2(hand[0]);}
+				if(hand[1]<0){put = 33;}
+				else if(hand[1]>0){put = 64-Math.log2(hand[1]);}
+				const y = Math.ceil(put/8)-1;
 				return size/4+size*y+y+size/8+size/6;
 			},
 			fill:(d,i)=>{
@@ -90,14 +108,7 @@ class GRAPHIC extends CONSTANTS{
 		})
 		.style('font-size', '10px')
 		.text((d)=>{
-			const e = d[0] + '';
-			const i = e.indexOf('.');
-			if(i===-1){
-				return e;
-			}else{
-				return e.slice(0,i+2);
-			}
-			return d[0] + "";
+			return d.e.toPrecision(3);
 		});
 	}
 	
@@ -106,8 +117,7 @@ class GRAPHIC extends CONSTANTS{
 			node = this.now;
 		}
 
-		const legalhand = new Uint32Array(2);
-		node.legalHand(legalhand);
+		const legalhand = node.legalHand();
 		
 		let l1 = legalhand[0];
 		let l2 = legalhand[1];
@@ -144,16 +154,18 @@ class GRAPHIC extends CONSTANTS{
 		if(!node){
 			node = this.now;
 		}
-		if(node.hand===undefined){
+		if(!Array.isArray(node.hand)){
 			canvas.cpuput.attr("r",0);
 			return;
 		}
-		const hand = node.hand;
 
-		if(hand[0]<0){return 1;}
-		if(hand[1]<0){return 33;}
-		if(hand[0]){return 32-Math.log2(hand[0]);}
-		if(hand[1]){return 64-Math.log2(hand[1]);}
+		const hand = node.hand;
+		let put = 0;
+		
+		if(hand[0]<0){put = 1;}
+		if(hand[1]<0){put = 33;}
+		if(hand[0]){put = 32-Math.log2(hand[0]);}
+		if(hand[1]){put = 64-Math.log2(hand[1]);}
 
 		const x = put%8===0 ? 7 : put%8-1;
 		const y = Math.ceil(put/8)-1;
@@ -188,12 +200,12 @@ class MASTER extends GRAPHIC {
 	
 	//ゲームを進行する
 	play(hand1=0, hand2=0){
-		
+		let e;
 		const legalhand = this.now.legalHand();
 		
 		if(!(hand1===0 && hand2===0)){//handle illegal hand
 			if(!(legalhand[0]&hand1)&&!(legalhand[1]&hand2)){
-				console.error(`error ${e} is illegal hand`);
+				console.error(`error (${hand1}, ${hand2}) is illegal hand`);
 				return;
 			}
 		}
@@ -215,10 +227,9 @@ class MASTER extends GRAPHIC {
 			if(this.now.state()===1){
 				this.record.unshift(new BOARD(this.now.boardArray));
 				const move = ai.cpuHand(this.now, -100, 100, true);
-				console.log(move);
-				console.log("kokokokokoko");
 				this.now.placeAndTurnStones(...move[0].hand);
-				
+				this.now.hand = move[0].hand;
+				console.log(move);
 			}else if(this.now.state()===2){
 				this.record.unshift(new BOARD(this.now.boardArray));
 				this.now.boardArray[4] *= -1;
@@ -229,16 +240,13 @@ class MASTER extends GRAPHIC {
 			}
 			
 			if(this.now.state()===1){
-				
 				resolve();
 			}else if(this.now.state()===2){
 				this.record.unshift(new BOARD(this.now.boardArray));
 				this.now.boardArray[4] *= -1;
-				this.play();
-				
+				this.play();3
 				resolve();
 			}else{
-				
 				resolve();
 			}
 		});};
@@ -333,8 +341,8 @@ class MASTER extends GRAPHIC {
             const temp = board[i];
             board[i] = board[swapto];
             board[swapto] = temp;
-        }
-
+		}
+		
         const b = new BOARD();
         b.setBoard = board;
 
