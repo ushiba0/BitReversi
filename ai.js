@@ -286,88 +286,76 @@ class AI extends EV {
 		let temp, sum=0;
 	
 		temp = b_[0];
-		temp = (temp&0x55555555) + ((temp&0xaaaaaaaa)>>>1);
-		temp = (temp&0x33333333) + ((temp&0xcccccccc)>>>2);
-		temp = (temp&0x0f0f0f0f) + ((temp&0xf0f0f0f0)>>>4);
-		temp = (temp&0x00ff00ff) + ((temp&0xff00ff00)>>>8);
-		temp = (temp&0x0000ffff) + ((temp&0xffff0000)>>>16);
+		temp = (temp&0x55555555) + ((temp>>>1)&0x55555555);
+		temp = (temp&0x33333333) + ((temp>>>2)&0x33333333);
+		temp = (temp&0x0f0f0f0f) + ((temp>>>4)&0x0f0f0f0f);
+		temp = (temp&0x00ff00ff) + ((temp>>>8)&0x00ff00ff);
+		temp = (temp&0x0000ffff) + ((temp>>>16)&0x0000ffff);
 		sum += temp;
 	
 		temp = b_[1];
-		temp = (temp&0x55555555) + ((temp&0xaaaaaaaa)>>>1);
-		temp = (temp&0x33333333) + ((temp&0xcccccccc)>>>2);
-		temp = (temp&0x0f0f0f0f) + ((temp&0xf0f0f0f0)>>>4);
-		temp = (temp&0x00ff00ff) + ((temp&0xff00ff00)>>>8);
-		temp = (temp&0x0000ffff) + ((temp&0xffff0000)>>>16);
+		temp = (temp&0x55555555) + ((temp>>>1)&0x55555555);
+		temp = (temp&0x33333333) + ((temp>>>2)&0x33333333);
+		temp = (temp&0x0f0f0f0f) + ((temp>>>4)&0x0f0f0f0f);
+		temp = (temp&0x00ff00ff) + ((temp>>>8)&0x00ff00ff);
+		temp = (temp&0x0000ffff) + ((temp>>>16)&0x0000ffff);
 		sum += temp;
 		return (sum<<1) - b_[5];
 	}
 
-	negaScout(board, alpha, beta, depth){
+	negaScout(node, alpha, beta, depth){
 		let num_readnode = 0;
-		const board_array = new Array(...board.boardArray);
+		const argnode = new BOARD(node.boardArray);
 		const board_array_buffer = new ArrayBuffer(24);
-		const b32a = new Int32Array(board_array_buffer, 0, 6);
-		const b8a = new Uint8Array(board_array_buffer, 0, 24);
+		const b32a = new Int32Array(board_array_buffer, 0);
+		const b8a = new Uint8Array(board_array_buffer, 0);
+		let value = 0;
 		
-		const search = (boardArray, alpha, beta, depth)=>{
+		const search = (b_, alpha, beta, depth)=>{
 			if(depth===0){
-				b32a[0] = boardArray[0]; b32a[1] = boardArray[1];
-				b32a[2] = boardArray[2]; b32a[3] = boardArray[3];
-				b32a[4] = boardArray[4]; b32a[5] = boardArray[5];
-				return this.evaluation(b8a)*boardArray[4];
+				b32a[0] = b_[0]; b32a[1] = b_[1];
+				b32a[2] = b_[2]; b32a[3] = b_[3];
+				b32a[4] = b_[4]; b32a[5] = b_[5];
+				return this.evaluation(b8a)*b_[4];
 			}
-	
-			const state = this.state(boardArray);
+
+			const state = this.state(b_);
 			num_readnode++;
 			let max, v;
 			
 			if(state===1){
 				//expand child node
 				const legalhand = [0, 0];
-				this.legalHand(boardArray, legalhand);
+				this.legalHand(b_, legalhand);
 				const childNodes = [];
-				const hand = [0, 0];
 				let bit = 0, i = 0;
 				while(legalhand[0]){
 					bit = -legalhand[0] & legalhand[0];
-	
-					const newNode = [0, 0, 0, 0, 0, 0, 0];
-					newNode[0] = boardArray[0]; newNode[1] = boardArray[1];
-					newNode[2] = boardArray[2]; newNode[3] = boardArray[3];
-					newNode[4] = boardArray[4]; newNode[5] = boardArray[5];
-					hand[0] = bit; hand[1] = 0;
-					this.placeAndTurnStones(newNode, hand);
-					b32a[0] = newNode[0]; b32a[1] = newNode[1];
-					b32a[2] = newNode[2]; b32a[3] = newNode[3];
-					b32a[4] = newNode[4]; b32a[5] = newNode[5];
-					newNode[6] = -this.evaluation(b8a)*newNode[4];
-					childNodes[i++] = newNode;
-					
-					legalhand[0] ^= bit;
+					//
+					const newNode = [b_[0], b_[1], b_[2], b_[3], b_[4], b_[5]];
+					this.placeAndTurnStones(newNode, [bit, 0]);
+					childNodes[i] = newNode;
+					b32a[0] = newNode[0]; b32a[1] = newNode[1]; b32a[2] = newNode[2]; b32a[3] = newNode[3]; b32a[4] = newNode[4]; b32a[5] = newNode[5];
+					childNodes[i].e = -this.evaluation(b8a)*newNode[4];
+					//
+					legalhand[0] = legalhand[0] ^ bit; i+=1;
 				}
 				while(legalhand[1]){
 					bit = -legalhand[1] & legalhand[1];
-	
-					const newNode = [0, 0, 0, 0, 0, 0, 0];
-					newNode[0] = boardArray[0]; newNode[1] = boardArray[1];
-					newNode[2] = boardArray[2]; newNode[3] = boardArray[3];
-					newNode[4] = boardArray[4]; newNode[5] = boardArray[5];
-					hand[0] = 0; hand[1] = bit;
-					this.placeAndTurnStones(newNode, hand);
-					b32a[0] = newNode[0]; b32a[1] = newNode[1];
-					b32a[2] = newNode[2]; b32a[3] = newNode[3];
-					b32a[4] = newNode[4]; b32a[5] = newNode[5];
-					newNode[6] = -this.evaluation(b8a)*newNode[4];
-					childNodes[i++] = newNode;
-					
-					legalhand[1] ^= bit;
+					//
+					const newNode = [b_[0], b_[1], b_[2], b_[3], b_[4], b_[5]];
+					this.placeAndTurnStones(newNode, [0, bit]);
+					childNodes[i] = newNode;
+					b32a[0] = newNode[0]; b32a[1] = newNode[1]; b32a[2] = newNode[2]; b32a[3] = newNode[3]; b32a[4] = newNode[4]; b32a[5] = newNode[5];
+					childNodes[i].e = -this.evaluation(b8a)*newNode[4];
+					//
+					legalhand[1] = legalhand[1] ^ bit; i+=1;
 				}
 				
 				//move ordering
-				for(let i=0;i<childNodes.length-1;i++){
-					for(let j=i+1;j<childNodes.length;j++){
-						if(childNodes[i][6]<childNodes[j][6]){
+				for(let i=0;i<childNodes.length-1;i+=1){
+					for(let j=i+1;j<childNodes.length;j+=1){
+						if(childNodes[i].e<childNodes[j].e){
 							let temp = childNodes[i];
 							childNodes[i] = childNodes[j];
 							childNodes[j] = temp;
@@ -375,12 +363,12 @@ class AI extends EV {
 					}
 				}
 				
-				v = -search(childNodes[0] , -beta, -alpha, depth-1);
+				v = -search(childNodes[0], -beta, -alpha, depth-1);
 				max = v;
 				if(beta<=v){return v;}//cut
 				if(alpha<v){alpha = v;}
 				
-				for(let j=1;j<childNodes.length;j++){
+				for(let j=1;j<childNodes.length;j+=1){
 					v = -search(childNodes[j], -alpha-1, -alpha, depth-1);//null window search
 					if(beta<=v){return v;}
 					if(alpha<v){
@@ -394,21 +382,109 @@ class AI extends EV {
 				
 				return max;
 			}else if(state===2){ //pass
-				boardArray[4] *= -1;
-				return -search(boardArray, -beta, -alpha, depth-1);
+				return -search([b_[0], b_[1], b_[2], b_[3], -b_[4], b_[5]], -beta, -alpha, depth-1);
 			}else{ //game finish
-				return this.b_w(boardArray)*boardArray[4];
+				return this.b_w(b_)*b_[4];
 			}
 		}
-
-		const evaluation = search(board_array, alpha, beta, depth);
-		this.num_readnode = num_readnode;
-		return evaluation;
+		value = search(argnode.boardArray, alpha, beta, depth);
+		return value;
 	}
 
-	cpuHand(board, alpha=-100, beta=100, showStatus=false){
+	negaScout_(node, alpha, beta, depth){
+		let num_readnode = 0;
+		const argnode = new BOARD(node.boardArray);
+		const board_array_buffer = new ArrayBuffer(24);
+		const b32a = new Int32Array(board_array_buffer, 0);
+		const b8a = new Uint8Array(board_array_buffer, 0);
+		let value = 0;
+
+		const hand = [0, 0];
+		const legalhand = [0, 0];
 		
-		const depth = board.boardArray[5]<(64-this.depth[1]) ? this.depth[0] : -1;
+		
+		const search = (b_, alpha, beta, depth)=>{
+			if(depth===0){
+				b32a[0] = b_[0]; b32a[1] = b_[1];
+				b32a[2] = b_[2]; b32a[3] = b_[3];
+				b32a[4] = b_[4]; b32a[5] = b_[5];
+				return this.evaluation(b8a)*b_[4];
+			}
+
+			const state = this.state(b_);
+			num_readnode++;
+			
+			if(state===1){
+				//expand child node
+				this.legalHand(b_, legalhand);
+				const childNodes = [];
+				let i = 0;
+				let max, v;
+				while(legalhand[0]){
+					const bit = -legalhand[0] & legalhand[0];
+					//
+					const newNode = [b_[0], b_[1], b_[2], b_[3], b_[4], b_[5]];
+					hand[0] = bit; hand[1] = 0;
+					this.placeAndTurnStones(newNode, hand);
+					childNodes[i] = newNode;
+					b32a[0] = newNode[0]; b32a[1] = newNode[1]; b32a[2] = newNode[2]; b32a[3] = newNode[3]; b32a[4] = newNode[4]; b32a[5] = newNode[5];
+					childNodes[i].e = -this.evaluation(b8a)*newNode[4];
+					//
+					legalhand[0] = legalhand[0] ^ bit; i+=1;
+				}
+				while(legalhand[1]){
+					const bit = -legalhand[1] & legalhand[1];
+					//
+					const newNode = [b_[0], b_[1], b_[2], b_[3], b_[4], b_[5]];
+					hand[0] = 0; hand[1] = bit;
+					this.placeAndTurnStones(newNode, hand);
+					childNodes[i] = newNode;
+					b32a[0] = newNode[0]; b32a[1] = newNode[1]; b32a[2] = newNode[2]; b32a[3] = newNode[3]; b32a[4] = newNode[4]; b32a[5] = newNode[5];
+					childNodes[i].e = -this.evaluation(b8a)*newNode[4];
+					//
+					legalhand[1] = legalhand[1] ^ bit; i+=1;
+				}
+				
+				//move ordering
+				for(let i=0;i<childNodes.length-1;i+=1){
+					for(let j=i+1;j<childNodes.length;j+=1){
+						if(childNodes[i].e<childNodes[j].e){
+							let temp = childNodes[i];
+							childNodes[i] = childNodes[j];
+							childNodes[j] = temp;
+						}
+					}
+				}
+				
+				v = -search(childNodes[0], -beta, -alpha, depth-1);
+				max = v;
+				if(beta<=v){return v;}//cut
+				if(alpha<v){alpha = v;}
+				
+				for(let j=1;j<childNodes.length;j+=1){
+					v = -search(childNodes[j], -alpha-1, -alpha, depth-1);//null window search
+					if(beta<=v){return v;}
+					if(alpha<v){
+						alpha = v;
+						v = -search(childNodes[j], -beta, -alpha, depth-1);
+						if(beta<=v){return v;}
+						if(alpha<v){alpha = v;}
+					}
+					if(max<v){max = v;}
+				}
+				
+				return max;
+			}else if(state===2){ //pass
+				return -search([b_[0], b_[1], b_[2], b_[3], -b_[4], b_[5]], -beta, -alpha, depth-1);
+			}else{ //game finish
+				return this.b_w(b_)*b_[4];
+			}
+		}
+		value = search(argnode.boardArray, alpha, beta, depth);
+		return value;
+	}
+
+	cpuHand(board, alpha=-100, beta=100, depth=0,showStatus=false){
 		const childIndex = [];
 		const startTime = performance.now();
 		let rand=0, temp=0, bit=0, i=0, value=0;
@@ -478,6 +554,26 @@ class AI extends EV {
 		return childIndex;
 	}
 
+	randomHand(board){
+		const hands = [];
+		const legalhand = board.legalHand();
+		let bit = 0;
+		
+		while(legalhand[0]){
+			bit = -legalhand[0] & legalhand[0];
+			hands.push([bit, 0]);
+			legalhand[0] = legalhand[0] ^ bit;
+		}
+		while(legalhand[1]){
+			bit = -legalhand[1] & legalhand[1];
+			hands.push([0, bit]);
+			legalhand[1] = legalhand[1] ^ bit;
+		}
+
+		const random_index = ~~(Math.random()*hands.length);
+		
+		return hands[random_index];
+	}
 }
 
 const ai = new AI();

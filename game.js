@@ -69,11 +69,16 @@ class GRAPHIC extends CONSTANTS{
 		}
 	}
 
-	visualizeEvaluation(node=0, alpha=-100,beta=100){
+	visualizeEvaluation(node=0, alpha=-100,beta=100, depth=-1){
 		if(!node){
 			node = this.now;
 		}
-		const evals = ai.cpuHand(node, alpha, beta);
+		
+		const search_depth = (depth===-1)?
+		(this.depth[1]>=64-node.boardArray[5] ? -1 : this.depth[0])
+		: depth;
+		console.log(search_depth);
+		const evals = ai.cpuHand(node, alpha, beta, search_depth);
 		if(evals[0]===undefined){
 			return;
 		}
@@ -226,10 +231,10 @@ class MASTER extends GRAPHIC {
 		const cpu_turn = ()=>{ return new Promise((resolve)=>{
 			if(this.now.state()===1){
 				this.record.unshift(new BOARD(this.now.boardArray));
-				const move = ai.cpuHand(this.now, -100, 100, true);
+				const search_depth = this.depth[1]>=64-this.now.boardArray[5] ? -1 : this.depth[0]; 
+				const move = ai.cpuHand(this.now, -100, 100, search_depth,true);
 				this.now.placeAndTurnStones(...move[0].hand);
 				this.now.hand = move[0].hand;
-				console.log(move);
 			}else if(this.now.state()===2){
 				this.record.unshift(new BOARD(this.now.boardArray));
 				this.now.boardArray[4] *= -1;
@@ -284,21 +289,20 @@ class MASTER extends GRAPHIC {
 	getSelfPlayGame(){
 		const nodes = [];
 		const history = [new BOARD([8,268435456,16,134217728,1,4])];
-		let state, move, c=0;
+		let c=0;
 		
 		while(true){
-			state = history[0].state(); //koko this.now.state;
+			const state = history[0].state();
 			
 			if(state===1){
 				history.unshift(new BOARD(history[0].boardArray));
-				move = history[0].cpuHand(history[0], -100, 100, false);
+				const move = ai.cpuHand(history[0], -100, 100, 4);
 				const rand = ~~(Math.random()*Math.min(move.length, 2));
 				for(let i=0;i<move.length;i++){
-					nodes[c++] = new BOARD(move[i][2].boardArray);
-					nodes[c-1].e = move[i][2].e;
+					nodes[c] = new BOARD(move[i].boardArray);
+					nodes[c++].e = move[i].e;
 				}
-				history[0].placeAndTurnStones(move[rand][1]);
-				
+				history[0].placeAndTurnStones(...move[rand].hand);
 			}else if(state===2){
 				history[0].boardArray[4] *=-1;
 			}else{
@@ -318,35 +322,32 @@ class MASTER extends GRAPHIC {
     }
     
     //ランダムな盤面を作るが、黒石を指定した個数にする
-    generateNode(n=64, blk=-1){
-        const black = blk===-1?~~(Math.random()*(n+1)) : Math.max(Math.min(blk,64), 0);
-        const board = new Array(65);
-        
-        for(let i=1;i<65;i++){
-            if(i<=black){
-                board[i] = 1;
-            }else{
-                board[i] = -1;
-            }
-        }
-        for(let i=1;i<65;i++){
-            if(i>n){
-                board[i] = 0;
-            }
-        }
-
-        //shuffle
-        for(let i=1;i<65;i++){
-            const swapto = 1+~~(Math.random()*64);
-            const temp = board[i];
-            board[i] = board[swapto];
-            board[swapto] = temp;
-		}
+    generateNode(N=64){
+		const n = Math.max(Math.min(64, N), 4);
+		let node_now = new BOARD();
 		
-        const b = new BOARD();
-        b.setBoard = board;
+		while(true){
+			const state = node_now.state();
+			
+			if(node_now.boardArray[5]===n){
+				node_now.boardArray[4] = 1;
+				return node_now;
+			}
 
-        return b;
+			if(state===1){
+				const hand = ai.randomHand(node_now	);
+				node_now.placeAndTurnStones(...hand);
+			}else if(state===2){
+				node_now.boardArray[4] *= -1;
+			}else{
+				if(node_now.boardArray[5]===N){
+					node_now.boardArray[4] = 1;
+					return node_now;
+				}else{
+					node_now = new BOARD();
+				}
+			}
+		}
 	}
 
 }

@@ -486,3 +486,398 @@ const measureTime = (func, iter)=>{
 	const ppms = (iter/(-before+after)).toPrecision(4);
 	console.log(`time: ${time} ms, ${ppms} process per ms`);
 };
+
+
+class LINEBOARD {
+	constructor(){
+		// horizontal 1...8
+		// vertical 1...8
+		// diagonal upward 3,4,5,6,7,8,7,6,5,4,3
+		// diagonal downward 3,4,5,6,7,8,7,6,5,4,3
+		this.lines = new Uint16Array(8+8+11+11+2);
+		this.boardArray = new Int32Array(6);
+
+		const afterBlack = new Array(6561);
+		const afterWhite = new Array(6561);
+		const indexb = new Array(256);
+		const indexw = new Array(256);
+		const legalBlack = new Array(6561);
+		const legalWhite = new Array(6561);
+		const count = new Array(6561);
+		for(let i=0;i<256;i++){
+			indexb[i] = parseInt(parseInt(i.toString(2),10)*2,3);
+			indexw[i] = indexb[i]/2;
+		}
+
+		// generate index table
+		for(let index=0;index<6561;index++){
+			const line_str = index.toString(3).split('');
+			const line_black = line_str.map(x=>{
+				if(x==="2"){ return 1; }
+				else {return 0;}
+			});
+			const line_white = line_str.map(x=>{
+				if(x==="1"){ return 1; }
+				else {return 0;}
+			});
+			const b = parseInt(line_black.join(''), 2);
+			const w = parseInt(line_white.join(''), 2);
+
+			afterBlack[index] = new Array(8);
+			for(let k=0, hand=1;k<8;k++){
+				const mask = 0b01111110 & w;
+				let temp = 0;
+				let b_ = b, w_ = w;
+				
+				temp  = mask & (hand<<1);
+				temp |= mask & (temp<<1);
+				temp |= mask & (temp<<1);
+				temp |= mask & (temp<<1);
+				temp |= mask & (temp<<1);
+				temp |= mask & (temp<<1);
+				if((temp<<1)&b){
+					b_ ^= temp;
+					w_ ^= temp;
+				}
+				
+				temp  = mask & (hand>>>1);
+				temp |= mask & (temp>>>1);
+				temp |= mask & (temp>>>1);
+				temp |= mask & (temp>>>1);
+				temp |= mask & (temp>>>1);
+				temp |= mask & (temp>>>1);
+				if((temp>>>1)&b){
+					b_ ^= temp;
+					w_ ^= temp;
+				}
+				
+
+				if(w_&hand){
+					w_ ^= hand;
+				}
+				b_ |= hand;
+				afterBlack[index][k] = indexb[b_] + indexw[w_];
+				hand = hand<<1;
+			}
+
+			afterWhite[index] = new Array(8);
+			for(let k=0, hand=1;k<8;k++){
+				const mask = 0b01111110 & b;
+				let temp = 0;
+				let b_ = b, w_ = w;
+			
+				temp  = mask & (hand<<1);
+				temp |= mask & (temp<<1);
+				temp |= mask & (temp<<1);
+				temp |= mask & (temp<<1);
+				temp |= mask & (temp<<1);
+				temp |= mask & (temp<<1);
+				if((temp<<1)&w){
+					b_ ^= temp;
+					w_ ^= temp;
+				}
+				
+				temp  = mask & (hand>>>1);
+				temp |= mask & (temp>>>1);
+				temp |= mask & (temp>>>1);
+				temp |= mask & (temp>>>1);
+				temp |= mask & (temp>>>1);
+				temp |= mask & (temp>>>1);
+				if((temp>>>1)&w){
+					b_ ^= temp;
+					w_ ^= temp;
+				}
+				
+				
+				if(b_&hand){
+					b_ ^= hand;
+				}
+				w_ |= hand;
+				afterWhite[index][k] = indexb[b_] + indexw[w_];
+				hand = hand<<1;
+			}
+		}
+
+		// generate legalhand table
+		for(let index=0;index<6561;index++){
+			const line_str = index.toString(3).split('');
+			const line_black = line_str.map(x=>{
+				if(x==="2"){ return 1; }
+				else {return 0;}
+			});
+			const line_white = line_str.map(x=>{
+				if(x==="1"){ return 1; }
+				else {return 0;}
+			});
+			const b = parseInt(line_black.join(''), 2);
+			const w = parseInt(line_white.join(''), 2);
+
+			(()=>{
+				const mask = 0b01111110 & w;
+				const blank = ~(b|w)
+				let temp = 0;
+				let legal = 0;
+				let b_ = b, w_ = w;
+				
+				temp  = mask & (b_<<1);
+				temp |= mask & (temp<<1);
+				temp |= mask & (temp<<1);
+				temp |= mask & (temp<<1);
+				temp |= mask & (temp<<1);
+				temp |= mask & (temp<<1);
+				legal |= blank & (temp<<1);
+	
+				temp  = mask & (b_>>>1);
+				temp |= mask & (temp>>>1);
+				temp |= mask & (temp>>>1);
+				temp |= mask & (temp>>>1);
+				temp |= mask & (temp>>>1);
+				temp |= mask & (temp>>>1);
+				legal |= blank & (temp>>>1);
+				
+				legalBlack[index] = legal;
+			})();
+
+			(()=>{
+				const mask = 0b01111110 & b;
+				const blank = ~(b|w)
+				let temp = 0;
+				let legal = 0;
+				let b_ = b, w_ = w;
+				
+				temp  = mask & (w_<<1);
+				temp |= mask & (temp<<1);
+				temp |= mask & (temp<<1);
+				temp |= mask & (temp<<1);
+				temp |= mask & (temp<<1);
+				temp |= mask & (temp<<1);
+				legal |= blank & (temp<<1);
+	
+				temp  = mask & (w_>>>1);
+				temp |= mask & (temp>>>1);
+				temp |= mask & (temp>>>1);
+				temp |= mask & (temp>>>1);
+				temp |= mask & (temp>>>1);
+				temp |= mask & (temp>>>1);
+				legal |= blank & (temp>>>1);
+				
+				legalWhite[index] = legal;
+			})();
+			
+		}
+
+		// calculate black - white
+		
+		// generate legalhand table
+		for(let index=0;index<6561;index++){
+			const line_str = index.toString(3).split('');
+			const line_black = line_str.map(x=>{
+				if(x==="2"){ return 1; }
+				else {return 0;}
+			});
+			const line_white = line_str.map(x=>{
+				if(x==="1"){ return 1; }
+				else {return 0;}
+			});
+			let b = parseInt(line_black.join(''), 2);
+			let w = parseInt(line_white.join(''), 2);
+
+			b = ((b>>>1)&0b01010101) + (b&0b01010101);
+			b = ((b>>>2)&0b00110011) + (b&0b00110011);
+			b = ((b>>>4)&0b00001111) + (b&0b00001111);
+			w = ((w>>>1)&0b01010101) + (w&0b01010101);
+			w = ((w>>>2)&0b00110011) + (w&0b00110011);
+			w = ((w>>>4)&0b00001111) + (w&0b00001111);
+
+			count[index] = b-w;
+			
+		}
+
+
+		this.afterBlack = afterBlack;
+		this.afterWhite = afterWhite;
+		
+		this.indexb = indexb;
+		this.indexw = indexw;
+
+		this.legalBlack = legalBlack;
+		this.legalWhite = legalWhite;
+
+		this.count = count;
+	}
+
+	setLineBoard(boardArray){
+		//index table
+		const indexb = this.indexb;
+		const indexw = this.indexw;
+		const lines = this.lines;
+		const b = new Array(8);
+		const w = new Array(8);
+		let lineb = 0, linew = 0;
+
+		
+		
+		
+
+		// define b1...8 w1...8
+		b[0] = (boardArray[0]>>>24)&0xff;
+		b[1] = (boardArray[0]>>>16)&0xff;
+		b[2] = (boardArray[0]>>>8)&0xff;
+		b[3] = (boardArray[0]>>>0)&0xff;
+		b[4] = (boardArray[1]>>>24)&0xff;
+		b[5] = (boardArray[1]>>>16)&0xff;
+		b[6] = (boardArray[1]>>>8)&0xff;
+		b[7] = (boardArray[1]>>>0)&0xff;
+		w[0] = (boardArray[2]>>>24)&0xff;
+		w[1] = (boardArray[2]>>>16)&0xff;
+		w[2] = (boardArray[2]>>>8)&0xff;
+		w[3] = (boardArray[2]>>>0)&0xff;
+		w[4] = (boardArray[3]>>>24)&0xff;
+		w[5] = (boardArray[3]>>>16)&0xff;
+		w[6] = (boardArray[3]>>>8)&0xff;
+		w[7] = (boardArray[3]>>>0)&0xff;
+		
+
+		// horizontal
+		lineb = b[0]; linew = w[0];
+		lines[0] = indexb[lineb] + indexw[linew];
+		lineb = b[1]; linew = w[1];
+		lines[1] = indexb[lineb] + indexw[linew];
+		lineb = b[2]; linew = w[2];
+		lines[2] = indexb[lineb] + indexw[linew];
+		lineb = b[3]; linew = w[3];
+		lines[3] = indexb[lineb] + indexw[linew];
+		lineb = b[4]; linew = w[4];
+		lines[4] = indexb[lineb] + indexw[linew];
+		lineb = b[5]; linew = w[5];
+		lines[5] = indexb[lineb] + indexw[linew];
+		lineb = b[6]; linew = w[6];
+		lines[6] = indexb[lineb] + indexw[linew];
+		lineb = b[7]; linew = w[7];
+		lines[7] = indexb[lineb] + indexw[linew];
+
+		//vertical
+		lineb = ((b[0]&128)>>>0)|((b[1]&128)>>>1)|((b[2]&128)>>>2)|((b[3]&128)>>>3)|((b[4]&128)>>>4)|((b[5]&128)>>>5)|((b[6]&128)>>>6)|((b[7]&128)>>>7);
+		linew = ((w[0]&128)>>>0)|((w[1]&128)>>>1)|((w[2]&128)>>>2)|((w[3]&128)>>>3)|((w[4]&128)>>>4)|((w[5]&128)>>>5)|((w[6]&128)>>>6)|((w[7]&128)>>>7);
+		lines[8 ] = indexb[lineb] + indexw[linew];
+		lineb = ((b[0]&64)<<1)|((b[1]&64)>>>0)|((b[2]&64)>>>1)|((b[3]&64)>>>2)|((b[4]&64)>>>3)|((b[5]&64)>>>4)|((b[6]&64)>>>5)|((b[7]&64)>>>6);
+		linew = ((w[0]&64)<<1)|((w[1]&64)>>>0)|((w[2]&64)>>>1)|((w[3]&64)>>>2)|((w[4]&64)>>>3)|((w[5]&64)>>>4)|((w[6]&64)>>>5)|((w[7]&64)>>>6);
+		lines[9 ] = indexb[lineb] + indexw[linew];
+		lineb = ((b[0]&32)<<2)|((b[1]&32)<<1)|((b[2]&32)>>>0)|((b[3]&32)>>>1)|((b[4]&32)>>>2)|((b[5]&32)>>>3)|((b[6]&32)>>>4)|((b[7]&32)>>>5);
+		linew = ((w[0]&32)<<2)|((w[1]&32)<<1)|((w[2]&32)>>>0)|((w[3]&32)>>>1)|((w[4]&32)>>>2)|((w[5]&32)>>>3)|((w[6]&32)>>>4)|((w[7]&32)>>>5);
+		lines[10] = indexb[lineb] + indexw[linew];
+		lineb = ((b[0]&16)<<3)|((b[1]&16)<<2)|((b[2]&16)<<1)|((b[3]&16)>>>0)|((b[4]&16)>>>1)|((b[5]&16)>>>2)|((b[6]&16)>>>3)|((b[7]&16)>>>4);
+		linew = ((w[0]&16)<<3)|((w[1]&16)<<2)|((w[2]&16)<<1)|((w[3]&16)>>>0)|((w[4]&16)>>>1)|((w[5]&16)>>>2)|((w[6]&16)>>>3)|((w[7]&16)>>>4);
+		lines[11] = indexb[lineb] + indexw[linew];
+		lineb = ((b[0]&8)<<4)|((b[1]&8)<<3)|((b[2]&8)<<2)|((b[3]&8)<<1)|((b[4]&8)>>>0)|((b[5]&8)>>>1)|((b[6]&8)>>>2)|((b[7]&8)>>>3);
+		linew = ((w[0]&8)<<4)|((w[1]&8)<<3)|((w[2]&8)<<2)|((w[3]&8)<<1)|((w[4]&8)>>>0)|((w[5]&8)>>>1)|((w[6]&8)>>>2)|((w[7]&8)>>>3);
+		lines[12] = indexb[lineb] + indexw[linew];
+		lineb = ((b[0]&4)<<5)|((b[1]&4)<<4)|((b[2]&4)<<3)|((b[3]&4)<<2)|((b[4]&4)<<1)|((b[5]&4)>>>0)|((b[6]&4)>>>1)|((b[7]&4)>>>2);
+		linew = ((w[0]&4)<<5)|((w[1]&4)<<4)|((w[2]&4)<<3)|((w[3]&4)<<2)|((w[4]&4)<<1)|((w[5]&4)>>>0)|((w[6]&4)>>>1)|((w[7]&4)>>>2);
+		lines[13] = indexb[lineb] + indexw[linew];
+		lineb = ((b[0]&2)<<6)|((b[1]&2)<<5)|((b[2]&2)<<4)|((b[3]&2)<<3)|((b[4]&2)<<2)|((b[5]&2)<<1)|((b[6]&2)>>>0)|((b[7]&2)>>>1);
+		linew = ((w[0]&2)<<6)|((w[1]&2)<<5)|((w[2]&2)<<4)|((w[3]&2)<<3)|((w[4]&2)<<2)|((w[5]&2)<<1)|((w[6]&2)>>>0)|((w[7]&2)>>>1);
+		lines[14] = indexb[lineb] + indexw[linew];
+		lineb = ((b[0]&1)<<7)|((b[1]&1)<<6)|((b[2]&1)<<5)|((b[3]&1)<<4)|((b[4]&1)<<3)|((b[5]&1)<<2)|((b[6]&1)<<1)|((b[7]&1)>>>0);
+		linew = ((w[0]&1)<<7)|((w[1]&1)<<6)|((w[2]&1)<<5)|((w[3]&1)<<4)|((w[4]&1)<<3)|((w[5]&1)<<2)|((w[6]&1)<<1)|((w[7]&1)>>>0);
+		lines[15] = indexb[lineb] + indexw[linew];
+		
+		//diagonal upward
+		lineb = ((b[2]&128)|(b[1]&64)|(b[0]&32))>>>5;
+		linew = ((w[2]&128)|(w[1]&64)|(w[0]&32))>>>5;
+		lines[16] = indexb[lineb] + indexw[linew];
+		lineb = ((b[3]&128)|(b[2]&64)|(b[1]&32)|(b[0]&16))>>>4;
+		linew = ((w[3]&128)|(w[2]&64)|(w[1]&32)|(w[0]&16))>>>4;
+		lines[17] = indexb[lineb] + indexw[linew];
+		lineb = ((b[4]&128)|(b[3]&64)|(b[2]&32)|(b[1]&16)|(b[0]&8))>>>3;
+		linew = ((w[4]&128)|(w[3]&64)|(w[2]&32)|(w[1]&16)|(w[0]&8))>>>3;
+		lines[18] = indexb[lineb] + indexw[linew];
+		lineb = ((b[5]&128)|(b[4]&64)|(b[3]&32)|(b[2]&16)|(b[1]&8)|(b[0]&4))>>>2;
+		linew = ((w[5]&128)|(w[4]&64)|(w[3]&32)|(w[2]&16)|(w[1]&8)|(w[0]&4))>>>2;
+		lines[19] = indexb[lineb] + indexw[linew];
+		lineb = ((b[6]&128)|(b[5]&64)|(b[4]&32)|(b[3]&16)|(b[2]&8)|(b[1]&4)|(b[0]&2))>>>1;
+		linew = ((w[6]&128)|(w[5]&64)|(w[4]&32)|(w[3]&16)|(w[2]&8)|(w[1]&4)|(w[0]&2))>>>1;
+		lines[20] = indexb[lineb] + indexw[linew];
+		lineb = ((b[7]&128)|(b[6]&64)|(b[5]&32)|(b[4]&16)|(b[3]&8)|(b[2]&4)|(b[1]&2)|(b[0]&1));
+		linew = ((w[7]&128)|(w[6]&64)|(w[5]&32)|(w[4]&16)|(w[3]&8)|(w[2]&4)|(w[1]&2)|(w[0]&1));
+		lines[21] = indexb[lineb] + indexw[linew];
+		lineb = ((b[7]&64)|(b[6]&32)|(b[5]&16)|(b[4]&8)|(b[3]&4)|(b[2]&2)|(b[1]&1));
+		linew = ((w[7]&64)|(w[6]&32)|(w[5]&16)|(w[4]&8)|(w[3]&4)|(w[2]&2)|(w[1]&1));
+		lines[22] = indexb[lineb] + indexw[linew];
+		lineb = ((b[7]&32)|(b[6]&16)|(b[5]&8)|(b[4]&4)|(b[3]&2)|(b[2]&1));
+		linew = ((w[7]&32)|(w[6]&16)|(w[5]&8)|(w[4]&4)|(w[3]&2)|(w[2]&1));
+		lines[23] = indexb[lineb] + indexw[linew];
+		lineb = ((b[7]&16)|(b[6]&8)|(b[5]&4)|(b[4]&2)|(b[3]&1));
+		linew = ((w[7]&16)|(w[6]&8)|(w[5]&4)|(w[4]&2)|(w[3]&1));
+		lines[24] = indexb[lineb] + indexw[linew];
+		lineb = ((b[7]&8)|(b[6]&4)|(b[5]&2)|(b[4]&1));
+		linew = ((w[7]&8)|(w[6]&4)|(w[5]&2)|(w[4]&1));
+		lines[25] = indexb[lineb] + indexw[linew];
+		lineb = ((b[7]&4)|(b[6]&2)|(b[5]&1));
+		linew = ((w[7]&4)|(w[6]&2)|(w[5]&1));
+		lines[26] = indexb[lineb] + indexw[linew];
+
+		//diagonal downward
+		lineb = ((b[5]&128)|(b[6]&64)|(b[7]&32))>>>5;
+		linew = ((w[5]&128)|(w[6]&64)|(w[7]&32))>>>5;
+		lines[27] = indexb[lineb] + indexw[linew];
+		lineb = ((b[4]&128)|(b[5]&64)|(b[6]&32)|(b[7]&16))>>>4;
+		linew = ((w[4]&128)|(w[5]&64)|(w[6]&32)|(w[7]&16))>>>4;
+		lines[28] = indexb[lineb] + indexw[linew];
+		lineb = ((b[3]&128)|(b[4]&64)|(b[5]&32)|(b[6]&16)|(b[7]&8))>>>3;
+		linew = ((w[3]&128)|(w[4]&64)|(w[5]&32)|(w[6]&16)|(w[7]&8))>>>3;
+		lines[29] = indexb[lineb] + indexw[linew];
+		lineb = ((b[2]&128)|(b[3]&64)|(b[4]&32)|(b[5]&16)|(b[6]&8)|(b[7]&4))>>>2;
+		linew = ((w[2]&128)|(w[3]&64)|(w[4]&32)|(w[5]&16)|(w[6]&8)|(w[7]&4))>>>2;
+		lines[30] = indexb[lineb] + indexw[linew];
+		lineb = ((b[1]&128)|(b[2]&64)|(b[3]&32)|(b[4]&16)|(b[5]&8)|(b[6]&4)|(b[7]&2))>>>1;
+		linew = ((w[1]&128)|(w[2]&64)|(w[3]&32)|(w[4]&16)|(w[5]&8)|(w[6]&4)|(w[7]&2))>>>1;
+		lines[31] = indexb[lineb] + indexw[linew];
+		lineb = ((b[0]&128)|(b[1]&64)|(b[2]&32)|(b[3]&16)|(b[4]&8)|(b[5]&4)|(b[6]&2)|(b[7]&1));
+		linew = ((w[0]&128)|(w[1]&64)|(w[2]&32)|(w[3]&16)|(w[4]&8)|(w[5]&4)|(w[6]&2)|(w[7]&1));
+		lines[32] = indexb[lineb] + indexw[linew];
+		lineb = ((b[0]&64)|(b[1]&32)|(b[2]&16)|(b[3]&8)|(b[4]&4)|(b[5]&2)|(b[6]&1));
+		linew = ((w[0]&64)|(w[1]&32)|(w[2]&16)|(w[3]&8)|(w[4]&4)|(w[5]&2)|(w[6]&1));
+		lines[33] = indexb[lineb] + indexw[linew];
+		lineb = ((b[0]&32)|(b[1]&16)|(b[2]&8)|(b[3]&4)|(b[4]&2)|(b[5]&1));
+		linew = ((w[0]&32)|(w[1]&16)|(w[2]&8)|(w[3]&4)|(w[4]&2)|(w[5]&1));
+		lines[34] = indexb[lineb] + indexw[linew];
+		lineb = ((b[0]&16)|(b[1]&8)|(b[2]&4)|(b[3]&2)|(b[4]&1));
+		linew = ((w[0]&16)|(w[1]&8)|(w[2]&4)|(w[3]&2)|(w[4]&1));
+		lines[35] = indexb[lineb] + indexw[linew];
+		lineb = ((b[0]&8)|(b[1]&4)|(b[2]&2)|(b[3]&1));
+		linew = ((w[0]&8)|(w[1]&4)|(w[2]&2)|(w[3]&1));
+		lines[36] = indexb[lineb] + indexw[linew];
+		lineb = ((b[0]&4)|(b[1]&2)|(b[2]&1));
+		linew = ((w[0]&4)|(w[1]&2)|(w[2]&1));
+		lines[37] = indexb[lineb] + indexw[linew];
+
+	}
+
+	placeAndTurnStones(top, left){
+		
+		// horizontal
+		this.lines[top] = this.afterBlack[this.lines[top]][7-left];
+		// vertical
+		this.lines[8+left] = this.afterBlack[this.lines[8+left]][top];
+		
+		const diag_up_idx = top + left - 2;
+		const diag_up_hand = top+left>7 ? top : 7-left;
+		const diag_down_idx = 5 - top + left;
+		const diag_down_hand = top>left ? 7-top : 7-left;
+
+		// diag upward
+		this.lines[16+diag_up_idx] = this.afterBlack[this.lines[16+diag_up_idx]][diag_up_hand];
+		// diag downword
+		this.lines[27+diag_down_idx] = this.afterBlack[this.lines[27+diag_down_idx]][diag_down_hand];
+
+
+
+
+	}
+
+	legalHand(){
+	}
+}
+
+
