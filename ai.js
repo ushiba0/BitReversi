@@ -303,15 +303,17 @@ class AI extends EV {
 		return (sum<<1) - b_[5];
 	}
 
-	negaScout(node, alpha, beta, depth){
+	negaScout(node, alpha, beta, depth, showStatus=false){
 		let num_readnode = 0;
 		const argnode = new BOARD(node.boardArray);
 		const board_array_buffer = new ArrayBuffer(24);
 		const b32a = new Int32Array(board_array_buffer, 0);
 		const b8a = new Uint8Array(board_array_buffer, 0);
 		let value = 0;
+
 		
 		const search = (b_, alpha, beta, depth)=>{
+			num_readnode++;
 			if(depth===0){
 				b32a[0] = b_[0]; b32a[1] = b_[1];
 				b32a[2] = b_[2]; b32a[3] = b_[3];
@@ -320,7 +322,6 @@ class AI extends EV {
 			}
 
 			const state = this.state(b_);
-			num_readnode++;
 			let max, v;
 			
 			if(state===1){
@@ -388,22 +389,22 @@ class AI extends EV {
 			}
 		}
 		value = search(argnode.boardArray, alpha, beta, depth);
+		if(showStatus){
+			console.log(`NegaScout\nread nodes: ${num_readnode}\nevaluation: ${value}`);
+		}
 		return value;
 	}
 
-	negaScout_(node, alpha, beta, depth){
+	negaScout_(node, alpha, beta, depth, showStatus=false){
 		let num_readnode = 0;
 		const argnode = new BOARD(node.boardArray);
 		const board_array_buffer = new ArrayBuffer(24);
 		const b32a = new Int32Array(board_array_buffer, 0);
 		const b8a = new Uint8Array(board_array_buffer, 0);
 		let value = 0;
-
-		const hand = [0, 0];
-		const legalhand = [0, 0];
-		
 		
 		const search = (b_, alpha, beta, depth)=>{
+			num_readnode++;
 			if(depth===0){
 				b32a[0] = b_[0]; b32a[1] = b_[1];
 				b32a[2] = b_[2]; b32a[3] = b_[3];
@@ -412,20 +413,19 @@ class AI extends EV {
 			}
 
 			const state = this.state(b_);
-			num_readnode++;
+			let max, v;
 			
 			if(state===1){
 				//expand child node
+				const legalhand = [0, 0];
 				this.legalHand(b_, legalhand);
 				const childNodes = [];
-				let i = 0;
-				let max, v;
+				let bit = 0, i = 0;
 				while(legalhand[0]){
-					const bit = -legalhand[0] & legalhand[0];
+					bit = -legalhand[0] & legalhand[0];
 					//
 					const newNode = [b_[0], b_[1], b_[2], b_[3], b_[4], b_[5]];
-					hand[0] = bit; hand[1] = 0;
-					this.placeAndTurnStones(newNode, hand);
+					this.placeAndTurnStones(newNode, [bit, 0]);
 					childNodes[i] = newNode;
 					b32a[0] = newNode[0]; b32a[1] = newNode[1]; b32a[2] = newNode[2]; b32a[3] = newNode[3]; b32a[4] = newNode[4]; b32a[5] = newNode[5];
 					childNodes[i].e = -this.evaluation(b8a)*newNode[4];
@@ -433,11 +433,10 @@ class AI extends EV {
 					legalhand[0] = legalhand[0] ^ bit; i+=1;
 				}
 				while(legalhand[1]){
-					const bit = -legalhand[1] & legalhand[1];
+					bit = -legalhand[1] & legalhand[1];
 					//
 					const newNode = [b_[0], b_[1], b_[2], b_[3], b_[4], b_[5]];
-					hand[0] = 0; hand[1] = bit;
-					this.placeAndTurnStones(newNode, hand);
+					this.placeAndTurnStones(newNode, [0, bit]);
 					childNodes[i] = newNode;
 					b32a[0] = newNode[0]; b32a[1] = newNode[1]; b32a[2] = newNode[2]; b32a[3] = newNode[3]; b32a[4] = newNode[4]; b32a[5] = newNode[5];
 					childNodes[i].e = -this.evaluation(b8a)*newNode[4];
@@ -481,6 +480,9 @@ class AI extends EV {
 			}
 		}
 		value = search(argnode.boardArray, alpha, beta, depth);
+		if(showStatus){
+			console.log(`NegaScout\nread nodes: ${num_readnode}\nevaluation: ${value}`);
+		}
 		return value;
 	}
 
@@ -554,25 +556,325 @@ class AI extends EV {
 		return childIndex;
 	}
 
+	bitCount(x){
+		x = (x&0x55555555) + ((x>>>1)&0x55555555);
+		x = (x&0x33333333) + ((x>>>2)&0x33333333);
+		x = (x&0x0f0f0f0f) + ((x>>>4)&0x0f0f0f0f);
+		x = (x&0x00ff00ff) + ((x>>>8)&0x00ff00ff);
+		x = (x&0x0000ffff) + ((x>>>16)&0x0000ffff);
+		return x;
+	}
+
+	hash(b_){
+		const b1 = b_[0];
+		const b2 = b_[1];
+		const w1 = b_[2];
+		const w2 = b_[3];
+		let a = (b1>>>2)^(w2<<2)^((b1<<11)|(b1>>>20));
+		let b = (b2>>>2)^(w1<<2)^((b2<<11)|(b2>>>20));
+		let c = (b1>>>2)^(w2<<2)^((w1<<11)|(w1>>>20));
+		let d = (b1>>>2)^(w2<<2)^((w2<<11)|(w2>>>20));
+		
+		b = (~a)^(b*17)^(b>>>4)^(c*257)^(c>>>13)^(d);
+		b = (~a)^(b*17)^(b>>>4)^(c*257)^(c>>>13)^(d);
+		b = (~a)^(b*17)^(b>>>4)^(c*257)^(c>>>13)^(d);
+		b = (~a)^(b*17)^(b>>>4)^(c*257)^(c>>>13)^(d);
+		b = (~a)^(b*17)^(b>>>4)^(c*257)^(c>>>13)^(d);
+		
+		return b;
+	}
+
 	randomHand(board){
 		const hands = [];
-		const legalhand = board.legalHand();
-		let bit = 0;
+		const mask1 = 0x00003c3c;
+		const mask2 = 0x3c3c0000;
+		let legalhand = board.legalHand();
+
+		const x_mask1 = ~0x42c30000;
+		const x_mask2 = ~0x0000c342;
+
+		if(Math.random()>0.1){
+			legalhand[0] &= x_mask1;
+			legalhand[1] &= x_mask2;
+		}
+		if(this.bitCount(legalhand[0])+this.bitCount(legalhand[1])===0){
+			legalhand = board.legalHand();
+		}
 		
 		while(legalhand[0]){
-			bit = -legalhand[0] & legalhand[0];
+			const bit = -legalhand[0] & legalhand[0];
 			hands.push([bit, 0]);
 			legalhand[0] = legalhand[0] ^ bit;
 		}
 		while(legalhand[1]){
-			bit = -legalhand[1] & legalhand[1];
+			const bit = -legalhand[1] & legalhand[1];
 			hands.push([0, bit]);
 			legalhand[1] = legalhand[1] ^ bit;
 		}
-
-		const random_index = ~~(Math.random()*hands.length);
+		
+		let random_index;
+		
+		for(let i=0;i<3;i++){
+			random_index= ~~(Math.random()*hands.length);
+			if((hands[random_index][0]&mask1)|(hands[random_index][1]&mask2)){
+				return hands[random_index];
+			}
+		}
 		
 		return hands[random_index];
+	}
+
+	negaAlpha(node, alpha, beta, depth, showStatus=false){
+
+		let num_readnode = 0;
+		const argnode = new BOARD(node.boardArray);
+		const board_array_buffer = new ArrayBuffer(24);
+		const b32a = new Int32Array(board_array_buffer, 0);
+		const b8a = new Uint8Array(board_array_buffer, 0);
+		let value = 0;
+
+
+
+		const search = (b_, alpha, beta, depth)=>{
+			num_readnode++;
+			if(depth===0){
+				b32a[0] = b_[0]; b32a[1] = b_[1];
+				b32a[2] = b_[2]; b32a[3] = b_[3];
+				b32a[4] = b_[4]; b32a[5] = b_[5];
+				return this.evaluation(b8a)*b_[4];
+			}
+
+			const state = this.state(b_);
+			const hand = [0, 0];
+			const legalhand = [0, 0];
+			
+			if(state===1){
+				//expand child node
+				this.legalHand(b_, legalhand);
+				const childNodes = [];
+				let i = 0;
+				while(legalhand[0]){
+					const bit = -legalhand[0] & legalhand[0];
+					//
+					const newNode = [b_[0], b_[1], b_[2], b_[3], b_[4], b_[5]];
+					hand[0] = bit; hand[1] = 0;
+					this.placeAndTurnStones(newNode, hand);
+					b32a[0] = newNode[0]; b32a[1] = newNode[1];
+					b32a[2] = newNode[2]; b32a[3] = newNode[3];
+					b32a[4] = newNode[4]; b32a[5] = newNode[5];
+					newNode.e = -this.evaluation(b8a)*newNode[4];
+					childNodes[i] = newNode;
+					//
+					legalhand[0] = legalhand[0] ^ bit; i+=1;
+				}
+				while(legalhand[1]){
+					const bit = -legalhand[1] & legalhand[1];
+					//
+					const newNode = [b_[0], b_[1], b_[2], b_[3], b_[4], b_[5]];
+					hand[0] = 0; hand[1] = bit;
+					this.placeAndTurnStones(newNode, hand);
+					b32a[0] = newNode[0]; b32a[1] = newNode[1];
+					b32a[2] = newNode[2]; b32a[3] = newNode[3];
+					b32a[4] = newNode[4]; b32a[5] = newNode[5];
+					newNode.e = -this.evaluation(b8a)*newNode[4];
+					childNodes[i] = newNode;
+					//
+					legalhand[1] = legalhand[1] ^ bit; i+=1;
+				}
+
+				// move ordering				
+				if(b_[5]<60){
+					for(let i=0;i<childNodes.length-1;i+=1){
+						for(let j=i+1;j<childNodes.length;j+=1){
+							if(childNodes[i].e<childNodes[j].e){
+								let temp = childNodes[i];
+								childNodes[i] = childNodes[j];
+								childNodes[j] = temp;
+							}
+						}
+					}
+				}
+
+				for(let i=0;i<childNodes.length;i++){
+					alpha = Math.max(alpha, -search(childNodes[i], -beta, -alpha, depth-1));
+					if(alpha>=beta){return alpha;}
+				}
+
+
+				return alpha;
+			}else if(state===2){
+				return -search([b_[0], b_[1], b_[2], b_[3], -b_[4], b_[5]], -beta, -alpha, depth-1);
+			}else{
+				return this.b_w(b_)*b_[4];
+			}
+		};
+		value = search(argnode.boardArray, alpha, beta, depth);
+		if(showStatus){
+			console.log(`NegaAlpha\nread nodes: ${num_readnode}\nevaluation: ${value}`);
+		}
+		return value;
+	}
+
+	negaAlpha_(node, alpha, beta, depth, showStatus=false){
+
+		let num_readnode = 0;
+		const argnode = new BOARD(node.boardArray);
+		const board_array_buffer = new ArrayBuffer(24);
+		const b32a = new Int32Array(board_array_buffer, 0);
+		const b8a = new Uint8Array(board_array_buffer, 0);
+		let value = 0;
+
+		const hash_table = new Int32Array(65536);
+		const hash_b1 = new Int32Array(65536);
+		const hash_max = new Int8Array(65536);
+		const hash_min = new Int8Array(65536);
+		let hash_index = 0;
+
+
+		const search = (b_, alpha, beta, depth)=>{
+			num_readnode++;
+			if(depth===0){
+				b32a[0] = b_[0]; b32a[1] = b_[1];
+				b32a[2] = b_[2]; b32a[3] = b_[3];
+				b32a[4] = b_[4]; b32a[5] = b_[5];
+				return this.evaluation(b8a)*b_[4];
+			}
+
+			// search hash table
+			const hash = this.hash(b_);
+			const indexof = hash_table.indexOf(hash);
+			const hash_exist = indexof!==-1 && b_[0]===hash_b1[indexof];
+			if(hash_exist){
+				if(hash_max[indexof]<=alpha){
+					return hash_max[indexof];
+				}
+				if(hash_min[indexof]>=beta){
+					return hash_min[indexof];
+				}
+				if(hash_max[indexof]===hash_min[indexof]>=beta){
+					return hash_max[indexof];
+				}
+				alpha = Math.max(alpha, hash_min[indexof]);
+				beta = Math.min(beta, hash_max[indexof]);
+			}
+
+			const state = this.state(b_);
+			const hand = [0, 0];
+			const legalhand = [0, 0];
+			
+			if(state===1){
+				//expand child node
+				this.legalHand(b_, legalhand);
+				const childNodes = [];
+				let i = 0;
+				while(legalhand[0]){
+					const bit = -legalhand[0] & legalhand[0];
+					//
+					const newNode = [b_[0], b_[1], b_[2], b_[3], b_[4], b_[5]];
+					hand[0] = bit; hand[1] = 0;
+					this.placeAndTurnStones(newNode, hand);
+					b32a[0] = newNode[0]; b32a[1] = newNode[1];
+					b32a[2] = newNode[2]; b32a[3] = newNode[3];
+					b32a[4] = newNode[4]; b32a[5] = newNode[5];
+					newNode.e = -this.evaluation(b8a)*newNode[4];
+					childNodes[i] = newNode;
+					//
+					legalhand[0] = legalhand[0] ^ bit; i+=1;
+				}
+				while(legalhand[1]){
+					const bit = -legalhand[1] & legalhand[1];
+					//
+					const newNode = [b_[0], b_[1], b_[2], b_[3], b_[4], b_[5]];
+					hand[0] = 0; hand[1] = bit;
+					this.placeAndTurnStones(newNode, hand);
+					b32a[0] = newNode[0]; b32a[1] = newNode[1];
+					b32a[2] = newNode[2]; b32a[3] = newNode[3];
+					b32a[4] = newNode[4]; b32a[5] = newNode[5];
+					newNode.e = -this.evaluation(b8a)*newNode[4];
+					childNodes[i] = newNode;
+					//
+					legalhand[1] = legalhand[1] ^ bit; i+=1;
+				}
+
+				// move ordering				
+				if(b_[5]<60){
+					for(let i=0;i<childNodes.length-1;i+=1){
+						for(let j=i+1;j<childNodes.length;j+=1){
+							if(childNodes[i].e<childNodes[j].e){
+								let temp = childNodes[i];
+								childNodes[i] = childNodes[j];
+								childNodes[j] = temp;
+							}
+						}
+					}
+				}
+
+
+				let score = 0, score_max = -256, a = alpha;
+				for(let i=0;i<childNodes.length;i++){
+					score = -search(childNodes[i], -beta, -a, depth-1);
+					if(score<=beta){
+						//置換表に[score, infty]を追加
+						if(score>=beta){
+							if(hash_exist){
+								hash_min[indexof] = score;
+								hash_max[indexof] = 256;
+							}else{
+								hash_table[hash_index] = this.hash(childNodes[i]);
+								hash_b1[hash_index] = childNodes[i][0];
+								hash_max[hash_index] = score;
+								hash_min[hash_index] = 256;
+								hash_index++;
+							}
+							return score;
+						}
+					}
+					if(score>score_max){
+						a = Math.max(a, score);
+						score_max = score;
+					}
+					alpha = Math.max(alpha, 0);
+					if(alpha>=beta){return alpha;}
+				}
+
+				if(score_max>alpha){
+					//置換表に[score_max, score_max]を追加
+					if(hash_exist){
+						hash_min[indexof] = score_max;
+						hash_max[indexof] = score_max;
+					}else{
+						hash_table[hash_index] = this.hash(b_);
+						hash_b1[hash_index] = b_[0];
+						hash_max[hash_index] = score_max;
+						hash_min[hash_index] = score_max;
+						hash_index++;
+					}
+				}else{
+					//地下表に[-infty, score_max]を追加
+					if(hash_exist){
+						hash_min[indexof] = -256;
+						hash_max[indexof] = score_max;
+					}else{
+						hash_table[hash_index] = this.hash(b_);
+						hash_b1[hash_index] = b_[0];
+						hash_min[indexof] = -256;
+						hash_max[indexof] = score_max;
+						hash_index++;
+					}
+				}
+
+				return score_max;
+			}else if(state===2){
+				return -search([b_[0], b_[1], b_[2], b_[3], -b_[4], b_[5]], -beta, -alpha, depth-1);
+			}else{
+				return this.b_w(b_)*b_[4];
+			}
+		};
+		value = search(argnode.boardArray, alpha, beta, depth);
+		if(showStatus){
+			console.log(`NegaAlpha\nread nodes: ${num_readnode}\nevaluation: ${value}`);
+		}
+		return value;
 	}
 }
 

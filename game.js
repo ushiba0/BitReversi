@@ -319,7 +319,41 @@ class MASTER extends GRAPHIC {
 		}
 		
 		return nodes;
-    }
+	}
+	
+	generateGame(){
+		const nodes = [];
+		const history = [this.generateNode(14)];
+		let c=0;
+		
+		while(true){
+			const state = history[0].state();
+			
+			if(state===1){
+				history.unshift(new BOARD(history[0].boardArray));
+				const depth = history[0].boardArray[5]>55? 8 : 3;
+				const move = ai.cpuHand(history[0], -100, 100, depth);
+				nodes.push(new BOARD(move[0].boardArray));
+				nodes[nodes.length-1].e = move[0].e;
+				history[0].placeAndTurnStones(...move[0].hand);
+			}else if(state===2){
+				history[0].boardArray[4] *=-1;
+			}else{
+				break;
+			}
+		}
+
+			
+		for(let i=0;i<nodes.length;i++){
+			nodes[i].e = -nodes[nodes.length-1].e * nodes[i].boardArray[4];
+			if(nodes[i].boardArray[4]===-1){
+				nodes[i].swap();
+				nodes[i].boardArray[4] = 1;
+			}
+		}
+		
+		return nodes;
+	}
     
     //ランダムな盤面を作るが、黒石を指定した個数にする
     generateNode(N=64){

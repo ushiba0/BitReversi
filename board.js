@@ -415,6 +415,25 @@ class BOARD {
 		
 	}
 
+	get hash(){
+		const b1 = this.boardArray[0];
+		const b2 = this.boardArray[1];
+		const w1 = this.boardArray[2];
+		const w2 = this.boardArray[3];
+		let a = (b1>>>2)^(w2<<2)^((b1<<11)|(b1>>>20));
+		let b = (b2>>>2)^(w1<<2)^((b2<<11)|(b2>>>20));
+		let c = (b1>>>2)^(w2<<2)^((w1<<11)|(w1>>>20));
+		let d = (b1>>>2)^(w2<<2)^((w2<<11)|(w2>>>20));
+		
+		b = (~a)^(b*17)^(b>>>4)^(c*257)^(c>>>13)^(d);
+		b = (~a)^(b*17)^(b>>>4)^(c*257)^(c>>>13)^(d);
+		b = (~a)^(b*17)^(b>>>4)^(c*257)^(c>>>13)^(d);
+		b = (~a)^(b*17)^(b>>>4)^(c*257)^(c>>>13)^(d);
+		b = (~a)^(b*17)^(b>>>4)^(c*257)^(c>>>13)^(d);
+		
+		return b;
+	}
+
 	b_w(){
 
 		let temp, sum=0;
@@ -881,3 +900,37 @@ class LINEBOARD {
 }
 
 
+const testhash = (iter=100,n1=4,n2=64)=>{
+	const hash_table = new Int32Array(iter);
+	const board_table = new Array(iter);
+	let index = 0;
+	let crash = 0;
+
+	const max = ~~Math.min(Math.max(n1, n2), 64);
+	const min = ~~Math.max(Math.min(n1, n2), 4);
+	console.log(max, min);
+
+	for(let i=0;i<iter;i++){
+		const stones = ~~(Math.random()*(max-min)) + min;
+		const node = master.generateNode(stones);
+		const hash = node.hash
+		const indexof = hash_table.indexOf(hash);
+		if(indexof===-1){
+			hash_table[index] = hash;
+			board_table[index] = node;
+		}else{
+			const b1 = node.boardArray[0]-board_table[indexof].boardArray[0];
+			const b2 = node.boardArray[1]-board_table[indexof].boardArray[1];
+			const w1 = node.boardArray[2]-board_table[indexof].boardArray[2];
+			const w2 = node.boardArray[3]-board_table[indexof].boardArray[3];
+			if(b1===0 && b2===0 && w1===0 && w2===0){
+			}else{
+				crash++;
+				console.log(node);
+				console.log(board_table[indexof]);
+			}
+		}
+		index++;
+	}
+	console.log(`crash: ${crash}`);
+};

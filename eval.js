@@ -88,7 +88,7 @@ class EV extends CONSTANTS {
 		const weights = this.weights;
 		const indexb = this.indexb;
 		const indexw = this.indexw;
-		const phase = Math.min(Math.max(0, b8[20]-4), 60);
+		const phase = Math.min(Math.max(0, b8[20]-4+10), 60);
 		
 		let start = 0;
 	
@@ -321,7 +321,7 @@ class EV extends CONSTANTS {
 		let lineb=0, linew=0, index=0;
 		const num_shape = this.num_shape;
 		const num_phase = this.num_phase;
-		const phase = Math.min(Math.max(0, b8[20]-4), 60);
+		const phase = Math.min(Math.max(0, b8[20]-4+10), 60);
 		let start = 0;
 		
 	
@@ -615,8 +615,8 @@ class EV extends CONSTANTS {
 	}
 
 	selfTraining(s=0,n1=0,n2=n1){
-		const othello = new Game_b();
-		let c = 0, loss = 0;
+		const othello = new MASTER();
+		let count = 0, loss = 0;
 		
 		if(n1===0 && n2===0){
 			n1 = 4;
@@ -632,17 +632,33 @@ class EV extends CONSTANTS {
 		
 		const startTime = performance.now();
 		while(true){
-			const list = othello.getSelfPlayGame();
+			const list = othello.generateGame();
 			for(let j=0;j<list.length;j++){
 				if(list[j].boardArray[5]>=n1 && list[j].boardArray[5]<=n2){
 					const node = list[j];
-					this.updateWeights(node._board8array, node.e);
-					//console.log(node.boardArray,node.e);
-					loss += Math.pow(this.evaluation(node._board8array)-node.e, 2);
-					c++;
-					if(c%100000===0){
-						console.log(c/10000, Math.sqrt(loss/c).toPrecision(4));
-					}
+					const node1 = node;
+					const node2 = this.rotateBoard(node1);
+					const node3 = this.rotateBoard(node2);
+					const node4 = this.rotateBoard(node3);
+					const node5 = this.flipBoard(node1);
+					const node6 = this.rotateBoard(node5);
+					const node7 = this.rotateBoard(node6);
+					const node8 = this.rotateBoard(node7);
+					
+					const true_value = node.e;
+					const pred_value = this.evaluation(node1._board8array);
+					
+					this.updateWeights(node1._board8array, true_value);
+					this.updateWeights(node2._board8array, true_value);
+					this.updateWeights(node3._board8array, true_value);
+					this.updateWeights(node4._board8array, true_value);
+					this.updateWeights(node5._board8array, true_value);
+					this.updateWeights(node6._board8array, true_value);
+					this.updateWeights(node7._board8array, true_value);
+					this.updateWeights(node8._board8array, true_value);
+		
+					loss += Math.pow(true_value-pred_value, 2);
+					count++;
 				}
 			}
 			
@@ -651,10 +667,10 @@ class EV extends CONSTANTS {
 		}
 
 		this.float2int();
-		console.log(`complete ${c} trains\nloss ${Math.sqrt(loss/c).toPrecision(4)}`);
+		console.log(`complete ${count} trainings\nloss ${Math.sqrt(loss/count).toPrecision(4)}`);
     }
 
-    train(s=0, n=64){
+    train(s=0, n=64, depth=-1){
         const reversi = new MASTER();
         let count = 0;
 		let loss = 0;
@@ -672,7 +688,7 @@ class EV extends CONSTANTS {
 			const node7 = this.rotateBoard(node6);
 			const node8 = this.rotateBoard(node7);
 			
-			const true_value = ai.negaScout(node1, -64, 64, -1);
+			const true_value = ai.negaScout(node1, -64, 64, depth);
 			const pred_value = this.evaluation(node1._board8array);
 			const value = true_value;
             
@@ -696,8 +712,14 @@ class EV extends CONSTANTS {
 		//////////////////
 		this.float2int();
 
-		console.log(`complete ${count} trainings\nloss ${Math.sqrt(loss/count).toPrecision(4)}`);
+		console.log(`stones: ${n}\ncomplete ${count} trainings\nloss ${Math.sqrt(loss/count).toPrecision(4)}`);
 		
+	}
+
+	trainAll(s=5000,depth=2){
+		for(let n=52;n>4;n--){
+			this.train(s, n, depth);
+		}
 	}
 
 	flipBoard(argboard){
@@ -805,6 +827,16 @@ class EV extends CONSTANTS {
 }
 
 
+function copy(){
+	const weights = ai.weights;
+	for(let shape=0;shape<11;shape++){
+		for(let index=0;index<6561;index++){
+			for(let phase=0;phase<49;phase++){
+				weights[6561*(61*shape+phase) + index] = weights[6561*(61*shape+49) + index];
+			}
+		}
+	}
+}
 
 
 
