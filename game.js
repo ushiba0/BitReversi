@@ -14,6 +14,57 @@ class GRAPHIC extends CONSTANTS{
 		const b_ = node.board;
 		
 		//評価値を消す
+		
+		//石の数をカウント
+		for(let i=1;i<65;i++){
+			if(b_[i]===1){
+				black++;
+			}else if(b_[i]===-1){
+				white++;
+			}
+		}
+		
+		//石を置く
+		for(let i=1;i<65;i++){
+			if(b_[i]===1){
+				circles[i-1].className = 'black';
+			}else if(b_[i]===-1){
+				circles[i-1].className = 'white';	
+			}else{
+				circles[i-1].className = 'blank';
+			}
+		}
+		
+		black_score.innerText = black + '';
+		white_score.innerText = white + '';
+		
+		if(node.boardArray[4]!==this.colorOfCpu){
+			comment.innerText = 'player turn';
+		}
+		
+		if(node.state()===3){//終局
+			if(black > white){
+				comment.innerText = 'black win';
+			}else if(black < white){
+				comment.innerText = 'white win';
+			}else{
+				comment.innerText = 'draw';
+			}
+			
+			return;
+		}
+	}
+
+	render_(node){
+		if(!node){
+			node = this.now;
+		}
+		
+		let black = 0;
+		let white = 0;
+		const b_ = node.board;
+		
+		//評価値を消す
 		d3.select('#board').selectAll('text').remove();
 		
 		//石の数をカウント
@@ -147,10 +198,9 @@ class GRAPHIC extends CONSTANTS{
 		
 		for(let i=1;i<65;i++){
 			if(board[i]===1){
-				canvas.circles[i].attr({
-					r:size/10,
-					fill:"#ff69e1"//4169e1
-				});
+				squares[i-1].className = 'legal';
+			}else{
+				squares[i-1].className = '';
 			}
 		}
 	}
@@ -160,7 +210,11 @@ class GRAPHIC extends CONSTANTS{
 			node = this.now;
 		}
 		if(!Array.isArray(node.hand)){
-			canvas.cpuput.attr("r",0);
+			for(let i=0;i<64;i++){
+				if(squares[i].className==='lastput'){
+					squares[i].className==='';
+				}
+			}
 			return;
 		}
 
@@ -174,12 +228,7 @@ class GRAPHIC extends CONSTANTS{
 
 		const x = put%8===0 ? 7 : put%8-1;
 		const y = Math.ceil(put/8)-1;
-		canvas.cpuput.attr({
-			cx:size/4+size*x+x+size/8,
-			cy:size/4+size*y+y+size/8,
-			r:size/12
-		});
-
+		squares[y*8+x].className = 'lastput';
 	}
 }
 

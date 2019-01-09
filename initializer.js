@@ -1,15 +1,15 @@
 
-
-//盤面の作画
+/*
+// draw board
 (function(){
 	
-	//ボード
+	// board
 	const board_width = size*8 + size/2 + 1*7;
 	const board_height = board_width;
 	
 	const svg = d3.select("#board");
 	
-	//デバイスの判定
+	// detect device
 	const getDevice = function() {
 		const userAgent = navigator.userAgent;
 		if(userAgent.indexOf('iPhone') > 0 || userAgent.indexOf('iPod') > 0 || userAgent.indexOf('Android') > 0 && userAgent.indexOf('Mobile') > 0){
@@ -22,7 +22,7 @@
 	};
 	const device = getDevice();
 	
-	//クリックイベントの追加
+	// add click event
 	svg.on(device==='pc'?'click':'touchend',function(){
 		d3.event.preventDefault();
 		let [x,y] = d3.mouse(this);
@@ -560,7 +560,23 @@
 	
 })();
 
+*/
+
 master.render();
 master.visualizeMove();
 //master.ai.ev.importWeights();
+
+
+
+
+
+
+
+
+
+
+circles[27].className = 'white';
+circles[28].className = 'black';
+circles[35].className = 'black';
+circles[36].className = 'white';
 
