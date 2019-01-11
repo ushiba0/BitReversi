@@ -566,22 +566,17 @@ class AI extends EV {
 	}
 
 	hash(b_){
-		const b1 = b_[0];
-		const b2 = b_[1];
-		const w1 = b_[2];
-		const w2 = b_[3];
-		let a = (b1>>>2)^(w2<<2)^((b1<<11)|(b1>>>20));
-		let b = (b2>>>2)^(w1<<2)^((b2<<11)|(b2>>>20));
-		let c = (b1>>>2)^(w2<<2)^((w1<<11)|(w1>>>20));
-		let d = (b1>>>2)^(w2<<2)^((w2<<11)|(w2>>>20));
+		let a = b_[0];
+		let b = b_[1];
+		let c = b_[2];
+		let d = b_[3];
 		
-		b = (~a)^(b*17)^(b>>>4)^(c*257)^(c>>>13)^(d);
-		b = (~a)^(b*17)^(b>>>4)^(c*257)^(c>>>13)^(d);
-		b = (~a)^(b*17)^(b>>>4)^(c*257)^(c>>>13)^(d);
-		b = (~a)^(b*17)^(b>>>4)^(c*257)^(c>>>13)^(d);
-		b = (~a)^(b*17)^(b>>>4)^(c*257)^(c>>>13)^(d);
+		a = (~(a=(~a<<7)|(a>>>25)))^(b*17)^((b=(~b<<11)|(b>>>21))>>>4)^(c*257)^((c=(c<<13)|(c>>19))>>>13)^(d=(d<<17)|(d>>>15));
+		a = (~(a=(~a<<7)|(a>>>25)))^(b*17)^((b=(~b<<11)|(b>>>21))>>>4)^(c*257)^((c=(c<<13)|(c>>19))>>>13)^(d=(d<<17)|(d>>>15));
+		a = (~(a=(~a<<7)|(a>>>25)))^(b*17)^((b=(~b<<11)|(b>>>21))>>>4)^(c*257)^((c=(c<<13)|(c>>19))>>>13)^(d=(d<<17)|(d>>>15));
+		a = (~(a=(~a<<7)|(a>>>25)))^(b*17)^((b=(~b<<11)|(b>>>21))>>>4)^(c*257)^((c=(c<<13)|(c>>19))>>>13)^(d=(d<<17)|(d>>>15));
 		
-		return b;
+		return a;
 	}
 
 	randomHand(board){
@@ -631,6 +626,7 @@ class AI extends EV {
 		const board_array_buffer = new ArrayBuffer(24);
 		const b32a = new Int32Array(board_array_buffer, 0);
 		const b8a = new Uint8Array(board_array_buffer, 0);
+		const startTime = performance.now();
 		let value = 0;
 
 
@@ -709,13 +705,14 @@ class AI extends EV {
 			}
 		};
 		value = search(argnode.boardArray, alpha, beta, depth);
+		const endTime = performance.now();
 		if(showStatus){
 			console.log(`NegaAlpha\nread nodes: ${num_readnode}\nevaluation: ${value}`);
 		}
 		return value;
 	}
 
-	negaAlpha_(node, alpha, beta, depth, showStatus=false){
+	negaAlpha_withMemory(node, alpha, beta, depth, showStatus=false){
 
 		let num_readnode = 0;
 		const argnode = new BOARD(node.boardArray);
@@ -734,30 +731,24 @@ class AI extends EV {
 		const search = (b_, alpha, beta, depth)=>{
 			num_readnode++;
 			if(depth===0){
-				b32a[0] = b_[0]; b32a[1] = b_[1];
-				b32a[2] = b_[2]; b32a[3] = b_[3];
-				b32a[4] = b_[4]; b32a[5] = b_[5];
+				b32a[0] = b_[0]; b32a[1] = b_[1]; b32a[2] = b_[2]; b32a[3] = b_[3]; b32a[4] = b_[4]; b32a[5] = b_[5];
 				return this.evaluation(b8a)*b_[4];
 			}
 
-			// search hash table
+			let lower, upper;
+			// 置換表に前回の計算結果があれば利用する
 			const hash = this.hash(b_);
 			const indexof = hash_table.indexOf(hash);
-			const hash_exist = indexof!==-1 && b_[0]===hash_b1[indexof];
-			if(hash_exist){
-				if(hash_max[indexof]<=alpha){
-					return hash_max[indexof];
-				}
-				if(hash_min[indexof]>=beta){
-					return hash_min[indexof];
-				}
-				if(hash_max[indexof]===hash_min[indexof]>=beta){
-					return hash_max[indexof];
-				}
-				alpha = Math.max(alpha, hash_min[indexof]);
-				beta = Math.min(beta, hash_max[indexof]);
+			const key = indexof===-1? ++hash_index : (b_[1]===hash_b1[indexof]? indexof : ++hash_index);
+			if(key!==hash_index){
+				lower = hash_min[key];
+				if(beta<=lower) {return lower;}
+				upper = hash_max[key];
+				if(upper<=alpha){return upper;}
+				alpha = Math.max(alpha, lower);
+				beta = Math.min(beta, upper);
 			}
-
+			
 			const state = this.state(b_);
 			const hand = [0, 0];
 			const legalhand = [0, 0];
@@ -773,9 +764,7 @@ class AI extends EV {
 					const newNode = [b_[0], b_[1], b_[2], b_[3], b_[4], b_[5]];
 					hand[0] = bit; hand[1] = 0;
 					this.placeAndTurnStones(newNode, hand);
-					b32a[0] = newNode[0]; b32a[1] = newNode[1];
-					b32a[2] = newNode[2]; b32a[3] = newNode[3];
-					b32a[4] = newNode[4]; b32a[5] = newNode[5];
+					b32a[0] = newNode[0]; b32a[1] = newNode[1]; b32a[2] = newNode[2]; b32a[3] = newNode[3]; b32a[4] = newNode[4]; b32a[5] = newNode[5];
 					newNode.e = -this.evaluation(b8a)*newNode[4];
 					childNodes[i] = newNode;
 					//
@@ -787,9 +776,7 @@ class AI extends EV {
 					const newNode = [b_[0], b_[1], b_[2], b_[3], b_[4], b_[5]];
 					hand[0] = 0; hand[1] = bit;
 					this.placeAndTurnStones(newNode, hand);
-					b32a[0] = newNode[0]; b32a[1] = newNode[1];
-					b32a[2] = newNode[2]; b32a[3] = newNode[3];
-					b32a[4] = newNode[4]; b32a[5] = newNode[5];
+					b32a[0] = newNode[0]; b32a[1] = newNode[1]; b32a[2] = newNode[2]; b32a[3] = newNode[3]; b32a[4] = newNode[4]; b32a[5] = newNode[5];
 					newNode.e = -this.evaluation(b8a)*newNode[4];
 					childNodes[i] = newNode;
 					//
@@ -808,62 +795,32 @@ class AI extends EV {
 						}
 					}
 				}
-
-
-				let score = 0, score_max = -256, a = alpha;
+				
+				let value = -128, v = 0;
 				for(let i=0;i<childNodes.length;i++){
-					score = -search(childNodes[i], -beta, -a, depth-1);
-					if(score<=beta){
-						//置換表に[score, infty]を追加
-						if(score>=beta){
-							if(hash_exist){
-								hash_min[indexof] = score;
-								hash_max[indexof] = 256;
-							}else{
-								hash_table[hash_index] = this.hash(childNodes[i]);
-								hash_b1[hash_index] = childNodes[i][0];
-								hash_max[hash_index] = score;
-								hash_min[hash_index] = 256;
-								hash_index++;
-							}
-							return score;
-						}
-					}
-					if(score>score_max){
-						a = Math.max(a, score);
-						score_max = score;
-					}
-					alpha = Math.max(alpha, 0);
-					if(alpha>=beta){return alpha;}
+					v = -search(childNodes[i], -beta, -Math.max(alpha,value), depth-1);
+					if(value<v){value = v;}
+					if(value>beta){break;}
 				}
 
-				if(score_max>alpha){
-					//置換表に[score_max, score_max]を追加
-					if(hash_exist){
-						hash_min[indexof] = score_max;
-						hash_max[indexof] = score_max;
-					}else{
-						hash_table[hash_index] = this.hash(b_);
-						hash_b1[hash_index] = b_[0];
-						hash_max[hash_index] = score_max;
-						hash_min[hash_index] = score_max;
-						hash_index++;
-					}
+				if(value<=alpha){
+					hash_table[key] = hash;
+					hash_b1[key] = b_[1];
+					hash_min[key] = lower;
+					hash_max[key] = value;
+				}else if(value>=beta){
+					hash_table[key] = hash;
+					hash_b1[key] = b_[1];
+					hash_min[key] = value;
+					hash_max[key] = upper;
 				}else{
-					//地下表に[-infty, score_max]を追加
-					if(hash_exist){
-						hash_min[indexof] = -256;
-						hash_max[indexof] = score_max;
-					}else{
-						hash_table[hash_index] = this.hash(b_);
-						hash_b1[hash_index] = b_[0];
-						hash_min[indexof] = -256;
-						hash_max[indexof] = score_max;
-						hash_index++;
-					}
+					hash_table[key] = hash;
+					hash_b1[key] = b_[1];
+					hash_min[key] = value;
+					hash_max[key] = value;
 				}
 
-				return score_max;
+				return value;
 			}else if(state===2){
 				return -search([b_[0], b_[1], b_[2], b_[3], -b_[4], b_[5]], -beta, -alpha, depth-1);
 			}else{

@@ -15,22 +15,43 @@ class CONSTANTS{
     }
 }
 
+const createElement = (element='',className='', id='')=>{
+    if(element===''){
+        element = 'div';
+    }
+    const div = document.createElement(element);
+    if(className!==''){
+        div.className = className;
+    }
+    if(id!==''){
+        div.id = id;
+    }
+    return div;
+};
+
+const container = document.body;
+const black_score = createElement('div', '', 'black_score');
+const white_score = createElement('div', '', 'white_score');
+const comment = createElement('div', '', 'comment');
+const board = createElement('div', '', 'board');
+
+
+
 
 const squares = new Array();
 const circles = new Array();
-const comment = document.createElement('div');
-const black_score = document.createElement('div');
-const white_score = document.createElement('div');
+const package = createElement('div');
+
 (()=>{
 
+
 	// generate board table
-    const table = document.createElement('table');
+    const table = createElement('table');
 	for(let i=0;i<8;i++){
-		const tr = document.createElement('tr');
+		const tr = createElement('tr');
 		for(let j=0;j<8;j++){
-			const td = document.createElement('td');
-			const div = document.createElement('div');
-			div.className = 'blank';
+			const td = createElement('td');
+			const div = createElement('div', 'blank');
 			// on mouse click
 			td.addEventListener('mousedown', ()=>{
 				const e = i*8 + j;
@@ -53,24 +74,33 @@ const white_score = document.createElement('div');
 
     // initialize comment box
     comment.innerText = 'player turn';
+    
 
-    // set class name
-    black_score.className = 'scorebox';
-    white_score.className = 'scorebox';
-    comment.className = '';
+    board.appendChild(table);
 
     // set score box
-    const black_stone = document.createElement('div');
-    const white_stone = document.createElement('div');
-    black_stone.className = 'black';
-    white_stone.className = 'white';
-    black_score.appendChild(black_stone);
-    white_score.appendChild(white_stone);
+    const black_stone = createElement('div', 'black minimize', 'black_stone');
+    const white_stone = createElement('div', 'white minimize', 'white_stone');
+    container.appendChild(black_stone);
+    container.appendChild(black_score);
+    container.appendChild(white_stone);
+	container.appendChild(white_score);
 
 
-
-    document.body.appendChild(comment);
-    document.body.appendChild(black_score);
-    document.body.appendChild(white_score);
-	document.body.appendChild(table);
+	// set select box event
+	const depth = document.getElementById('depth');
+	const depth_last = document.getElementById('depth_last');
+	depth.addEventListener('change', ()=>{
+		const value = parseInt(depth.value, 10);
+		console.log(value);
+	});
+	depth_last.addEventListener('change', ()=>{
+		const value = parseInt(depth_last.value, 10);
+		console.log(value);
+	});
+	
 })();
+
+
+container.appendChild(comment);
+container.appendChild(board);

@@ -14,6 +14,9 @@ class GRAPHIC extends CONSTANTS{
 		const b_ = node.board;
 		
 		//評価値を消す
+		for(let value of squares){
+			value.className = '';
+		}
 		
 		//石の数をカウント
 		for(let i=1;i<65;i++){
@@ -49,71 +52,6 @@ class GRAPHIC extends CONSTANTS{
 				comment.innerText = 'white win';
 			}else{
 				comment.innerText = 'draw';
-			}
-			
-			return;
-		}
-	}
-
-	render_(node){
-		if(!node){
-			node = this.now;
-		}
-		
-		let black = 0;
-		let white = 0;
-		const b_ = node.board;
-		
-		//評価値を消す
-		d3.select('#board').selectAll('text').remove();
-		
-		//石の数をカウント
-		for(let i=1;i<65;i++){
-			if(b_[i]===1){
-				black++;
-			}else if(b_[i]===-1){
-				white++;
-			}
-		}
-		
-		for(let i=1;i<65;i++){
-			if(b_[i]===1){
-				canvas.circles[i].attr({
-						r:size*4/10,
-						fill:"#292929",
-						stroke:"#292929",
-						"stroke-width":1
-				});
-			}else if(b_[i]===-1){
-				canvas.circles[i].attr({
-						r:size*4/10,
-						fill:"#ffffff",
-						stroke:"#a0a0a0",
-						"stroke-width":1
-				});
-			}else{
-				canvas.circles[i].attr({
-						r:		0,
-						fill:	"none",
-						"stroke-width":0
-				});
-			}
-		}
-		
-		canvas.bscore.text(black + "");
-		canvas.wscore.text(white + "");
-		
-		if(node.boardArray[4]!==this.colorOfCpu){
-			canvas.comment.text('player turn');
-		}
-		
-		if(node.state()===3){//終局
-			if(black > white){
-				canvas.comment.text('black win');
-			}else if(black < white){
-				canvas.comment.text('white win');
-			}else{
-				canvas.comment.text('draw');
 			}
 			
 			return;

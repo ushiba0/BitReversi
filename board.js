@@ -14,6 +14,9 @@ class BOARD {
 		this.boardArray = new Int32Array(boardArrayBuffer, 0, 6);
 		this._board8array = new Uint8Array(boardArrayBuffer, 0, 24);
 
+		this.black = 0x0000000810000000n;
+		this.white = 0x0000001008000000n;
+
 		if(board8array && board8array.length===6){
 			this.boardArray.set(board8array, 0);
 		}else{
@@ -395,6 +398,10 @@ class BOARD {
 		return legalhand;
 	}
 
+
+	
+	
+
 	state(){
 		
 		const legalhand = this.legalHand();
@@ -416,22 +423,17 @@ class BOARD {
 	}
 
 	get hash(){
-		const b1 = this.boardArray[0];
-		const b2 = this.boardArray[1];
-		const w1 = this.boardArray[2];
-		const w2 = this.boardArray[3];
-		let a = (b1>>>2)^(w2<<2)^((b1<<11)|(b1>>>20));
-		let b = (b2>>>2)^(w1<<2)^((b2<<11)|(b2>>>20));
-		let c = (b1>>>2)^(w2<<2)^((w1<<11)|(w1>>>20));
-		let d = (b1>>>2)^(w2<<2)^((w2<<11)|(w2>>>20));
+		let a = this.boardArray[0];
+		let b = this.boardArray[1];
+		let c = this.boardArray[2];
+		let d = this.boardArray[3];
 		
-		b = (~a)^(b*17)^(b>>>4)^(c*257)^(c>>>13)^(d);
-		b = (~a)^(b*17)^(b>>>4)^(c*257)^(c>>>13)^(d);
-		b = (~a)^(b*17)^(b>>>4)^(c*257)^(c>>>13)^(d);
-		b = (~a)^(b*17)^(b>>>4)^(c*257)^(c>>>13)^(d);
-		b = (~a)^(b*17)^(b>>>4)^(c*257)^(c>>>13)^(d);
+		a = (a=(a<<7)|(~a>>>25))^((b*17)|((b=(~b<<11)|(b>>>21))>>>4))^((c*257)|((c=(~c<<13)|(c>>19))>>>13))^(d=(d<<17)|(d>>>15));
+		a = (a=(a<<7)|(~a>>>25))^((b*17)|((b=(~b<<11)|(b>>>21))>>>4))^((c*257)|((c=(~c<<13)|(c>>19))>>>13))^(d=(d<<17)|(d>>>15));
+		a = (a=(a<<7)|(~a>>>25))^((b*17)|((b=(~b<<11)|(b>>>21))>>>4))^((c*257)|((c=(~c<<13)|(c>>19))>>>13))^(d=(d<<17)|(d>>>15));
 		
-		return b;
+		
+		return a;
 	}
 
 	b_w(){
