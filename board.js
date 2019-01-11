@@ -13,9 +13,7 @@ class BOARD {
 		const boardArrayBuffer = new ArrayBuffer(24);
 		this.boardArray = new Int32Array(boardArrayBuffer, 0, 6);
 		this._board8array = new Uint8Array(boardArrayBuffer, 0, 24);
-
-		this.black = 0x0000000810000000n;
-		this.white = 0x0000001008000000n;
+		
 
 		if(board8array && board8array.length===6){
 			this.boardArray.set(board8array, 0);
