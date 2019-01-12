@@ -1,3 +1,6 @@
+// しくみ
+// 
+
 
 class GRAPHIC extends CONSTANTS{
 	constructor(){
@@ -176,12 +179,12 @@ class MASTER extends GRAPHIC {
 	constructor(){
 		super();
 		this.mode = 'gameb';
-		this.record = [new BOARD([8, 268435456, 16, 134217728, 1, 4])];
+		this.record = [new BOARD()];
 	}
 
 	resetGame(){
 		this.mode = 'gameb';
-		this.record = [new BOARD([8, 268435456, 16, 134217728, 1, 4])];
+		this.record = [new BOARD()];
 		this.render(this.now);
 	}
 	
@@ -209,7 +212,7 @@ class MASTER extends GRAPHIC {
 			if(this.now.boardArray[4]===this.colorOfCpu){
 				resolve();
 			}else{
-				this.record.unshift(new BOARD(this.now.boardArray));
+				this.record.unshift(new BOARD(this.now));
 				this.now.placeAndTurnStones(hand1, hand2);
 				resolve();
 			}
@@ -217,13 +220,13 @@ class MASTER extends GRAPHIC {
 		
 		const cpu_turn = ()=>{ return new Promise((resolve)=>{
 			if(this.now.state()===1){
-				this.record.unshift(new BOARD(this.now.boardArray));
+				this.record.unshift(new BOARD(this.now));
 				const search_depth = this.depth[1]>=64-this.now.boardArray[5] ? -1 : this.depth[0]; 
 				const move = ai.cpuHand(this.now, -100, 100, search_depth,true);
 				this.now.placeAndTurnStones(...move[0].hand);
 				this.now.hand = move[0].hand;
 			}else if(this.now.state()===2){
-				this.record.unshift(new BOARD(this.now.boardArray));
+				this.record.unshift(new BOARD(this.now));
 				this.now.boardArray[4] *= -1;
 				resolve();
 			}else{
@@ -234,7 +237,7 @@ class MASTER extends GRAPHIC {
 			if(this.now.state()===1){
 				resolve();
 			}else if(this.now.state()===2){
-				this.record.unshift(new BOARD(this.now.boardArray));
+				this.record.unshift(new BOARD(this.now));
 				this.now.boardArray[4] *= -1;
 				this.play();3
 				resolve();
@@ -275,18 +278,18 @@ class MASTER extends GRAPHIC {
 
 	getSelfPlayGame(){
 		const nodes = [];
-		const history = [new BOARD([8,268435456,16,134217728,1,4])];
+		const history = [new BOARD()];
 		let c=0;
 		
 		while(true){
 			const state = history[0].state();
 			
 			if(state===1){
-				history.unshift(new BOARD(history[0].boardArray));
+				history.unshift(new BOARD(history[0]));
 				const move = ai.cpuHand(history[0], -100, 100, 4);
 				const rand = ~~(Math.random()*Math.min(move.length, 2));
 				for(let i=0;i<move.length;i++){
-					nodes[c] = new BOARD(move[i].boardArray);
+					nodes[c] = new BOARD(move[i]);
 					nodes[c++].e = move[i].e;
 				}
 				history[0].placeAndTurnStones(...move[rand].hand);
@@ -317,10 +320,10 @@ class MASTER extends GRAPHIC {
 			const state = history[0].state();
 			
 			if(state===1){
-				history.unshift(new BOARD(history[0].boardArray));
+				history.unshift(new BOARD(history[0]));
 				const depth = history[0].boardArray[5]>55? 8 : 3;
 				const move = ai.cpuHand(history[0], -100, 100, depth);
-				nodes.push(new BOARD(move[0].boardArray));
+				nodes.push(new BOARD(move[0]));
 				nodes[nodes.length-1].e = move[0].e;
 				history[0].placeAndTurnStones(...move[0].hand);
 			}else if(state===2){
