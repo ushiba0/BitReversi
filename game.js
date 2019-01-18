@@ -60,8 +60,54 @@ class GRAPHIC extends CONSTANTS{
 			return;
 		}
 	}
+	
+	showEval(node=0, alpha=-100,beta=100, depth=-1){
+		if(!node){
+			node = this.now;
+		}
+		
+		const search_depth = (depth===-1)?
+			(this.depth[1]>=64-node.boardArray[5] ? -1 : this.depth[0]):
+			depth;
+		const evals = ai.cpuHand(node, alpha, beta, search_depth);
 
-	visualizeEvaluation(node=0, alpha=-100,beta=100, depth=-1){
+		if(evals.length===0){
+			return;
+		}
+
+		// delete former evels
+		for(let element of circles){
+			element.innerText = '';
+		}
+
+		for(let node of evals){
+			const hand = node.hand;
+			let put = 0;
+			if(hand[0]<0){
+				put = 1;
+			}else if(hand[0]>0){
+				put = 32-Math.log2(hand[0]);
+			}
+			if(hand[1]<0){
+				put = 33;
+			}else if(hand[1]>0){
+				put = 64-Math.log2(hand[1]);
+			}
+
+			circles[put-1].innerText = node.e;
+			if(node.e>0){
+				circles[put-1].className = 'eval_plus';
+				circles[put-1].innerText = (node.e + '').slice(0, 5);
+			}else{
+				circles[put-1].className = 'eval_minus';
+				circles[put-1].innerText = (node.e + '').slice(0, 5);
+			}
+		}
+		
+		return;
+	}
+
+	visualizeEvaluation_(node=0, alpha=-100,beta=100, depth=-1){
 		if(!node){
 			node = this.now;
 		}

@@ -87,16 +87,21 @@ const package = createElement('div');
 	container.appendChild(white_score);
 
 
-	// set select box event
-	const depth = document.getElementById('depth');
-	const depth_last = document.getElementById('depth_last');
-	depth.addEventListener('change', ()=>{
-		const value = parseInt(depth.value, 10);
-		console.log(value);
-	});
-	depth_last.addEventListener('change', ()=>{
-		const value = parseInt(depth_last.value, 10);
-		console.log(value);
+	
+	window.addEventListener('click', (e)=>{
+		const target = e.target;
+		console.log(target);
+
+		if(target.id==='depth0'){
+			const list = ['1', '2', '4', '6', '8', '1'];
+			const indexof = list.indexOf(target.innerText);
+			target.innerText = list[indexof + 1];
+		}
+		if(target.id==='depth1'){
+			const list = ['4', '6', '8', '12', '16', '4'];
+			const indexof = list.indexOf(target.innerText);
+			target.innerText = list[indexof + 1];
+		} 
 	});
 	
 })();

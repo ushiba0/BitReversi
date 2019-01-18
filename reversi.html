@@ -23,7 +23,7 @@
 
 				display: grid;
 				grid-template-rows: 30px 300px 30px;
-				grid-template-columns: 1fr 30px 30px 30px 30px 180px 1fr;
+				grid-template-columns: 1fr 30px 20px 10px 30px 20px 10px 170px 10px 1fr;
 				
 				margin: 20px;
 			}
@@ -67,7 +67,25 @@
 				width: 30px;
 				height: 30px;
 			}
+
+			.eval_plus{
+				width: 30px;
+				height: 30px;
+				font-size: 11px;
+				color: #ff0000;
+				display:table-cell;
+				vertical-align: middle;
+			}
 			
+			.eval_minus{
+				width: 30px;
+				height: 30px;
+				font-size: 11px;
+				color: #000000;
+				display:table-cell;
+				vertical-align: middle;
+			}
+
 			.legal{
 				background: #9f9fff;
 			}
@@ -85,54 +103,7 @@
 			.minimize{
 				transform: scale(0.7, 0.7);
 			}
-
-			.cp_ipselect {
-				overflow: hidden;
-				width: 96%;
-				margin: auto;
-				text-align: center;
-			}
-			.cp_ipselect select {
-				width: 100%;
-				padding-right: 1em;
-				cursor: pointer;
-				text-indent: 0.01px;
-				text-overflow: ellipsis;
-				border: none;
-				outline: none;
-				background: transparent;
-				background-image: none;
-				box-shadow: none;
-				-webkit-appearance: none;
-				appearance: none;
-			}
-			.cp_ipselect select::-ms-expand {
-				display: none;
-			}
-			.cp_ipselect.cp_sl01 {
-				position: relative;
-				border: 1px solid #bbbbbb;
-				border-radius: 2px;
-				background: #ffffff;
-			}
-			.cp_ipselect.cp_sl01::before {
-				position: absolute;
-				top: 0.7em;
-				right: 0.5em;
-				width: 0;
-				height: 0;
-				padding: 0;
-				content: '';
-				border-left: 6px solid transparent;
-				border-right: 6px solid transparent;
-				border-top: 6px solid #666666;
-				pointer-events: none;
-			}
-			.cp_ipselect.cp_sl01 select {
-				padding: 6px 38px 6px 10px;
-				color: #666666;
-			}
-			
+						
 			@keyframes bounce {
 				0% { transform: scale(0.4, 0.4); }
 				25% { transform: scale(1, 1); }
@@ -151,73 +122,84 @@
 			#black_score{
 				grid-row: 1;
 				grid-column: 3;
-				background: #f88;
+				background: #fff;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				border : 0px solid #000;
 			}
 			#white_stone{
 				grid-row: 1;
-				grid-column: 4;
+				grid-column: 5;
 			}
 			#white_score{
 				grid-row: 1;
-				grid-column: 5;
-				background: #8f8;
+				grid-column: 6;
+				background: #fff;
+				display: flex;
+				justify-content: center;
+				align-items: center;
 			}
 			#comment{
 				grid-row: 1;
-				grid-column: 6;
-				background: #88f;
+				grid-column: 8;
+				background: #eee;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				padding: 15px;
 			}
 
 			#board{
 				grid-row: 2;
 				grid-column: 2/7;
-				background: #ff8;
+				background: #fff;
 				display: flex;
 			}
 
 			#depth0{
 				grid-row: 3;
-				grid-column: 2/4;
+				grid-column: 2/5;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				border: solid 0.5px #aaa;
+				margin: 2px;
 			}
 
 			#depth1{
 				grid-row: 3;
-				grid-column: 4/6;
+				grid-column: 5/8;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				border: solid 0.5px #aaa;
+				margin: 2px;
 			}
 
-			
+			#test{
+				grid-row: 3;
+				grid-column: 6/9;
+			}
 		</style>
 		
 	</head>
 	
 	
 	<body>
-		<div class="cp_ipselect cp_sl01" id="depth0">
-		<select required id="depth">
-			<option value="2" selected>2</option>
-			<option value="4">4</option>
-			<option value="6">6</option>
-			<option value="8">8</option>
-		</select>
-		</div>
 		
-		<div class="cp_ipselect cp_sl01" id=depth1>
-		<select required id="depth_last">
-			<option value="2" selected>2</option>
-			<option value="4">4</option>
-			<option value="6">6</option>
-			<option value="8">8</option>
-		</select>
-		</div>
-
+		
+		<div id="depth0">4</div>
+		<div id="depth1">4</div>
+	
 		
 
-
-		<script src="d3.v3.min.js"></script>	
+		<!--<script src="d3.v3.min.js"></script>-->	
+		<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.14.1/dist/tf.min.js"></script>
 		<script src="thread.js"></script>
+		<script src="data2png.js"></script>
 		<script src="main.js"></script>
 		<script src="board.js"></script>
-		<script src="data2png.js"></script>
 		<script src="eval.js"></script>
 		<script src="ai.js"></script>
 		<script src="game.js"></script>

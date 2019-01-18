@@ -395,6 +395,35 @@ class BOARD {
 		return legalhand;
 	}
 
+	expand(){
+		const childNodes = [];
+		const board = this;
+		const legalhand = this.legalHand();
+		let bit = 0, i = 0;
+
+		while(legalhand[0]){
+			bit = -legalhand[0] & legalhand[0];
+			//
+			const child = new BOARD(board);
+			child.placeAndTurnStones(bit, 0);
+			child.hand = [bit, 0];
+			childNodes[i] = child;
+			//
+			legalhand[0] = legalhand[0] ^ bit; i+=1;
+		}
+		while(legalhand[1]){
+			bit = -legalhand[1] & legalhand[1];
+			//
+			const child = new BOARD(board);
+			child.placeAndTurnStones(0, bit);
+			child.hand = [0, bit];
+			childNodes[i] = child;
+			//
+			legalhand[1] = legalhand[1] ^ bit; i+=1;
+		}
+		return childNodes;
+	}
+
 	state(){
 		
 		const legalhand = this.legalHand();
@@ -532,4 +561,36 @@ const testhash = (iter=100,n1=4,n2=64)=>{
 		index++;
 	}
 	console.log(`crash: ${crash}`);
+};
+
+const learningSet = (N=100, n1=50, n2=64)=>{
+	const data = new Uint8ClampedArray(N*20);
+	const max = ~~Math.min(Math.max(n1, n2), 64);
+	const min = ~~Math.max(Math.min(n1, n2), 4);
+
+	const split = (_x)=>{
+		const x = _x|0;
+		const a1 = (x>>>24) & 0xff;
+		const a2 = (x>>>16) & 0xff;
+		const a3 = (x>>>8) & 0xff;
+		const a4 = (x>>>0) & 0xff;
+		return [a1, a2, a3, a4];
+	};
+
+	for(let i=0;i<N;i++){
+		const stones = ~~(Math.random()*(max-min+1))+min;
+		const board = master.generateNode(stones);
+		board.e = ai.negaScout(board, -64, 64, -1);
+
+		data.set(split(board.boardArray[0]), i*20 + 0);
+		data.set(split(board.boardArray[1]), i*20 + 4);
+		data.set(split(board.boardArray[2]), i*20 + 8);
+		data.set(split(board.boardArray[3]), i*20 + 12);
+		data.set(split(board.e), i*20 + 16);
+	}
+
+	const d2p = new data2png();
+	d2p.toPng(data);
+
+	return data;
 };

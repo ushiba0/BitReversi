@@ -24,30 +24,11 @@ class AI extends EV {
 			
 			if(state===1){
 				//expand child node
-				const legalhand = board.legalHand();
-				const childNodes = [];
-				let bit = 0, i = 0;
-				while(legalhand[0]){
-					bit = -legalhand[0] & legalhand[0];
-					//
-					const child = new BOARD(board);
-					child.placeAndTurnStones(bit, 0);
-					childNodes[i] = child;
-					childNodes[i].e = -this.evaluation(child)*child.boardArray[4];
+				const childNodes = board.expand();
+				
+				for(let i=0;i<childNodes.length;i++){
+					childNodes[i].e = -this.evaluation(childNodes[i])*childNodes[i].boardArray[4];
 					if(max<childNodes[i].e){max = childNodes[i].e; v = i;}
-					//
-					legalhand[0] = legalhand[0] ^ bit; i+=1;
-				}
-				while(legalhand[1]){
-					bit = -legalhand[1] & legalhand[1];
-					//
-					const child = new BOARD(board);
-					child.placeAndTurnStones(0, bit);
-					childNodes[i] = child;
-					childNodes[i].e = -this.evaluation(child)*child.boardArray[4];
-					if(max<childNodes[i].e){max = childNodes[i].e; v = i;}
-					//
-					legalhand[1] = legalhand[1] ^ bit; i+=1;
 				}
 
 				max = v = -search(childNodes[v], -beta, -alpha, depth-1);
@@ -89,36 +70,19 @@ class AI extends EV {
 	}
 
 	cpuHand(board, alpha=-100, beta=100, depth=0,showStatus=false){
-		const childNodes = [];
+		
 		const startTime = performance.now();
-		let rand=0, temp=0, bit=0, i=0, value=0;
+		const childNodes = board.expand();
+		let rand=0, temp=0;
 
-		const legalhand = board.legalHand();
-		
-		
-		while(legalhand[0]){
-			bit = -legalhand[0] & legalhand[0];
-			//
-			const child = new BOARD(board);
-			child.placeAndTurnStones(bit, 0);
-			child.e = -this.negaScout(child, alpha, beta, depth);
-			child.hand = [bit, 0];
-			childNodes[i++] = child;
-			//
-			legalhand[0] = legalhand[0] ^ bit;
-		}
-		while(legalhand[1]){
-			bit = -legalhand[1] & legalhand[1];
-			//
-			const child = new BOARD(board);
-			child.placeAndTurnStones(0, bit);
-			child.e = -this.negaScout(child, alpha, beta, depth);
-			child.hand = [0, bit];
-			childNodes[i++] = child;
-			//
-			legalhand[1] = legalhand[1] ^ bit;
+		if(childNodes.length===0){
+			return childNodes;
 		}
 		
+		for(let i=0;i<childNodes.length;i++){
+			childNodes[i].e = -this.negaScout(childNodes[i], alpha, beta, depth);
+		}
+
 		// sort
 		childNodes.sort((a,b)=>{return b.e-a.e});
 		
