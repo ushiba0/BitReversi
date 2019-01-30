@@ -106,54 +106,6 @@ class GRAPHIC extends CONSTANTS{
 		
 		return;
 	}
-
-	visualizeEvaluation_(node=0, alpha=-100,beta=100, depth=-1){
-		if(!node){
-			node = this.now;
-		}
-		
-		const search_depth = (depth===-1)?
-		(this.depth[1]>=64-node.boardArray[5] ? -1 : this.depth[0])
-		: depth;
-		console.log(search_depth);
-		const evals = ai.cpuHand(node, alpha, beta, search_depth);
-		if(evals[0]===undefined){
-			return;
-		}
-		const d0 = evals[0][0];
-		d3.select('#board').selectAll('text').remove();
-		d3.select('#board').selectAll('text').data(evals).enter().append('text').attr({
-			x:(d)=>{
-				const hand = d.hand;
-				let put = 0;
-				if(hand[0]<0){put = 1;}
-				else if(hand[0]>0){put = 32-Math.log2(hand[0]);}
-				if(hand[1]<0){put = 33;}
-				else if(hand[1]>0){put = 64-Math.log2(hand[1]);}
-				const x = put%8===0 ? 7 : put%8-1;
-				return size/4+size*x+x+size/8;
-			},
-			y:(d)=>{
-				const hand = d.hand;
-				let put = 0;
-				if(hand[0]<0){put = 1;}
-				else if(hand[0]>0){put = 32-Math.log2(hand[0]);}
-				if(hand[1]<0){put = 33;}
-				else if(hand[1]>0){put = 64-Math.log2(hand[1]);}
-				const y = Math.ceil(put/8)-1;
-				return size/4+size*y+y+size/8+size/6;
-			},
-			fill:(d,i)=>{
-				if(i===0){return 'red';}
-				if(d0===d[0]){return 'red';}
-				return 'black';
-			}
-		})
-		.style('font-size', '10px')
-		.text((d)=>{
-			return d.e.toPrecision(3);
-		});
-	}
 	
 	visualizeMove(node){
 		if(!node){
@@ -357,41 +309,31 @@ class MASTER extends GRAPHIC {
 		return nodes;
 	}
 	
-	generateGame(){
-		const nodes = [];
-		const history = [this.generateNode(14)];
-		let c=0;
+	generateGame(random_rate=0){
+		const node_now = this.generateNode(14);
+		const nodes = [new BOARD(node_now)];
 		
 		while(true){
-			const state = history[0].state();
-			
+			const state = node_now.state();
+
 			if(state===1){
-				history.unshift(new BOARD(history[0]));
-				const depth = history[0].boardArray[5]>55? 8 : 3;
-				const move = ai.cpuHand(history[0], -100, 100, depth);
-				nodes.push(new BOARD(move[0]));
-				nodes[nodes.length-1].e = move[0].e;
-				history[0].placeAndTurnStones(...move[0].hand);
+				const depth = node_now.boardArray[5]>60? -6 : 0;
+				const move = ai.cpuHand(node_now, -100, 100, depth);
+				const index = Math.random()<random_rate ? Math.floor(Math.random()*move.length) : 0;
+				const next_move = move[index];
+				const next_node = new BOARD(next_move);
+				next_node.e = -next_move.e;
+				nodes.push(next_node);
+				node_now.placeAndTurnStones(...next_move.hand);
 			}else if(state===2){
-				history[0].boardArray[4] *=-1;
+				node_now.boardArray[4] *=-1;
 			}else{
 				break;
 			}
 		}
-
-			
-		for(let i=0;i<nodes.length;i++){
-			nodes[i].e = -nodes[nodes.length-1].e * nodes[i].boardArray[4];
-			if(nodes[i].boardArray[4]===-1){
-				nodes[i].swap();
-				nodes[i].boardArray[4] = 1;
-			}
-		}
-		
 		return nodes;
 	}
     
-    //ランダムな盤面を作るが、黒石を指定した個数にする
     generateNode(N=64){
 		const n = Math.max(Math.min(64, N), 4);
 		let node_now = new BOARD();
@@ -422,3 +364,217 @@ class MASTER extends GRAPHIC {
 
 }
 const master = new MASTER();
+
+
+
+
+const selfPlay = (num_iter, random_rate=0)=>{
+	
+	for(let i=0;i<num_iter;i++){
+		const game = master.generateGame(random_rate);
+		const last = game[game.length-1];
+		const value = last.e;
+		for(const node of game){
+			if(node.boardArray[4]===-1){
+				node.swap();
+				node.e *= -1;
+			}
+			node.e = value * node.boardArray[4];
+
+			node.boardArray[4] = 1;
+			backup.push(node);
+		}
+	}
+};
+
+
+const trainEV = ()=>{
+	const constants = new CONSTANTS();
+	const num_phase = constants.num_phase;
+	const num_shape = constants.num_shape;
+	const weights_temp = new Float32Array(6561*num_phase*num_shape);
+	const indexb = ai.indexb;
+	const indexw = ai.indexw;
+
+	while(backup.length>0){
+		const node = backup.pop();
+		const value = node.e;
+		const phase = Math.min(Math.max(10, node.boardArray[5]-4), 60);
+
+		const node1 = new BOARD(node);
+		const node2 = ai.rotateBoard(node1);
+		const node3 = ai.rotateBoard(node2);
+		const node4 = ai.rotateBoard(node3);
+		const node5 = ai.flipBoard(node1);
+		const node6 = ai.rotateBoard(node5);
+		const node7 = ai.rotateBoard(node6);
+		const node8 = ai.rotateBoard(node7);
+
+		for(let node of [node1, node2, node3, node4, node5, node6, node7, node8]){
+			const shape = node.shape();
+			let offset = 6561*phase, index;
+
+			//horizontal 1
+			//上辺
+			index = indexb[shape[0]] + indexw[shape[1]];
+			weights_temp[offset + index] += value;
+			//下辺
+			index = indexb[shape[2]] + indexw[shape[3]];
+			weights_temp[offset + index] += value;
+			//右辺
+			index = indexb[shape[4]] + indexw[shape[5]];
+			weights_temp[offset + index] += value;
+			//左辺
+			index = indexb[shape[6]] + indexw[shape[7]];
+			weights_temp[offset + index] += value;
+			
+			
+			offset += 6561*num_phase;
+			//horizontal 2
+			//上辺
+			index = indexb[shape[8]] + indexw[shape[9]];
+			weights_temp[offset + index] += value;
+			//下辺
+			index = indexb[shape[10]] + indexw[shape[11]];
+			weights_temp[offset + index] += value;
+			//右辺
+			index = indexb[shape[12]] + indexw[shape[13]];
+			weights_temp[offset + index] += value;
+			//左辺
+			index = indexb[shape[14]] + indexw[shape[15]];
+			weights_temp[offset + index] += value;
+			
+		
+			offset += 6561*num_phase;
+			//horizontal 3
+			//上辺
+			index = indexb[shape[16]] + indexw[shape[17]];
+			weights_temp[offset + index] += value;
+			//下辺
+			index = indexb[shape[18]] + indexw[shape[19]];
+			weights_temp[offset + index] += value;
+			//右辺
+			index = indexb[shape[20]] + indexw[shape[21]];
+			weights_temp[offset + index] += value;
+			//左辺
+			index = indexb[shape[22]] + indexw[shape[23]];
+			weights_temp[offset + index] += value;
+		
+		
+			offset += 6561*num_phase;
+			//horizontal 4
+			//上辺
+			index = indexb[shape[24]] + indexw[shape[25]];
+			weights_temp[offset + index] += value;
+			//下辺
+			index = indexb[shape[26]] + indexw[shape[27]];
+			weights_temp[offset + index] += value;
+			//右辺
+			index = indexb[shape[28]] + indexw[shape[29]];
+			weights_temp[offset + index] += value;
+			//左辺
+			index = indexb[shape[30]] + indexw[shape[31]];
+			weights_temp[offset + index] += value;
+			
+		
+			offset += 6561*num_phase;
+			//diagonal 8
+			//右肩上がり
+			index = indexb[shape[32]] + indexw[shape[33]];
+			weights_temp[offset + index] += value;
+			//右肩下がり
+			index = indexb[shape[34]] + indexw[shape[35]];
+			weights_temp[offset + index] += value;
+			
+			
+			offset += 6561*num_phase;
+			//corner 8
+			//upper left
+			index = indexb[shape[40]] + indexw[shape[41]];
+			weights_temp[offset + index] += value;
+			//upper right
+			index = indexb[shape[42]] + indexw[shape[43]];
+			weights_temp[offset + index] += value;
+			//lower left
+			index = indexb[shape[44]] + indexw[shape[45]];
+			weights_temp[offset + index] += value;
+			//lower right
+			index = indexb[shape[46]] + indexw[shape[47]];
+			weights_temp[offset + index] += value;
+			
+			
+			offset += 6561*num_phase;
+			//diagonal 7
+			//upper left
+			index = indexb[shape[48]] + indexw[shape[49]];
+			weights_temp[offset + index] += value;
+			//lower right
+			index = indexb[shape[50]] + indexw[shape[51]];
+			weights_temp[offset + index] += value;
+			//lower left
+			index = indexb[shape[52]] + indexw[shape[53]];
+			weights_temp[offset + index] += value;
+			//upper right
+			index = indexb[shape[54]] + indexw[shape[55]];
+			weights_temp[offset + index] += value;
+		
+			
+			offset += 6561*num_phase;
+			//diagonal 6
+			//upper left
+			index = indexb[shape[56]] + indexw[shape[57]];
+			weights_temp[offset + index] += value;
+			//lower right
+			index = indexb[shape[58]] + indexw[shape[59]];
+			weights_temp[offset + index] += value;
+			//lower left
+			index = indexb[shape[60]] + indexw[shape[61]];
+			weights_temp[offset + index] += value;
+			//upper right
+			index = indexb[shape[62]] + indexw[shape[63]];
+			weights_temp[offset + index] += value;
+			
+			
+			offset += 6561*num_phase;
+			//corner24
+			//horizontal upper left
+			index = indexb[shape[64]] + indexw[shape[65]];
+			weights_temp[offset + index] += value;
+			//horizontal lower left
+			index = indexb[shape[66]] + indexw[shape[67]];
+			weights_temp[offset + index] += value;
+			//horizontal upper right
+			index = indexb[shape[68]] + indexw[shape[69]];
+			weights_temp[offset + index] += value;
+			//horizontal lower right
+			index = indexb[shape[70]] + indexw[shape[71]];
+			weights_temp[offset + index] += value;
+			//vertical upper left
+			index = indexb[shape[72]] + indexw[shape[73]];
+			weights_temp[offset + index] += value;
+			//vertical lower left
+			index = indexb[shape[74]] + indexw[shape[75]];
+			weights_temp[offset + index] += value;
+			//vertical upper right
+			index = indexb[shape[76]] + indexw[shape[77]];
+			weights_temp[offset + index] += value;
+			//vertical lower right
+			index = indexb[shape[78]] + indexw[shape[79]];
+			weights_temp[offset + index] += value;
+		}
+
+	}
+	
+	return weights_temp;
+};
+
+const montecarlo = ()=>{
+	selfPlay(5000);
+	const w = trainEV();
+	for(let i=0;i<w.length;i++){
+		if(w[i]===0){
+			continue;
+		}
+		ai.weights[i] = ai.weights[i]*0.7 + w[i]/5000*0.3;
+	}
+};

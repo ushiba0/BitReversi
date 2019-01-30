@@ -3,6 +3,8 @@ let counter = 0;
 let clickDisabled = false;
 const canvas = new Object();
 
+const backup = new Array();
+
 
 class CONSTANTS{
     constructor(){
@@ -87,20 +89,31 @@ const package = createElement('div');
 	container.appendChild(white_score);
 
 
-	
-	window.addEventListener('click', (e)=>{
-		const target = e.target;
-		console.log(target);
+	// append search depth box
+	const depth0 = createElement('div', '', 'depth0');
+	const depth1 = createElement('div', '', 'depth1');
+	depth0.innerText = 4;
+	depth1.innerText = 4;
+	container.appendChild(depth0);
+	container.appendChild(depth1);
 
+
+	
+	// set click event of search depth
+	document.body.addEventListener('click', (e)=>{
+		const target = e.target;
+		
 		if(target.id==='depth0'){
 			const list = ['1', '2', '4', '6', '8', '1'];
 			const indexof = list.indexOf(target.innerText);
-			target.innerText = list[indexof + 1];
+			const depth = list[indexof + 1];
+			target.innerText = depth;
 		}
 		if(target.id==='depth1'){
 			const list = ['4', '6', '8', '12', '16', '4'];
 			const indexof = list.indexOf(target.innerText);
-			target.innerText = list[indexof + 1];
+			const depth = list[indexof + 1];
+			target.innerText = depth;
 		} 
 	});
 	
