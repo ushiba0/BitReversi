@@ -1,7 +1,7 @@
 //board			ボードを配列で返す
 //setBoard		配列をボードにセット
-//legalHand		着手可能位置をthis.l1とthis.l2に格納
-//placeAndTurnStones	石を返す。this.currentturnを逆にして、this.sumofstonesに1を足す
+//getMove		着手可能位置をthis.l1とthis.l2に格納
+//putStone	石を返す。this.currentturnを逆にして、this.sumofstonesに1を足す
 //count			黒石ー白石の値を返す
 //hash			ハッシュ値を生成
 //state			次の人が置けるなら1、次の人がパスなら2、終局なら3を返す
@@ -9,15 +9,23 @@
 
 //BOARD_DATA holds stone location, current turn, sum of stones
 class BOARD {
-	constructor(board){
-		const boardArrayBuffer = new ArrayBuffer(24);
-		this.boardArray = new Int32Array(boardArrayBuffer, 0, 6);
-		//this._board8array = new Uint8Array(boardArrayBuffer, 0, 24);
-		
-		if(board && board.boardArray){
-			this.boardArray.set(board.boardArray, 0);
-		}else{
-			this.boardArray.set([8, 268435456, 16, 134217728, 1, 4], 0);
+	constructor(node){
+		this.black1 = 0x00000008;
+		this.black2 = 0x10000000;
+		this.white1 = 0x00000010;
+		this.white2 = 0x08000000;
+		this.turn = 1;
+		this.stones = 4;
+		this.e = 0;
+
+		if(node instanceof BOARD){
+			this.black1 = node.black1;
+			this.black2 = node.black2;
+			this.white1 = node.white1;
+			this.white2 = node.white2;
+			this.turn = node.turn;
+			this.stones = node.stones;
+			this.e = node.e;
 		}
 	}
 
@@ -26,23 +34,23 @@ class BOARD {
 		const board = new Int8Array(65);
 		
 		for(let i=0;i<32;i++){
-			if(this.boardArray[0]&(1<<i)){
+			if(this.black1&(1<<i)){
 				board[32-i] = 1;
 			}
 		}
 		for(let i=0;i<32;i++){
-			if(this.boardArray[1]&(1<<i)){
+			if(this.black2&(1<<i)){
 				board[64-i] = 1;
 			}
 		}
 			
 		for(let i=0;i<32;i++){
-			if(this.boardArray[2]&(1<<i)){
+			if(this.white1&(1<<i)){
 				board[32-i] = -1;
 			}
 		}
 		for(let i=0;i<32;i++){
-			if(this.boardArray[3]&(1<<i)){
+			if(this.white2&(1<<i)){
 				board[64-i] = -1;
 			}
 		}
@@ -60,34 +68,41 @@ class BOARD {
 			throw 'invalid fboard data';
 		}
 		
-		this.boardArray[0] = arr[0];
-		this.boardArray[1] = arr[1];
-		this.boardArray[2] = arr[2];
-		this.boardArray[3] = arr[3];
+		this.black1 = arr[0];
+		this.black2 = arr[1];
+		this.white1 = arr[2];
+		this.white2 = arr[3];
 		
 		if(arr[4]===-1){
-			this.boardArray[4] = -1;
+			this.turn = -1;
 		}else{
-			this.boardArray[4] = 1;
+			this.turn = 1;
 		}
 
 		let num_stones = 0;
-		for(let i=0;i<4;i++){
-			for(let j=0;j<32;j++){
-				if(this.boardArray[i]&(1<<j)){
-					num_stones++;
-				}
+		for(let j=0;j<32;j++){
+			if(this.black1&(1<<j)){
+				num_stones++;
+			}
+			if(this.black2&(1<<j)){
+				num_stones++;
+			}
+			if(this.white1&(1<<j)){
+				num_stones++;
+			}
+			if(this.white2&(1<<j)){
+				num_stones++;
 			}
 		}
 
-		this.boardArray[5] = num_stones;
+		this.stones = num_stones;
 	}
 
 	set setBoard(arr_){
 		const arr = new Int8Array(65);
 		
 		//reset board array
-		this.boardArray[0] = this.boardArray[1] = this.boardArray[2] = this.boardArray[3] = 0;
+		this.black1 = this.black2 = this.white1 = this.white2 = 0;
 		
 		for(let i=1;i<65;i++){
 			if(arr_[i]===1){
@@ -99,8 +114,8 @@ class BOARD {
 
 		//set black stone
 		for(let i=0;i<32;i++){
-			this.boardArray[0] |= arr[32-i]<<i;
-			this.boardArray[1] |= arr[64-i]<<i
+			this.black1 |= arr[32-i]<<i;
+			this.black2 |= arr[64-i]<<i
 		}
 		
 
@@ -114,45 +129,56 @@ class BOARD {
 
 		//set white stone
 		for(let i=0;i<32;i++){
-			this.boardArray[2] |= arr[32-i]<<i;
-			this.boardArray[3] |= arr[64-i]<<i;
+			this.white1 |= arr[32-i]<<i;
+			this.white2 |= arr[64-i]<<i;
 		}
 
 		let num_stones = 0;
-		for(let i=0;i<4;i++){
-			for(let j=0;j<32;j++){
-				if(this.boardArray[i]&(1<<j)){
-					num_stones++;
-				}
+		for(let j=0;j<32;j++){
+			if(this.black1&(1<<j)){
+				num_stones++;
+			}
+			if(this.black2&(1<<j)){
+				num_stones++;
+			}
+			if(this.white1&(1<<j)){
+				num_stones++;
+			}
+			if(this.white2&(1<<j)){
+				num_stones++;
 			}
 		}
-		this.boardArray[5] = num_stones;
 
-		this.boardArray[4] = (arr_[0]===-1) ? -1 : 1;
+		this.stones = num_stones;
+
+		this.turn = (arr_[0]===-1) ? -1 : 1;
 
 
 	}
 	
-	placeAndTurnStones(hand1, hand2){
-
-		const b_ = this.boardArray;
+	putStone(hand1, hand2){
+		let black1 = this.black1;
+		let black2 = this.black2;
+		let white1 = this.white1;
+		let white2 = this.white2;
+		
 		let temp, temp1, temp2;
 	
-		if(this.boardArray[4]===-1){//white turn
-			temp = b_[2];
-			b_[2] = b_[0];
-			b_[0] = temp;
-			temp = b_[3];
-			b_[3] = b_[1];
-			b_[1] = temp;
+		if(this.turn===-1){//white turn
+			temp = white1;
+			white1 = black1;
+			black1 = temp;
+			temp = white2;
+			white2 = black2;
+			black2 = temp;
 		}
 		
-		const horizontalMask1 = 0x7e7e7e7e & b_[2];
-		const horizontalMask2 = 0x7e7e7e7e & b_[3];
-		const verticalMask1 = 0x00ffffff & b_[2];
-		const verticalMask2 = 0xffffff00 & b_[3];
-		const edgeMask1 = 0x007e7e7e & b_[2];
-		const edgeMask2 = 0x7e7e7e00 & b_[3];
+		const horizontalMask1 = 0x7e7e7e7e & white1;
+		const horizontalMask2 = 0x7e7e7e7e & white2;
+		const verticalMask1 = 0x00ffffff & white1;
+		const verticalMask2 = 0xffffff00 & white2;
+		const edgeMask1 = 0x007e7e7e & white1;
+		const edgeMask2 = 0x7e7e7e00 & white2;
 		
 	
 	
@@ -164,9 +190,9 @@ class BOARD {
 		temp1 |= horizontalMask1 & (temp1<<1); temp2 |= horizontalMask2 & (temp2<<1);
 		temp1 |= horizontalMask1 & (temp1<<1); temp2 |= horizontalMask2 & (temp2<<1);
 		temp1 |= horizontalMask1 & (temp1<<1); temp2 |= horizontalMask2 & (temp2<<1);
-		if(((temp1<<1)&b_[0])|((temp2<<1)&b_[1])){
-			b_[0] ^= temp1; b_[1] ^= temp2;
-			b_[2] ^= temp1; b_[3] ^= temp2;
+		if(((temp1<<1)&black1)|((temp2<<1)&black2)){
+			black1 ^= temp1; black2 ^= temp2;
+			white1 ^= temp1; white2 ^= temp2;
 		}
 	
 	
@@ -177,9 +203,9 @@ class BOARD {
 		temp1 |= horizontalMask1 & (temp1>>>1); temp2 |= horizontalMask2 & (temp2>>>1);
 		temp1 |= horizontalMask1 & (temp1>>>1); temp2 |= horizontalMask2 & (temp2>>>1);
 		temp1 |= horizontalMask1 & (temp1>>>1); temp2 |= horizontalMask2 & (temp2>>>1);
-		if(((temp1>>>1)&b_[0])|((temp2>>>1)&b_[1])){
-			b_[0] ^= temp1; b_[1] ^= temp2;
-			b_[2] ^= temp1; b_[3] ^= temp2;
+		if(((temp1>>>1)&black1)|((temp2>>>1)&black2)){
+			black1 ^= temp1; black2 ^= temp2;
+			white1 ^= temp1; white2 ^= temp2;
 		}
 	
 		
@@ -191,9 +217,9 @@ class BOARD {
 		temp1 |= verticalMask1&(temp1>>>8); temp2 |= verticalMask2&(temp2>>>8|temp1<<24);
 		temp1 |= verticalMask1&(temp1>>>8); temp2 |= verticalMask2&(temp2>>>8|temp1<<24);
 		temp1 |= verticalMask1&(temp1>>>8); temp2 |= verticalMask2&(temp2>>>8|temp1<<24);
-		if(((temp1>>>8)&b_[0])|((temp2>>>8|temp1<<24)&b_[1])){
-			b_[0] ^= temp1; b_[1] ^= temp2;
-			b_[2] ^= temp1; b_[3] ^= temp2;
+		if(((temp1>>>8)&black1)|((temp2>>>8|temp1<<24)&black2)){
+			black1 ^= temp1; black2 ^= temp2;
+			white1 ^= temp1; white2 ^= temp2;
 		}
 	
 		//-8
@@ -203,9 +229,9 @@ class BOARD {
 		temp1 |= verticalMask1&(temp1<<8|temp2>>>24); temp2 |= verticalMask2&(temp2<<8);
 		temp1 |= verticalMask1&(temp1<<8|temp2>>>24); temp2 |= verticalMask2&(temp2<<8);
 		temp1 |= verticalMask1&(temp1<<8|temp2>>>24); temp2 |= verticalMask2&(temp2<<8);
-		if(((temp1<<8|temp2>>>24)&b_[0])|((temp2<<8)&b_[1])){
-			b_[0] ^= temp1; b_[1] ^= temp2;
-			b_[2] ^= temp1; b_[3] ^= temp2;
+		if(((temp1<<8|temp2>>>24)&black1)|((temp2<<8)&black2)){
+			black1 ^= temp1; black2 ^= temp2;
+			white1 ^= temp1; white2 ^= temp2;
 		}
 		
 		//-7
@@ -215,9 +241,9 @@ class BOARD {
 		temp1 |= edgeMask1&(temp1<<7|temp2>>>25); temp2 |= edgeMask2&(temp2<<7);
 		temp1 |= edgeMask1&(temp1<<7|temp2>>>25); temp2 |= edgeMask2&(temp2<<7);
 		temp1 |= edgeMask1&(temp1<<7|temp2>>>25); temp2 |= edgeMask2&(temp2<<7);
-		if(((temp1<<7|temp2>>>25)&b_[0])|((temp2<<7)&b_[1])){
-			b_[0] ^= temp1; b_[1] ^= temp2;
-			b_[2] ^= temp1; b_[3] ^= temp2;
+		if(((temp1<<7|temp2>>>25)&black1)|((temp2<<7)&black2)){
+			black1 ^= temp1; black2 ^= temp2;
+			white1 ^= temp1; white2 ^= temp2;
 		}
 		
 		
@@ -228,9 +254,9 @@ class BOARD {
 		temp1 |= edgeMask1&(temp1<<9|temp2>>>23); temp2 |= edgeMask2&(temp2<<9);
 		temp1 |= edgeMask1&(temp1<<9|temp2>>>23); temp2 |= edgeMask2&(temp2<<9);
 		temp1 |= edgeMask1&(temp1<<9|temp2>>>23); temp2 |= edgeMask2&(temp2<<9);
-		if(((temp1<<9|temp2>>>23)&b_[0])|((temp2<<9)&b_[1])){
-			b_[0] ^= temp1; b_[1] ^= temp2;
-			b_[2] ^= temp1; b_[3] ^= temp2;
+		if(((temp1<<9|temp2>>>23)&black1)|((temp2<<9)&black2)){
+			black1 ^= temp1; black2 ^= temp2;
+			white1 ^= temp1; white2 ^= temp2;
 		}
 		
 		//+7
@@ -240,9 +266,9 @@ class BOARD {
 		temp1 |= edgeMask1&(temp1>>>7); temp2 |= edgeMask2&(temp2>>>7|temp1<<25);
 		temp1 |= edgeMask1&(temp1>>>7); temp2 |= edgeMask2&(temp2>>>7|temp1<<25);
 		temp1 |= edgeMask1&(temp1>>>7); temp2 |= edgeMask2&(temp2>>>7|temp1<<25);
-		if(((temp1>>>7)&b_[0])|((temp2>>>7|temp1<<25)&b_[1])){
-			b_[0] ^= temp1; b_[1] ^= temp2;
-			b_[2] ^= temp1; b_[3] ^= temp2;
+		if(((temp1>>>7)&black1)|((temp2>>>7|temp1<<25)&black2)){
+			black1 ^= temp1; black2 ^= temp2;
+			white1 ^= temp1; white2 ^= temp2;
 		}
 		
 		//+9
@@ -252,191 +278,182 @@ class BOARD {
 		temp1 |= edgeMask1&(temp1>>>9); temp2 |= edgeMask2&(temp2>>>9|temp1<<23);
 		temp1 |= edgeMask1&(temp1>>>9); temp2 |= edgeMask2&(temp2>>>9|temp1<<23);
 		temp1 |= edgeMask1&(temp1>>>9); temp2 |= edgeMask2&(temp2>>>9|temp1<<23);
-		if(((temp1>>>9)&b_[0])|((temp2>>>9|temp1<<23)&b_[1])){
-			b_[0] ^= temp1; b_[1] ^= temp2;
-			b_[2] ^= temp1; b_[3] ^= temp2;
+		if(((temp1>>>9)&black1)|((temp2>>>9|temp1<<23)&black2)){
+			black1 ^= temp1; black2 ^= temp2;
+			white1 ^= temp1; white2 ^= temp2;
 		}
 	
-		b_[0] |= hand1;
-		b_[1] |= hand2;
+		black1 |= hand1;
+		black2 |= hand2;
 	
-		if(this.boardArray[4]===-1){//white turn
-			temp = b_[2];
-			b_[2] = b_[0];
-			b_[0] = temp;
-			temp = b_[3];
-			b_[3] = b_[1];
-			b_[1] = temp;
+		if(this.turn===-1){//white turn
+			temp = white1;
+			white1 = black1;
+			black1 = temp;
+			temp = white2;
+			white2 = black2;
+			black2 = temp;
 		}
-	
+
+		const child = new BOARD();
+
+		child.black1 = black1;
+		child.black2 = black2;
+		child.white1 = white1;
+		child.white2 = white2;
+		child.turn = -this.turn;
+		child.stones = this.stones + 1;
 		
-		//change turn
-		this.boardArray[4]*=-1;
-		//add stone
-		this.boardArray[5]++;
-		
+		return child;
 	}
 
-	legalHand(){
-		const legalhand = [0, 0];
-		const b_ = this.boardArray;
+	getMove(){
+		let move1 = 0, move2 = 0;
 		let temp, temp1, temp2;
+		
+		let black1 = this.black1;
+		let black2 = this.black2;
+		let white1 = this.white1;
+		let white2 = this.white2;
 	
-		if(this.boardArray[4]===-1){//white turn
-			temp = b_[2];
-			b_[2] = b_[0];
-			b_[0] = temp;
-			temp = b_[3];
-			b_[3] = b_[1];
-			b_[1] = temp;
+		if(this.turn===-1){//white turn
+			temp = white1;
+			white1 = black1;
+			black1 = temp;
+			temp = white2;
+			white2 = black2;
+			black2 = temp;
 		}
 		
-		const horizontalMask1 = 0x7e7e7e7e&b_[2];
-		const horizontalMask2 = 0x7e7e7e7e&b_[3];
-		const verticalMask1 = 0x00ffffff&b_[2];
-		const verticalMask2 = 0xffffff00&b_[3];
-		const edgeMask1 = 0x007e7e7e&b_[2];
-		const edgeMask2 = 0x7e7e7e00&b_[3];
-		const blankBoard1 = ~(b_[0]|b_[2]);
-		const blankBoard2 = ~(b_[1]|b_[3]);
+		const horizontalMask1 = 0x7e7e7e7e&white1;
+		const horizontalMask2 = 0x7e7e7e7e&white2;
+		const verticalMask1 = 0x00ffffff&white1;
+		const verticalMask2 = 0xffffff00&white2;
+		const edgeMask1 = 0x007e7e7e&white1;
+		const edgeMask2 = 0x7e7e7e00&white2;
+		const blankBoard1 = ~(black1|white1);
+		const blankBoard2 = ~(black2|white2);
 		
-		//reset
-		legalhand[0] = legalhand[1] = 0;
 		
 		//-1
-		temp1 = horizontalMask1&(b_[0]<<1); temp2 = horizontalMask2&(b_[1]<<1);
+		temp1 = horizontalMask1&(black1<<1); temp2 = horizontalMask2&(black2<<1);
 		temp1 |= horizontalMask1&(temp1<<1); temp2 |= horizontalMask2&(temp2<<1);
 		temp1 |= horizontalMask1&(temp1<<1); temp2 |= horizontalMask2&(temp2<<1);
 		temp1 |= horizontalMask1&(temp1<<1); temp2 |= horizontalMask2&(temp2<<1);
 		temp1 |= horizontalMask1&(temp1<<1); temp2 |= horizontalMask2&(temp2<<1);
 		temp1 |= horizontalMask1&(temp1<<1); temp2 |= horizontalMask2&(temp2<<1);
-		legalhand[0] |= blankBoard1&(temp1<<1);
-		legalhand[1] |= blankBoard2&(temp2<<1);
+		move1 |= blankBoard1&(temp1<<1);
+		move2 |= blankBoard2&(temp2<<1);
 		
 		//+1
-		temp1 = horizontalMask1&(b_[0]>>>1); temp2 = horizontalMask2&(b_[1]>>>1);
+		temp1 = horizontalMask1&(black1>>>1); temp2 = horizontalMask2&(black2>>>1);
 		temp1 |= horizontalMask1&(temp1>>>1); temp2 |= horizontalMask2&(temp2>>>1);
 		temp1 |= horizontalMask1&(temp1>>>1); temp2 |= horizontalMask2&(temp2>>>1);
 		temp1 |= horizontalMask1&(temp1>>>1); temp2 |= horizontalMask2&(temp2>>>1);
 		temp1 |= horizontalMask1&(temp1>>>1); temp2 |= horizontalMask2&(temp2>>>1);
 		temp1 |= horizontalMask1&(temp1>>>1); temp2 |= horizontalMask2&(temp2>>>1);
-		legalhand[0] |= blankBoard1&(temp1>>>1);
-		legalhand[1] |= blankBoard2&(temp2>>>1);
+		move1 |= blankBoard1&(temp1>>>1);
+		move2 |= blankBoard2&(temp2>>>1);
 		
 		//-8
-		temp1 = verticalMask1&(b_[0]<<8|b_[1]>>>24); temp2 = verticalMask2&(b_[1]<<8);
+		temp1 = verticalMask1&(black1<<8|black2>>>24); temp2 = verticalMask2&(black2<<8);
 		temp1 |= verticalMask1&(temp1<<8|temp2>>>24); temp2 |= verticalMask2&(temp2<<8);
 		temp1 |= verticalMask1&(temp1<<8|temp2>>>24); temp2 |= verticalMask2&(temp2<<8);
 		temp1 |= verticalMask1&(temp1<<8|temp2>>>24); temp2 |= verticalMask2&(temp2<<8);
 		temp1 |= verticalMask1&(temp1<<8|temp2>>>24); temp2 |= verticalMask2&(temp2<<8);
 		temp1 |= verticalMask1&(temp1<<8|temp2>>>24); temp2 |= verticalMask2&(temp2<<8);
-		legalhand[0] |= blankBoard1&(temp1<<8|temp2>>>24);
-		legalhand[1] |= blankBoard2&(temp2<<8);
+		move1 |= blankBoard1&(temp1<<8|temp2>>>24);
+		move2 |= blankBoard2&(temp2<<8);
 		
 		//+8
-		temp1 = verticalMask1&(b_[0]>>>8); temp2 = verticalMask2&(b_[1]>>>8|b_[0]<<24);
+		temp1 = verticalMask1&(black1>>>8); temp2 = verticalMask2&(black2>>>8|black1<<24);
 		temp1 |= verticalMask1&(temp1>>>8); temp2 |= verticalMask2&(temp2>>>8|temp1<<24);
 		temp1 |= verticalMask1&(temp1>>>8); temp2 |= verticalMask2&(temp2>>>8|temp1<<24);
 		temp1 |= verticalMask1&(temp1>>>8); temp2 |= verticalMask2&(temp2>>>8|temp1<<24);
 		temp1 |= verticalMask1&(temp1>>>8); temp2 |= verticalMask2&(temp2>>>8|temp1<<24);
 		temp1 |= verticalMask1&(temp1>>>8); temp2 |= verticalMask2&(temp2>>>8|temp1<<24);
-		legalhand[0] |= blankBoard1&(temp1>>>8);
-		legalhand[1] |= blankBoard2&(temp2>>>8|temp1<<24);
+		move1 |= blankBoard1&(temp1>>>8);
+		move2 |= blankBoard2&(temp2>>>8|temp1<<24);
 		
 		//-7
-		temp1 = edgeMask1&(b_[0]<<7|b_[1]>>>25); temp2 = edgeMask2&(b_[1]<<7);
+		temp1 = edgeMask1&(black1<<7|black2>>>25); temp2 = edgeMask2&(black2<<7);
 		temp1 |= edgeMask1&(temp1<<7|temp2>>>25); temp2 |= edgeMask2&(temp2<<7);
 		temp1 |= edgeMask1&(temp1<<7|temp2>>>25); temp2 |= edgeMask2&(temp2<<7);
 		temp1 |= edgeMask1&(temp1<<7|temp2>>>25); temp2 |= edgeMask2&(temp2<<7);
 		temp1 |= edgeMask1&(temp1<<7|temp2>>>25); temp2 |= edgeMask2&(temp2<<7);
 		temp1 |= edgeMask1&(temp1<<7|temp2>>>25); temp2 |= edgeMask2&(temp2<<7);
-		legalhand[0] |= blankBoard1&(temp1<<7|temp2>>>25);
-		legalhand[1] |= blankBoard2&(temp2<<7);
+		move1 |= blankBoard1&(temp1<<7|temp2>>>25);
+		move2 |= blankBoard2&(temp2<<7);
 		
 		//-9
-		temp1 = edgeMask1&(b_[0]<<9| b_[1]>>>23); temp2 = edgeMask2&(b_[1]<<9);
+		temp1 = edgeMask1&(black1<<9| black2>>>23); temp2 = edgeMask2&(black2<<9);
 		temp1 |= edgeMask1&(temp1<<9| temp2>>>23); temp2 |= edgeMask2&(temp2<<9);
 		temp1 |= edgeMask1&(temp1<<9| temp2>>>23); temp2 |= edgeMask2&(temp2<<9);
 		temp1 |= edgeMask1&(temp1<<9| temp2>>>23); temp2 |= edgeMask2&(temp2<<9);
 		temp1 |= edgeMask1&(temp1<<9| temp2>>>23); temp2 |= edgeMask2&(temp2<<9);
 		temp1 |= edgeMask1&(temp1<<9| temp2>>>23); temp2 |= edgeMask2&(temp2<<9);
-		legalhand[0] |= blankBoard1&(temp1<<9| temp2>>>23);
-		legalhand[1] |= blankBoard2&(temp2<<9);
+		move1 |= blankBoard1&(temp1<<9| temp2>>>23);
+		move2 |= blankBoard2&(temp2<<9);
 		
 		//+7
-		temp1 = edgeMask1&(b_[0]>>>7); temp2 = edgeMask2&(b_[1]>>>7|b_[0]<<25);
+		temp1 = edgeMask1&(black1>>>7); temp2 = edgeMask2&(black2>>>7|black1<<25);
 		temp1 |= edgeMask1&(temp1>>>7); temp2 |= edgeMask2&(temp2>>>7|temp1<<25);
 		temp1 |= edgeMask1&(temp1>>>7); temp2 |= edgeMask2&(temp2>>>7|temp1<<25);
 		temp1 |= edgeMask1&(temp1>>>7); temp2 |= edgeMask2&(temp2>>>7|temp1<<25);
 		temp1 |= edgeMask1&(temp1>>>7); temp2 |= edgeMask2&(temp2>>>7|temp1<<25);
 		temp1 |= edgeMask1&(temp1>>>7); temp2 |= edgeMask2&(temp2>>>7|temp1<<25);
-		legalhand[0] |= blankBoard1&(temp1>>>7);
-		legalhand[1] |= blankBoard2&(temp2>>>7|temp1<<25);
+		move1 |= blankBoard1&(temp1>>>7);
+		move2 |= blankBoard2&(temp2>>>7|temp1<<25);
 		
 		//+9
-		temp1 = edgeMask1&(b_[0]>>>9); temp2 = edgeMask2&(b_[1]>>>9| b_[0]<<23);
+		temp1 = edgeMask1&(black1>>>9); temp2 = edgeMask2&(black2>>>9| black1<<23);
 		temp1 |= edgeMask1&(temp1>>>9); temp2 |= edgeMask2&(temp2>>>9| temp1<<23);
 		temp1 |= edgeMask1&(temp1>>>9); temp2 |= edgeMask2&(temp2>>>9| temp1<<23);
 		temp1 |= edgeMask1&(temp1>>>9); temp2 |= edgeMask2&(temp2>>>9| temp1<<23);
 		temp1 |= edgeMask1&(temp1>>>9); temp2 |= edgeMask2&(temp2>>>9| temp1<<23);
 		temp1 |= edgeMask1&(temp1>>>9); temp2 |= edgeMask2&(temp2>>>9| temp1<<23);
-		legalhand[0] |= blankBoard1&(temp1>>>9);
-		legalhand[1] |= blankBoard2&(temp2>>>9| temp1<<23);
-		
-		if(this.boardArray[4]===-1){//white turn
-			temp = b_[2];
-			b_[2] = b_[0];
-			b_[0] = temp;
-			temp = b_[3];
-			b_[3] = b_[1];
-			b_[1] = temp;
-		}
+		move1 |= blankBoard1&(temp1>>>9);
+		move2 |= blankBoard2&(temp2>>>9| temp1<<23);
 
-		return legalhand;
+		return [move1, move2];
 	}
 
 	expand(){
-		const childNodes = [];
-		const board = this;
-		const legalhand = this.legalHand();
-		let bit = 0, i = 0;
+		const children = [];
+		let [move1, move2] = this.getMove();
 
-		while(legalhand[0]){
-			bit = -legalhand[0] & legalhand[0];
+		while(move1){
+			const bit = -move1 & move1;
 			//
-			const child = new BOARD(board);
-			child.placeAndTurnStones(bit, 0);
-			child.hand = [bit, 0];
-			childNodes[i] = child;
+			const child = this.putStone(bit, 0);
+			children.push(child);
 			//
-			legalhand[0] = legalhand[0] ^ bit; i+=1;
+			move1 = move1 ^ bit;
 		}
-		while(legalhand[1]){
-			bit = -legalhand[1] & legalhand[1];
+		while(move2){
+			const bit = -move2 & move2;
 			//
-			const child = new BOARD(board);
-			child.placeAndTurnStones(0, bit);
-			child.hand = [0, bit];
-			childNodes[i] = child;
+			const child = this.putStone(0, bit);
+			children.push(child);
 			//
-			legalhand[1] = legalhand[1] ^ bit; i+=1;
+			move2 = move2 ^ bit;
 		}
-		return childNodes;
+		return children;
 	}
 
 	state(){
 		
-		const legalhand = this.legalHand();
+		const [move1, move2] = this.getMove();
 		
-		if(legalhand[0]|legalhand[1]){
+		if(move1|move2){
 			return 1;
 		}
 		
-		this.boardArray[4] *= -1;
-		const legalhand_ = this.legalHand(legalhand);
-		this.boardArray[4] *= -1;
+		this.turn *= -1;
+		const [move3, move4] = this.getMove();
+		this.turn *= -1;
 		
-		if(legalhand_[0]|legalhand_[1]){
+		if(move3|move4){
 			return 2;
 		}else{
 			return 3;
@@ -445,10 +462,10 @@ class BOARD {
 	}
 
 	get hash(){
-		let a = this.boardArray[0];
-		let b = this.boardArray[1];
-		let c = this.boardArray[2];
-		let d = this.boardArray[3];
+		let a = this.black1;
+		let b = this.black2;
+		let c = this.white1;
+		let d = this.white2;
 		
 		a = (a=(a<<7)|(~a>>>25))^((b*17)|((b=(~b<<11)|(b>>>21))>>>4))^((c*257)|((c=(~c<<13)|(c>>19))>>>13))^(d=(d<<17)|(d>>>15));
 		a = (a=(a<<7)|(~a>>>25))^((b*17)|((b=(~b<<11)|(b>>>21))>>>4))^((c*257)|((c=(~c<<13)|(c>>19))>>>13))^(d=(d<<17)|(d>>>15));
@@ -458,60 +475,59 @@ class BOARD {
 		return a;
 	}
 
-	b_w(){
+	black_white(){
 
 		let temp, sum=0;
-		const b_ = this.boardArray;
 
-		temp = b_[0];
-		temp = (temp&0x55555555) + ((temp&0xaaaaaaaa)>>>1);
-		temp = (temp&0x33333333) + ((temp&0xcccccccc)>>>2);
-		temp = (temp&0x0f0f0f0f) + ((temp&0xf0f0f0f0)>>>4);
-		temp = (temp&0x00ff00ff) + ((temp&0xff00ff00)>>>8);
-		temp = (temp&0x0000ffff) + ((temp&0xffff0000)>>>16);
+		temp = this.black1;
+		temp = (temp&0x55555555) + ((temp>>>1)&0x55555555);
+		temp = (temp&0x33333333) + ((temp>>>2)&0x33333333);
+		temp = (temp&0x0f0f0f0f) + ((temp>>>4)&0x0f0f0f0f);
+		temp = (temp&0x00ff00ff) + ((temp>>>8)&0x00ff00ff);
+		temp = (temp&0x0000ffff) + ((temp>>>16)&0x0000ffff);
 		sum += temp;
 
-		temp = b_[1];
-		temp = (temp&0x55555555) + ((temp&0xaaaaaaaa)>>>1);
-		temp = (temp&0x33333333) + ((temp&0xcccccccc)>>>2);
-		temp = (temp&0x0f0f0f0f) + ((temp&0xf0f0f0f0)>>>4);
-		temp = (temp&0x00ff00ff) + ((temp&0xff00ff00)>>>8);
-		temp = (temp&0x0000ffff) + ((temp&0xffff0000)>>>16);
+		temp = this.black2;
+		temp = (temp&0x55555555) + ((temp>>>1)&0x55555555);
+		temp = (temp&0x33333333) + ((temp>>>2)&0x33333333);
+		temp = (temp&0x0f0f0f0f) + ((temp>>>4)&0x0f0f0f0f);
+		temp = (temp&0x00ff00ff) + ((temp>>>8)&0x00ff00ff);
+		temp = (temp&0x0000ffff) + ((temp>>>16)&0x0000ffff);
 		sum += temp;
+		
 
-		return (sum<<1) - b_[5];
+		return (sum<<1) - this.stones;
 	}
 
 	swap(){
-		let temp = 0;
+		const newNode = new BOARD();
 
-		temp = this.boardArray[0];
-		this.boardArray[0] = this.boardArray[2];
-		this.boardArray[2] = temp;
-		temp = this.boardArray[1];
-		this.boardArray[1] = this.boardArray[3];
-		this.boardArray[3] = temp;
+		newNode.black1 = this.white1;
+		newNode.black2 = this.white2;
+		newNode.white1 = this.black1;
+		newNode.white2 = this.black2;
+
+		return newNode;
 	}
 
 	horizontalLines(){
 		const lines = new Array(16);
-		const boardArray = this.boardArray;
-		lines[0] = (boardArray[0]>>>24) & 0xff;
-		lines[1] = (boardArray[0]>>>16) & 0xff;
-		lines[2] = (boardArray[0]>>>8) & 0xff;
-		lines[3] = (boardArray[0]>>>0) & 0xff;
-		lines[4] = (boardArray[1]>>>24) & 0xff;
-		lines[5] = (boardArray[1]>>>16) & 0xff;
-		lines[6] = (boardArray[1]>>>8) & 0xff;
-		lines[7] = (boardArray[1]>>>0) & 0xff;
-		lines[8] = (boardArray[2]>>>24) & 0xff;
-		lines[9] = (boardArray[2]>>>16) & 0xff;
-		lines[10] = (boardArray[2]>>>8) & 0xff;
-		lines[11] = (boardArray[2]>>>0) & 0xff;
-		lines[12] = (boardArray[3]>>>24) & 0xff;
-		lines[13] = (boardArray[3]>>>16) & 0xff;
-		lines[14] = (boardArray[3]>>>8) & 0xff;
-		lines[15] = (boardArray[3]>>>0) & 0xff;
+		lines[0] = (this.black1>>>24) & 0xff;
+		lines[1] = (this.black1>>>16) & 0xff;
+		lines[2] = (this.black1>>>8) & 0xff;
+		lines[3] = (this.black1>>>0) & 0xff;
+		lines[4] = (this.black2>>>24) & 0xff;
+		lines[5] = (this.black2>>>16) & 0xff;
+		lines[6] = (this.black2>>>8) & 0xff;
+		lines[7] = (this.black2>>>0) & 0xff;
+		lines[8] = (this.white1>>>24) & 0xff;
+		lines[9] = (this.white1>>>16) & 0xff;
+		lines[10] = (this.white1>>>8) & 0xff;
+		lines[11] = (this.white1>>>0) & 0xff;
+		lines[12] = (this.white2>>>24) & 0xff;
+		lines[13] = (this.white2>>>16) & 0xff;
+		lines[14] = (this.white2>>>8) & 0xff;
+		lines[15] = (this.white2>>>0) & 0xff;
 		
 		return lines
 	}
@@ -736,105 +752,94 @@ class BOARD {
 		
 		return list;
 	}
-}
 
+	getBatch(){
+		const batch_arr = new Array(64*3);
+		const move = this.getMove();
 
-//従来では3弱
-function speedtest(n=58){
-	const reversi = new Game();
-	let count = 0;
-	const TIME = 1000;
-	
-	const startTime = new Date().getTime();
-	while(true){
-		const node = reversi.generateNode(n);
-		node.e = reversi.ai.negaScout_last(node, -64, 64);
-		count++;
+		batch_arr.fill(0);
 
-		
-		if(count%10===0 && new Date().getTime() - startTime>TIME){
-			break;
+		for(let i=0;i<31;i++){
+			if(this.black1&(1<<(31-i))){
+				batch_arr[i] = 1;
+			}
+			if(this.black2&(1<<(31-i))){
+				batch_arr[i+32] = 1;
+			}
+			if(this.white1&(1<<(31-i))){
+				batch_arr[i+64] = 1;
+			}
+			if(this.white2&(1<<(31-i))){
+				batch_arr[i+96] = 1;
+			}
+			if(move[0]&(1<<(31-i))){
+				batch_arr[i+128] = 1;
+			}
+			if(move[1]&(1<<(31-i))){
+				batch_arr[i+160] = 1;
+			}
 		}
+
+		return batch_arr;
 	}
 
-	
-	console.log('node per ms: ' + (count/TIME) );
+	cnnEval(){
+		const batch_arr = this.getBatch();
+		const batch = tf.tensor4d(batch_arr, [1, 8, 8, 3]);
+		const pred = model.predict(batch);
+		const pred_arr = pred.dataSync();
+		batch.dispose();
+		pred.dispose();
+		return pred_arr;
+	}
+
+	negaAlpha(alpha=-100, beta=100, depth=1){
+		const search = (node, alpha, beta, depth)=>{
+			if(depth===0){
+				return node.black_white()*node.turn;
+			}
+		
+			const state = node.state();
+			
+			if(state===1){
+				const children = node.expand();// expand child node
+
+				for(const child of children){
+					alpha = Math.max(alpha, -search(child, -beta, -alpha, depth-1));
+					if(alpha>=beta){
+						return alpha;
+					}
+				}
+				return alpha;
+			}else if(state===2){ //pass
+				const child = new BOARD(node);
+				child.turn *= -1;
+				return -search(child, -beta, -alpha, depth-1);
+			}else{ //game finish
+				return node.black_white()*node.turn;
+			}
+		}
+		
+		return search(this, alpha, beta, depth);
+	}
 }
 
+
 const measureTime = (func, iter)=>{
-	const before = performance.now();
+	const startTime = performance.now();
 	for(let i=0;i<iter;i++){
 		func();
 	}
-	const after = performance.now();
-	const time = (after-before).toPrecision(4);
-	const ppms = (iter/(-before+after)).toPrecision(4);
-	console.log(`time: ${time} ms, ${ppms} process per ms`);
+	const endTime = performance.now();
+	const averageTime = (endTime-startTime)/iter*1000;
+	console.log(`average time: ${averageTime.toPrecision(4)} μs`);
 };
 
-const testhash = (iter=100,n1=4,n2=64)=>{
-	const hash_table = new Int32Array(iter);
-	const board_table = new Array(iter);
-	let index = 0;
-	let crash = 0;
-
-	const max = ~~Math.min(Math.max(n1, n2), 64);
-	const min = ~~Math.max(Math.min(n1, n2), 4);
-	console.log(max, min);
-
-	for(let i=0;i<iter;i++){
-		const stones = ~~(Math.random()*(max-min)) + min;
-		const node = master.generateNode(stones);
-		const hash = node.hash
-		const indexof = hash_table.indexOf(hash);
-		if(indexof===-1){
-			hash_table[index] = hash;
-			board_table[index] = node;
-		}else{
-			const b1 = node.boardArray[0]-board_table[indexof].boardArray[0];
-			const b2 = node.boardArray[1]-board_table[indexof].boardArray[1];
-			const w1 = node.boardArray[2]-board_table[indexof].boardArray[2];
-			const w2 = node.boardArray[3]-board_table[indexof].boardArray[3];
-			if(b1===0 && b2===0 && w1===0 && w2===0){
-			}else{
-				crash++;
-				console.log(node);
-				console.log(board_table[indexof]);
-			}
-		}
-		index++;
-	}
-	console.log(`crash: ${crash}`);
-};
-
-const learningSet = (N=100, n1=50, n2=64)=>{
-	const data = new Uint8ClampedArray(N*20);
-	const max = ~~Math.min(Math.max(n1, n2), 64);
-	const min = ~~Math.max(Math.min(n1, n2), 4);
-
-	const split = (_x)=>{
-		const x = _x|0;
-		const a1 = (x>>>24) & 0xff;
-		const a2 = (x>>>16) & 0xff;
-		const a3 = (x>>>8) & 0xff;
-		const a4 = (x>>>0) & 0xff;
-		return [a1, a2, a3, a4];
-	};
-
-	for(let i=0;i<N;i++){
-		const stones = ~~(Math.random()*(max-min+1))+min;
-		const board = master.generateNode(stones);
-		board.e = ai.negaScout(board, -64, 64, -1);
-
-		data.set(split(board.boardArray[0]), i*20 + 0);
-		data.set(split(board.boardArray[1]), i*20 + 4);
-		data.set(split(board.boardArray[2]), i*20 + 8);
-		data.set(split(board.boardArray[3]), i*20 + 12);
-		data.set(split(board.e), i*20 + 16);
-	}
-
-	const d2p = new data2png();
-	d2p.toPng(data);
-
-	return data;
-};
+var _b = new BOARD;
+_b.black1= -1057177963
+_b.black2= -455067384
+_b.e= 0
+_b.stones= 50
+_b.turn= 1
+_b.white1= 268451946
+_b.white2= 455017991

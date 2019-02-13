@@ -79,7 +79,7 @@ class EV extends CONSTANTS {
 		const weights = this.weights;
 		const indexb = this.indexb;
 		const indexw = this.indexw;
-		const phase = Math.min(Math.max(10, board.boardArray[5]-4), 60);
+		const phase = Math.min(Math.max(10, board.stones-4), 60);
 		
 		let start = 0;
 	
@@ -250,7 +250,7 @@ class EV extends CONSTANTS {
 		let index=0;
 		const num_shape = this.num_shape;
 		const num_phase = this.num_phase;
-		const phase = Math.min(Math.max(10, board.boardArray[5]-4), 60);
+		const phase = Math.min(Math.max(10, board.stones-4), 60);
 		let start = 0;
 		
 	
@@ -436,7 +436,7 @@ class EV extends CONSTANTS {
 		while(true){
 			const list = othello.generateGame();
 			for(let j=0;j<list.length;j++){
-				if(list[j].boardArray[5]>=n1 && list[j].boardArray[5]<=n2){
+				if(list[j].stones>=n1 && list[j].stones<=n2){
 					const node = list[j];
 					const node1 = node;
 					const node2 = this.rotateBoard(node1);
@@ -524,7 +524,7 @@ class EV extends CONSTANTS {
 		}
 	}
 
-	flipBoard(argboard){
+	flipBoard(node){
 		const reverse = (x)=>{
 			x = ((x&0b10101010)>>>1) | ((x&0b01010101)<<1);
 			x = ((x&0b11001100)>>>2) | ((x&0b00110011)<<2);
@@ -532,63 +532,69 @@ class EV extends CONSTANTS {
 			return x;
 		};
 		
-		const boardArray = argboard.boardArray;
+		const black1 = node.black1;
+		const black2 = node.black2;
+		const white1 = node.white1;
+		const white2 = node.white2;
 		
-		const b0 = reverse((boardArray[0]>>>24) & 0xff);
-		const b1 = reverse((boardArray[0]>>>16) & 0xff);
-		const b2 = reverse((boardArray[0]>>>8) & 0xff);
-		const b3 = reverse((boardArray[0]>>>0) & 0xff);
-		const b4 = reverse((boardArray[1]>>>24) & 0xff);
-		const b5 = reverse((boardArray[1]>>>16) & 0xff);
-		const b6 = reverse((boardArray[1]>>>8) & 0xff);
-		const b7 = reverse((boardArray[1]>>>0) & 0xff);
-		const w0 = reverse((boardArray[2]>>>24) & 0xff);
-		const w1 = reverse((boardArray[2]>>>16) & 0xff);
-		const w2 = reverse((boardArray[2]>>>8) & 0xff);
-		const w3 = reverse((boardArray[2]>>>0) & 0xff);
-		const w4 = reverse((boardArray[3]>>>24) & 0xff);
-		const w5 = reverse((boardArray[3]>>>16) & 0xff);
-		const w6 = reverse((boardArray[3]>>>8) & 0xff);
-		const w7 = reverse((boardArray[3]>>>0) & 0xff);
+		const b0 = reverse((black1>>>24) & 0xff);
+		const b1 = reverse((black1>>>16) & 0xff);
+		const b2 = reverse((black1>>>8) & 0xff);
+		const b3 = reverse((black1>>>0) & 0xff);
+		const b4 = reverse((black2>>>24) & 0xff);
+		const b5 = reverse((black2>>>16) & 0xff);
+		const b6 = reverse((black2>>>8) & 0xff);
+		const b7 = reverse((black2>>>0) & 0xff);
+		const w0 = reverse((white1>>>24) & 0xff);
+		const w1 = reverse((white1>>>16) & 0xff);
+		const w2 = reverse((white1>>>8) & 0xff);
+		const w3 = reverse((white1>>>0) & 0xff);
+		const w4 = reverse((white2>>>24) & 0xff);
+		const w5 = reverse((white2>>>16) & 0xff);
+		const w6 = reverse((white2>>>8) & 0xff);
+		const w7 = reverse((white2>>>0) & 0xff);
 
-		const board = new BOARD(argboard);
+		const newNode = new BOARD(node);
 		
-		board.boardArray[0] = (b0<<24)|(b1<<16)|(b2<<8)|b3;
-		board.boardArray[1] = (b4<<24)|(b5<<16)|(b6<<8)|b7;
-		board.boardArray[2] = (w0<<24)|(w1<<16)|(w2<<8)|w3;
-		board.boardArray[3] = (w4<<24)|(w5<<16)|(w6<<8)|w7;
+		newNode.black1 = (b0<<24)|(b1<<16)|(b2<<8)|b3;
+		newNode.black2 = (b4<<24)|(b5<<16)|(b6<<8)|b7;
+		newNode.white1 = (w0<<24)|(w1<<16)|(w2<<8)|w3;
+		newNode.white2 = (w4<<24)|(w5<<16)|(w6<<8)|w7;
 
 		return board;
 	}
 
-	rotateBoard(argboard){
+	rotateBoard(node){
 		const reverse = (x)=>{
 			x = ((x&0b10101010)>>>1) | ((x&0b01010101)<<1);
 			x = ((x&0b11001100)>>>2) | ((x&0b00110011)<<2);
 			x = ((x&0b11110000)>>>4) | ((x&0b00001111)<<4);
 			return x;
 		};
-		const board = new BOARD(argboard);
-		const boardArray = argboard.boardArray;
+
 		const b = new Array();
 		const w = new Array();
+		const black1 = node.black1;
+		const black2 = node.black2;
+		const white1 = node.white1;
+		const white2 = node.white2;
 	
-		b[0] = (boardArray[0]>>>24)&0xff;
-		b[1] = (boardArray[0]>>>16)&0xff;
-		b[2] = (boardArray[0]>>>8)&0xff;
-		b[3] = (boardArray[0]>>>0)&0xff;
-		b[4] = (boardArray[1]>>>24)&0xff;
-		b[5] = (boardArray[1]>>>16)&0xff;
-		b[6] = (boardArray[1]>>>8)&0xff;
-		b[7] = (boardArray[1]>>>0)&0xff;
-		w[0] = (boardArray[2]>>>24)&0xff;
-		w[1] = (boardArray[2]>>>16)&0xff;
-		w[2] = (boardArray[2]>>>8)&0xff;
-		w[3] = (boardArray[2]>>>0)&0xff;
-		w[4] = (boardArray[3]>>>24)&0xff;
-		w[5] = (boardArray[3]>>>16)&0xff;
-		w[6] = (boardArray[3]>>>8)&0xff;
-		w[7] = (boardArray[3]>>>0)&0xff;
+		b[0] = (black1>>>24)&0xff;
+		b[1] = (black1>>>16)&0xff;
+		b[2] = (black1>>>8)&0xff;
+		b[3] = (black1>>>0)&0xff;
+		b[4] = (black2>>>24)&0xff;
+		b[5] = (black2>>>16)&0xff;
+		b[6] = (black2>>>8)&0xff;
+		b[7] = (black2>>>0)&0xff;
+		w[0] = (white1>>>24)&0xff;
+		w[1] = (white1>>>16)&0xff;
+		w[2] = (white1>>>8)&0xff;
+		w[3] = (white1>>>0)&0xff;
+		w[4] = (white2>>>24)&0xff;
+		w[5] = (white2>>>16)&0xff;
+		w[6] = (white2>>>8)&0xff;
+		w[7] = (white2>>>0)&0xff;
 		let b1 = 0, b2 = 0, w1 = 0, w2 = 0;
 		let lineb, linew;
 
@@ -618,12 +624,13 @@ class EV extends CONSTANTS {
 		linew = ((w[0]&1)<<7)|((w[1]&1)<<6)|((w[2]&1)<<5)|((w[3]&1)<<4)|((w[4]&1)<<3)|((w[5]&1)<<2)|((w[6]&1)<<1)|((w[7]&1)>>>0);
 		b2 |= reverse(lineb); w2 |= reverse(linew);
 
-		board.boardArray[0] = b1;
-		board.boardArray[1] = b2;
-		board.boardArray[2] = w1;
-		board.boardArray[3] = w2;
+		const newNode = new BOARD(node);
+		newNode.black1 = b1;
+		newNode.black2 = b2;
+		newNode.white1 = w1;
+		newNode.white2 = w2;
 
-		return board;
+		return newNode;
 	}
 	
     int2float(){

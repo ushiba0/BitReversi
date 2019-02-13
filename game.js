@@ -7,14 +7,11 @@ class GRAPHIC extends CONSTANTS{
 		super();
 	}
 
-	render(node){
-		if(!node){
-			node = this.now;
-		}
+	render(node=this.now){
 		
 		let black = 0;
 		let white = 0;
-		const b_ = node.board;
+		const board = node.board;
 		
 		//評価値を消す
 		for(let value of squares){
@@ -23,18 +20,18 @@ class GRAPHIC extends CONSTANTS{
 		
 		//石の数をカウント
 		for(let i=1;i<65;i++){
-			if(b_[i]===1){
+			if(board[i]===1){
 				black++;
-			}else if(b_[i]===-1){
+			}else if(board[i]===-1){
 				white++;
 			}
 		}
 		
 		//石を置く
 		for(let i=1;i<65;i++){
-			if(b_[i]===1){
+			if(board[i]===1){
 				circles[i-1].className = 'black';
-			}else if(b_[i]===-1){
+			}else if(board[i]===-1){
 				circles[i-1].className = 'white';	
 			}else{
 				circles[i-1].className = 'blank';
@@ -44,7 +41,7 @@ class GRAPHIC extends CONSTANTS{
 		black_score.innerText = black + '';
 		white_score.innerText = white + '';
 		
-		if(node.boardArray[4]!==this.colorOfCpu){
+		if(node.turn!==this.colorOfCpu){
 			comment.innerText = 'player turn';
 		}
 		
@@ -61,13 +58,10 @@ class GRAPHIC extends CONSTANTS{
 		}
 	}
 	
-	showEval(node=0, alpha=-100,beta=100, depth=-1){
-		if(!node){
-			node = this.now;
-		}
+	showEval(node=this.now, alpha=-100,beta=100, depth=-1){
 		
 		const search_depth = (depth===-1)?
-			(this.depth[1]>=64-node.boardArray[5] ? -1 : this.depth[0]):
+			(this.depth[1]>=64-node.stones ? -1 : this.depth[0]):
 			depth;
 		const evals = ai.cpuHand(node, alpha, beta, search_depth);
 
@@ -76,46 +70,40 @@ class GRAPHIC extends CONSTANTS{
 		}
 
 		// delete former evels
-		for(let element of circles){
+		for(const element of circles){
 			element.innerText = '';
 		}
 
-		for(let node of evals){
+		for(const node of evals){
 			const hand = node.hand;
 			let put = 0;
 			if(hand[0]<0){
-				put = 1;
+				put = 0;
 			}else if(hand[0]>0){
-				put = 32-Math.log2(hand[0]);
+				put = 31-Math.log2(hand[0]);
 			}
 			if(hand[1]<0){
-				put = 33;
+				put = 32;
 			}else if(hand[1]>0){
-				put = 64-Math.log2(hand[1]);
+				put = 63-Math.log2(hand[1]);
 			}
 
-			circles[put-1].innerText = node.e;
+			circles[put].innerText = node.e;
 			if(node.e>0){
-				circles[put-1].className = 'eval_plus';
-				circles[put-1].innerText = (node.e + '').slice(0, 5);
+				circles[put].className = 'eval_plus';
+				circles[put].innerText = (node.e + '').slice(0, 5);
 			}else{
-				circles[put-1].className = 'eval_minus';
-				circles[put-1].innerText = (node.e + '').slice(0, 5);
+				circles[put].className = 'eval_minus';
+				circles[put].innerText = (node.e + '').slice(0, 5);
 			}
 		}
 		
 		return;
 	}
 	
-	visualizeMove(node){
-		if(!node){
-			node = this.now;
-		}
+	showMove(node=this.now){
 
-		const legalhand = node.legalHand();
-		
-		let l1 = legalhand[0];
-		let l2 = legalhand[1];
+		let [move1, move2] = node.getMove();
 		const board = new Array();
 		
 		for(let i=0;i<65;i++){
@@ -123,16 +111,16 @@ class GRAPHIC extends CONSTANTS{
 		}
 		
 		for(let i=32;i>0;i--){
-			if(l1&1 === 1){
+			if(move1&1 === 1){
 				board[i] = 1;
 			}
-			l1 = l1 >>> 1;
+			move1 = move1 >>> 1;
 		}
 		for(let i=64;i>32;i--){
-			if(l2&1 === 1){
+			if(move2&1 === 1){
 				board[i] = 1;
 			}
-			l2 = l2 >>> 1;
+			move2 = move2 >>> 1;
 		}
 		
 		for(let i=1;i<65;i++){
@@ -144,11 +132,9 @@ class GRAPHIC extends CONSTANTS{
 		}
 	}
 	
-	visualizeLastPut(node){
-		if(!node){
-			node = this.now;
-		}
-		if(!Array.isArray(node.hand)){
+	showHand(node=this.now){
+		// this.nowにhandプロパティがなかったら
+		if(node.hand1===0 && node.hand2===0){
 			for(let i=0;i<64;i++){
 				if(squares[i].className==='lastput'){
 					squares[i].className==='';
@@ -157,16 +143,24 @@ class GRAPHIC extends CONSTANTS{
 			return;
 		}
 
-		const hand = node.hand;
-		let put = 0;
+		let x, y;
+		if(node.hand1<0){
+			y = 0;
+			x = 0;
+		}else if(node.hand1>0){
+			const e = 31 - Math.log2(node.hand1);
+			y = ~~(e/8);
+			x = e%8;
+		}
+		if(node.hand2<0){
+			y = 4;
+			x = 0;
+		}else if(node.hand2>0){
+			const e = 63 - Math.log2(node.hand2);
+			y = ~~(e/8);
+			x = e%8;
+		}
 		
-		if(hand[0]<0){put = 1;}
-		if(hand[1]<0){put = 33;}
-		if(hand[0]){put = 32-Math.log2(hand[0]);}
-		if(hand[1]){put = 64-Math.log2(hand[1]);}
-
-		const x = put%8===0 ? 7 : put%8-1;
-		const y = Math.ceil(put/8)-1;
 		squares[y*8+x].className = 'lastput';
 	}
 }
@@ -188,16 +182,16 @@ class MASTER extends GRAPHIC {
 	
 	//最新のBoardを返す
 	get now(){
-		return this.record[0];
+		return this.record[this.record.length - 1];
 	}
 	
 	//ゲームを進行する
 	play(hand1=0, hand2=0){
-		let e;
-		const legalhand = this.now.legalHand();
+		
+		const [move1, move2] = this.now.getMove();
 		
 		if(!(hand1===0 && hand2===0)){//handle illegal hand
-			if(!(legalhand[0]&hand1)&&!(legalhand[1]&hand2)){
+			if(!(move1&hand1)&&!(move2&hand2)){
 				console.error(`error (${hand1}, ${hand2}) is illegal hand`);
 				return;
 			}
@@ -207,25 +201,29 @@ class MASTER extends GRAPHIC {
 		clickDisabled = true;
 
 		const player_turn = ()=>{ return new Promise((resolve)=>{
-			if(this.now.boardArray[4]===this.colorOfCpu){
+			if(this.now.turn===this.colorOfCpu){
 				resolve();
 			}else{
-				this.record.unshift(new BOARD(this.now));
-				this.now.placeAndTurnStones(hand1, hand2);
+				const newNode = this.now.putStone(hand1, hand2);
+				this.record.push(newNode);
+				this.now.hand1 = hand1;
+				this.now.hand2 = hand2;
 				resolve();
 			}
 		});};
 		
 		const cpu_turn = ()=>{ return new Promise((resolve)=>{
 			if(this.now.state()===1){
-				this.record.unshift(new BOARD(this.now));
-				const search_depth = this.depth[1]>=64-this.now.boardArray[5] ? -1 : this.depth[0]; 
-				const move = ai.cpuHand(this.now, -100, 100, search_depth,true);
-				this.now.placeAndTurnStones(...move[0].hand);
-				this.now.hand = move[0].hand;
+				const search_depth = this.depth[1]>=64-this.now.stones ? -1 : this.depth[0]; 
+				const move = ai.cpuHand(this.now, -100, 100, search_depth, true);
+				this.record.push(move[0]);
 			}else if(this.now.state()===2){
-				this.record.unshift(new BOARD(this.now));
-				this.now.boardArray[4] *= -1;
+				const hand1 = this.now.hand1;
+				const hand2 = this.now.hand2;
+				this.record.push(new BOARD(this.now));
+				this.now.turn *= -1;
+				this.now.hand1 = hand1;
+				this.now.hand2 = hand2;
 				resolve();
 			}else{
 				console.log('終局');
@@ -235,22 +233,26 @@ class MASTER extends GRAPHIC {
 			if(this.now.state()===1){
 				resolve();
 			}else if(this.now.state()===2){
-				this.record.unshift(new BOARD(this.now));
-				this.now.boardArray[4] *= -1;
-				this.play();3
+				const hand1 = this.now.hand1;
+				const hand2 = this.now.hand2;
+				this.record.push(new BOARD(this.now));
+				this.now.turn *= -1;
+				this.now.hand1 = hand1;
+				this.now.hand2 = hand2;
+				this.play();
 				resolve();
 			}else{
 				resolve();
 			}
 		});};
 		
-		const render = ()=>{return new Promise((resolve)=>{
+		const render = ()=>{ return new Promise((resolve)=>{
 			setTimeout(() => {
 				resolve();
 			}, 50);
 			this.render(this.now);
-			this.visualizeMove(this.now);
-			this.visualizeLastPut(this.now);
+			this.showMove(this.now);
+			this.showHand(this.now);
 		});};
 		
 
@@ -261,17 +263,11 @@ class MASTER extends GRAPHIC {
 			.catch(e=>{
 				console.error(e);
 			});
-
 			
-		
 		//クリック操作を有効化
 		clickDisabled = false;
 		
 		return;
-	}
-
-	get state(){
-		return this.now.state;
 	}
 
 	getSelfPlayGame(){
@@ -290,9 +286,9 @@ class MASTER extends GRAPHIC {
 					nodes[c] = new BOARD(move[i]);
 					nodes[c++].e = move[i].e;
 				}
-				history[0].placeAndTurnStones(...move[rand].hand);
+				history[0].putStone(...move[rand].hand);
 			}else if(state===2){
-				history[0].boardArray[4] *=-1;
+				history[0].turn *=-1;
 			}else{
 				break;
 			}
@@ -300,9 +296,9 @@ class MASTER extends GRAPHIC {
 			
 		for(let i=0;i<nodes.length;i++){
 			nodes[i].e *= -1;
-			if(nodes[i].boardArray[4]===-1){
+			if(nodes[i].turn===-1){
 				nodes[i].swap();
-				nodes[i].boardArray[4] = 1;
+				nodes[i].turn = 1;
 			}
 		}
 		
@@ -317,16 +313,16 @@ class MASTER extends GRAPHIC {
 			const state = node_now.state();
 
 			if(state===1){
-				const depth = node_now.boardArray[5]>60? -6 : 0;
+				const depth = node_now.stones>60? -6 : 0;
 				const move = ai.cpuHand(node_now, -100, 100, depth);
 				const index = Math.random()<random_rate ? Math.floor(Math.random()*move.length) : 0;
 				const next_move = move[index];
 				const next_node = new BOARD(next_move);
 				next_node.e = -next_move.e;
 				nodes.push(next_node);
-				node_now.placeAndTurnStones(...next_move.hand);
+				node_now.putStone(...next_move.hand);
 			}else if(state===2){
-				node_now.boardArray[4] *=-1;
+				node_now.turn *=-1;
 			}else{
 				break;
 			}
@@ -335,25 +331,26 @@ class MASTER extends GRAPHIC {
 	}
     
     generateNode(N=64){
-		const n = Math.max(Math.min(64, N), 4);
+		const n = ~~Math.max(Math.min(64, N), 4);
 		let node_now = new BOARD();
 		
 		while(true){
-			const state = node_now.state();
-			
-			if(node_now.boardArray[5]===n){
-				node_now.boardArray[4] = 1;
+			if(node_now.stones===n){
+				//node_now.turn = 1;
 				return node_now;
 			}
+			
+			const state = node_now.state();
 
 			if(state===1){
-				const hand = ai.randomHand(node_now	);
-				node_now.placeAndTurnStones(...hand);
+				const moves = ai.cpuHand(node_now, -100, 100, 2);
+				const key = Math.random()<0.01 ? ~~(Math.random()*moves.length) : 0;
+				node_now = node_now.putStone(moves[key].hand1, moves[key].hand2)
 			}else if(state===2){
-				node_now.boardArray[4] *= -1;
+				node_now.turn *= -1;
 			}else{
-				if(node_now.boardArray[5]===N){
-					node_now.boardArray[4] = 1;
+				if(node_now.stones===n){
+					node_now.turn = 1;
 					return node_now;
 				}else{
 					node_now = new BOARD();
@@ -375,18 +372,17 @@ const selfPlay = (num_iter, random_rate=0)=>{
 		const last = game[game.length-1];
 		const value = last.e;
 		for(const node of game){
-			if(node.boardArray[4]===-1){
+			if(node.turn===-1){
 				node.swap();
 				node.e *= -1;
 			}
-			node.e = value * node.boardArray[4];
+			node.e = value * node.turn;
 
-			node.boardArray[4] = 1;
+			node.turn = 1;
 			backup.push(node);
 		}
 	}
 };
-
 
 const trainEV = ()=>{
 	const constants = new CONSTANTS();
@@ -399,7 +395,7 @@ const trainEV = ()=>{
 	while(backup.length>0){
 		const node = backup.pop();
 		const value = node.e;
-		const phase = Math.min(Math.max(10, node.boardArray[5]-4), 60);
+		const phase = Math.min(Math.max(10, node.stones-4), 60);
 
 		const node1 = new BOARD(node);
 		const node2 = ai.rotateBoard(node1);
@@ -568,13 +564,39 @@ const trainEV = ()=>{
 	return weights_temp;
 };
 
-const montecarlo = ()=>{
-	selfPlay(5000);
-	const w = trainEV();
-	for(let i=0;i<w.length;i++){
-		if(w[i]===0){
-			continue;
+const calcLoss = (N=200)=>{
+	let s_2 = 0;
+	for(let i=0;i<N;i++){
+		const node = master.generateNode(~~(Math.random()*6) + 58);
+		const true_value = ai.negaScout(node, -1, 1, -1, 0);
+		const pred_value = ai.evaluation(node);
+		const sgn_true_value = true_value>0? 1 : (true_value<0? -1 : 0);
+		const sgn_pred_value = pred_value>0? 1 : (pred_value<0? -1 : 0);
+
+		s_2 += (sgn_pred_value-sgn_true_value)**2;
+	}
+
+	return s_2/N;
+};
+
+const montecarlo = (num_iter=5)=>{
+
+	for(let iter=0;iter<num_iter;iter++){
+		const start_time = performance.now();
+		
+		const N = 5000;
+		selfPlay(N);
+		const w = trainEV();
+		for(let i=0;i<w.length;i++){
+			if(w[i]===0){
+				continue;
+			}
+			ai.weights[i] = ai.weights[i]*0.9 + w[i]/N*0.1;
 		}
-		ai.weights[i] = ai.weights[i]*0.7 + w[i]/5000*0.3;
+
+		const loss = calcLoss();
+		const end_time = performance.now();
+		const time = (end_time-start_time)/1000;
+		console.log(`epoch: ${iter+1}\nloss: ${loss.toPrecision(4)}\ntime: ${time.toPrecision(4)}`);
 	}
 };

@@ -16,7 +16,7 @@ class AI extends EV {
 			num_readnode++;
 
 			if(depth===0){
-				return this.evaluation(board)*board.boardArray[4];
+				return this.evaluation(board)*board.turn;
 			}
 		
 			const state = board.state(board);
@@ -24,28 +24,28 @@ class AI extends EV {
 			
 			if(state===1){
 				//expand child node
-				const childNodes = board.expand();
+				const children = board.expand();
 				
-				for(let i=0;i<childNodes.length;i++){
-					childNodes[i].e = -this.evaluation(childNodes[i])*childNodes[i].boardArray[4];
-					if(max<childNodes[i].e){max = childNodes[i].e; v = i;}
+				for(let i=0;i<children.length;i++){
+					children[i].e = -this.evaluation(children[i])*children[i].turn;
+					if(max<children[i].e){max = children[i].e; v = i;}
 				}
 
-				max = v = -search(childNodes[v], -beta, -alpha, depth-1);
+				max = v = -search(children[v], -beta, -alpha, depth-1);
 				if(beta<=v){return v;} //cut
 				if(alpha<v){alpha = v;}
 				
 				//move ordering
-				if(board.boardArray[5]<60){
-					childNodes.sort((a,b)=>{return b.e-a.e});
+				if(board.stones<60){
+					children.sort((a,b)=>{return b.e-a.e});
 				}
 				
-				for(let i=1;i<childNodes.length;i++){
-					v = -search(childNodes[i], -alpha-1, -alpha, depth-1);
+				for(let i=1;i<children.length;i++){
+					v = -search(children[i], -alpha-1, -alpha, depth-1);
 					if(beta<=v){return v;}
 					if(alpha<v){
 						alpha = v;
-						v = -search(childNodes[i], -beta, -alpha, depth-1);
+						v = -search(children[i], -beta, -alpha, depth-1);
 						if(beta<=v){return v;}
 						if(alpha<v){alpha = v;}
 					}
@@ -55,10 +55,10 @@ class AI extends EV {
 				return max;
 			}else if(state===2){ //pass
 				const child = new BOARD(board);
-				child.boardArray[4] *= -1;
+				child.turn *= -1;
 				return -search(child, -beta, -alpha, depth-1);
 			}else{ //game finish
-				return board.b_w()*board.boardArray[4];
+				return board.black_white()*board.turn;
 			}
 		}
 
@@ -69,26 +69,30 @@ class AI extends EV {
 		return value;
 	}
 
-	cpuHand(board, alpha=-100, beta=100, depth=0,showStatus=false){
+	cpuHand(node, alpha=-100, beta=100, depth=0, showStatus=false){
 		
 		const startTime = performance.now();
-		const childNodes = board.expand();
+		const children = node.expand();
 		let rand=0, temp=0;
 
-		if(childNodes.length===0){
-			return childNodes;
+		if(children.length===0){
+			return children;
 		}
 		
-		for(let i=0;i<childNodes.length;i++){
-			childNodes[i].e = -this.negaScout(childNodes[i], alpha, beta, depth);
+		for(const child of children){
+			// calc eval of child
+			child.e = -this.negaScout(child, alpha, beta, depth);
+			// どこにおいたかを調べる
+			child.hand1 = (node.black1|node.white1)^(child.black1|child.white1);
+			child.hand2 = (node.black2|node.white2)^(child.black2|child.white2);
 		}
 
 		// sort
-		childNodes.sort((a,b)=>{return b.e-a.e});
+		children.sort((a,b)=>{return b.e-a.e;});
 		
 		//最大値がいくつあるかをrandにカウント
-		for(let i=1;i<childNodes.length;i++){
-			if(~~childNodes[0].e===~~childNodes[i].e){
+		for(let i=1;i<children.length;i++){
+			if(~~children[0].e===~~children[i].e){
 				rand = i;
 			}else{
 				break;
@@ -97,27 +101,27 @@ class AI extends EV {
 		
 		//0番目とrand番目を入れ替える
 		rand = ~~(Math.random() * rand);
-		temp = childNodes[0];
-		childNodes[0] = childNodes[rand];
-		childNodes[rand] = temp;
+		temp = children[0];
+		children[0] = children[rand];
+		children[rand] = temp;
 		
 		if(showStatus){
 			console.log(
 				"read " + this.num_readnode + " nodes\n" + 
 				"process time " + (performance.now()-startTime) + " ms\n" + 
 				(~~(this.num_readnode/(performance.now()-startTime))) + " nodes per ms\n" + 
-				"cpu put at " + childNodes[rand].hand + "\n"
+				"cpu put at " + children[rand].hand + "\n"
 			);
 		}
 		
-		return childNodes;
+		return children;
 	}
 	
 	randomHand(board){
 		const hands = [];
 		const mask1 = 0x00003c3c;
 		const mask2 = 0x3c3c0000;
-		let legalhand = board.legalHand();
+		let legalhand = board.getMove();
 
 		const x_mask1 = ~0x42c30000;
 		const x_mask2 = ~0x0000c342;
@@ -127,7 +131,7 @@ class AI extends EV {
 			legalhand[1] &= x_mask2;
 		}
 		if(legalhand[0]===0 && legalhand[1]===0){
-			legalhand = board.legalHand();
+			legalhand = board.getMove();
 		}
 		
 		while(legalhand[0]){

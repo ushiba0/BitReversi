@@ -1,2 +1,2 @@
 master.render();
-master.visualizeMove();
+master.showMove();
