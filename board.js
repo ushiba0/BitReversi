@@ -295,7 +295,7 @@ class BOARD {
 			black2 = temp;
 		}
 
-		const child = new BOARD();
+		const child = new BOARD(this);
 
 		child.black1 = black1;
 		child.black2 = black2;
@@ -500,12 +500,13 @@ class BOARD {
 	}
 
 	swap(){
-		const newNode = new BOARD();
+		const newNode = new BOARD(this);
 
 		newNode.black1 = this.white1;
 		newNode.black2 = this.white2;
 		newNode.white1 = this.black1;
 		newNode.white2 = this.black2;
+		newNode.turn *= -1;
 
 		return newNode;
 	}
@@ -753,44 +754,113 @@ class BOARD {
 		return list;
 	}
 
-	getBatch(){
-		const batch_arr = new Array(64*3);
-		const move = this.getMove();
+	flip(){
+		const reverse = (x)=>{
+			x = ((x&0b10101010)>>>1) | ((x&0b01010101)<<1);
+			x = ((x&0b11001100)>>>2) | ((x&0b00110011)<<2);
+			x = ((x&0b11110000)>>>4) | ((x&0b00001111)<<4);
+			return x;
+		};
+		
+		const black1 = this.black1;
+		const black2 = this.black2;
+		const white1 = this.white1;
+		const white2 = this.white2;
+		
+		const b0 = reverse((black1>>>24) & 0xff);
+		const b1 = reverse((black1>>>16) & 0xff);
+		const b2 = reverse((black1>>>8)  & 0xff);
+		const b3 = reverse((black1>>>0)  & 0xff);
+		const b4 = reverse((black2>>>24) & 0xff);
+		const b5 = reverse((black2>>>16) & 0xff);
+		const b6 = reverse((black2>>>8)  & 0xff);
+		const b7 = reverse((black2>>>0)  & 0xff);
+		const w0 = reverse((white1>>>24) & 0xff);
+		const w1 = reverse((white1>>>16) & 0xff);
+		const w2 = reverse((white1>>>8)  & 0xff);
+		const w3 = reverse((white1>>>0)  & 0xff);
+		const w4 = reverse((white2>>>24) & 0xff);
+		const w5 = reverse((white2>>>16) & 0xff);
+		const w6 = reverse((white2>>>8)  & 0xff);
+		const w7 = reverse((white2>>>0)  & 0xff);
 
-		batch_arr.fill(0);
+		const newNode = new BOARD(this);
+		
+		newNode.black1 = (b0<<24)|(b1<<16)|(b2<<8)|b3;
+		newNode.black2 = (b4<<24)|(b5<<16)|(b6<<8)|b7;
+		newNode.white1 = (w0<<24)|(w1<<16)|(w2<<8)|w3;
+		newNode.white2 = (w4<<24)|(w5<<16)|(w6<<8)|w7;
 
-		for(let i=0;i<31;i++){
-			if(this.black1&(1<<(31-i))){
-				batch_arr[i] = 1;
-			}
-			if(this.black2&(1<<(31-i))){
-				batch_arr[i+32] = 1;
-			}
-			if(this.white1&(1<<(31-i))){
-				batch_arr[i+64] = 1;
-			}
-			if(this.white2&(1<<(31-i))){
-				batch_arr[i+96] = 1;
-			}
-			if(move[0]&(1<<(31-i))){
-				batch_arr[i+128] = 1;
-			}
-			if(move[1]&(1<<(31-i))){
-				batch_arr[i+160] = 1;
-			}
-		}
-
-		return batch_arr;
+		return newNode;
 	}
 
-	cnnEval(){
-		const batch_arr = this.getBatch();
-		const batch = tf.tensor4d(batch_arr, [1, 8, 8, 3]);
-		const pred = model.predict(batch);
-		const pred_arr = pred.dataSync();
-		batch.dispose();
-		pred.dispose();
-		return pred_arr;
+	rotate(){
+		const reverse = (x)=>{
+			x = ((x&0b10101010)>>>1) | ((x&0b01010101)<<1);
+			x = ((x&0b11001100)>>>2) | ((x&0b00110011)<<2);
+			x = ((x&0b11110000)>>>4) | ((x&0b00001111)<<4);
+			return x;
+		};
+
+		const b = new Array();
+		const w = new Array();
+		const black1 = this.black1;
+		const black2 = this.black2;
+		const white1 = this.white1;
+		const white2 = this.white2;
+	
+		b[0] = (black1>>>24)&0xff;
+		b[1] = (black1>>>16)&0xff;
+		b[2] = (black1>>>8) &0xff;
+		b[3] = (black1>>>0) &0xff;
+		b[4] = (black2>>>24)&0xff;
+		b[5] = (black2>>>16)&0xff;
+		b[6] = (black2>>>8) &0xff;
+		b[7] = (black2>>>0) &0xff;
+		w[0] = (white1>>>24)&0xff;
+		w[1] = (white1>>>16)&0xff;
+		w[2] = (white1>>>8) &0xff;
+		w[3] = (white1>>>0) &0xff;
+		w[4] = (white2>>>24)&0xff;
+		w[5] = (white2>>>16)&0xff;
+		w[6] = (white2>>>8) &0xff;
+		w[7] = (white2>>>0) &0xff;
+		let b1 = 0, b2 = 0, w1 = 0, w2 = 0;
+		let lineb, linew;
+
+		//vertical
+		lineb = ((b[0]&128)>>>0)|((b[1]&128)>>>1)|((b[2]&128)>>>2)|((b[3]&128)>>>3)|((b[4]&128)>>>4)|((b[5]&128)>>>5)|((b[6]&128)>>>6)|((b[7]&128)>>>7);
+		linew = ((w[0]&128)>>>0)|((w[1]&128)>>>1)|((w[2]&128)>>>2)|((w[3]&128)>>>3)|((w[4]&128)>>>4)|((w[5]&128)>>>5)|((w[6]&128)>>>6)|((w[7]&128)>>>7);
+		b1 |= reverse(lineb)<<24; w1 |= reverse(linew)<<24;
+		lineb = ((b[0]&64)<<1)|((b[1]&64)>>>0)|((b[2]&64)>>>1)|((b[3]&64)>>>2)|((b[4]&64)>>>3)|((b[5]&64)>>>4)|((b[6]&64)>>>5)|((b[7]&64)>>>6);
+		linew = ((w[0]&64)<<1)|((w[1]&64)>>>0)|((w[2]&64)>>>1)|((w[3]&64)>>>2)|((w[4]&64)>>>3)|((w[5]&64)>>>4)|((w[6]&64)>>>5)|((w[7]&64)>>>6);
+		b1 |= reverse(lineb)<<16; w1 |= reverse(linew)<<16;
+		lineb = ((b[0]&32)<<2)|((b[1]&32)<<1)|((b[2]&32)>>>0)|((b[3]&32)>>>1)|((b[4]&32)>>>2)|((b[5]&32)>>>3)|((b[6]&32)>>>4)|((b[7]&32)>>>5);
+		linew = ((w[0]&32)<<2)|((w[1]&32)<<1)|((w[2]&32)>>>0)|((w[3]&32)>>>1)|((w[4]&32)>>>2)|((w[5]&32)>>>3)|((w[6]&32)>>>4)|((w[7]&32)>>>5);
+		b1 |= reverse(lineb)<<8; w1 |= reverse(linew)<<8;
+		lineb = ((b[0]&16)<<3)|((b[1]&16)<<2)|((b[2]&16)<<1)|((b[3]&16)>>>0)|((b[4]&16)>>>1)|((b[5]&16)>>>2)|((b[6]&16)>>>3)|((b[7]&16)>>>4);
+		linew = ((w[0]&16)<<3)|((w[1]&16)<<2)|((w[2]&16)<<1)|((w[3]&16)>>>0)|((w[4]&16)>>>1)|((w[5]&16)>>>2)|((w[6]&16)>>>3)|((w[7]&16)>>>4);
+		b1 |= reverse(lineb); w1 |= reverse(linew);
+		lineb = ((b[0]&8)<<4)|((b[1]&8)<<3)|((b[2]&8)<<2)|((b[3]&8)<<1)|((b[4]&8)>>>0)|((b[5]&8)>>>1)|((b[6]&8)>>>2)|((b[7]&8)>>>3);
+		linew = ((w[0]&8)<<4)|((w[1]&8)<<3)|((w[2]&8)<<2)|((w[3]&8)<<1)|((w[4]&8)>>>0)|((w[5]&8)>>>1)|((w[6]&8)>>>2)|((w[7]&8)>>>3);
+		b2 |= reverse(lineb)<<24; w2 |= reverse(linew)<<24;
+		lineb = ((b[0]&4)<<5)|((b[1]&4)<<4)|((b[2]&4)<<3)|((b[3]&4)<<2)|((b[4]&4)<<1)|((b[5]&4)>>>0)|((b[6]&4)>>>1)|((b[7]&4)>>>2);
+		linew = ((w[0]&4)<<5)|((w[1]&4)<<4)|((w[2]&4)<<3)|((w[3]&4)<<2)|((w[4]&4)<<1)|((w[5]&4)>>>0)|((w[6]&4)>>>1)|((w[7]&4)>>>2);
+		b2 |= reverse(lineb)<<16; w2 |= reverse(linew)<<16;
+		lineb = ((b[0]&2)<<6)|((b[1]&2)<<5)|((b[2]&2)<<4)|((b[3]&2)<<3)|((b[4]&2)<<2)|((b[5]&2)<<1)|((b[6]&2)>>>0)|((b[7]&2)>>>1);
+		linew = ((w[0]&2)<<6)|((w[1]&2)<<5)|((w[2]&2)<<4)|((w[3]&2)<<3)|((w[4]&2)<<2)|((w[5]&2)<<1)|((w[6]&2)>>>0)|((w[7]&2)>>>1);
+		b2 |= reverse(lineb)<<8; w2 |= reverse(linew)<<8;
+		lineb = ((b[0]&1)<<7)|((b[1]&1)<<6)|((b[2]&1)<<5)|((b[3]&1)<<4)|((b[4]&1)<<3)|((b[5]&1)<<2)|((b[6]&1)<<1)|((b[7]&1)>>>0);
+		linew = ((w[0]&1)<<7)|((w[1]&1)<<6)|((w[2]&1)<<5)|((w[3]&1)<<4)|((w[4]&1)<<3)|((w[5]&1)<<2)|((w[6]&1)<<1)|((w[7]&1)>>>0);
+		b2 |= reverse(lineb); w2 |= reverse(linew);
+
+		const newNode = new BOARD(this);
+		newNode.black1 = b1;
+		newNode.black2 = b2;
+		newNode.white1 = w1;
+		newNode.white2 = w2;
+
+		return newNode;
 	}
 
 	negaAlpha(alpha=-100, beta=100, depth=1){

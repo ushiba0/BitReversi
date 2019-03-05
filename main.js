@@ -10,7 +10,7 @@ class CONSTANTS{
     constructor(){
 		this.num_phase = 61;
 		this.num_shape = 11;
-		this.learning_rate = 1/2/4;
+		this.learning_rate = 1/2/2/2/2;
 		this.colorOfCpu = -1;
         this.num_readnode = 0;
         this.depth = [2,4];
