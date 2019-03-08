@@ -497,7 +497,7 @@ class EV extends CONSTANTS {
 			nodes[6] = nodes[5].rotate();
 			nodes[7] = nodes[6].rotate();
 
-			const true_value = node.negaAlpha(-100, 100, -1);
+			const true_value = ai.negaScout(node, -100, 100, -1);//node.negaAlpha(-100, 100, -1);
 			const pred_value = this.evaluation(node);
 
 			for(const node_ of nodes){

@@ -16,7 +16,7 @@ class AI extends EV {
 			num_readnode++;
 
 			if(depth===0){
-				return this.evaluation(board)*board.turn;
+				return this.evaluation(board);//*board.turn;
 			}
 		
 			const state = board.state(board);
@@ -27,7 +27,7 @@ class AI extends EV {
 				const children = board.expand();
 				
 				for(let i=0;i<children.length;i++){
-					children[i].e = -this.evaluation(children[i])*children[i].turn;
+					children[i].e = -this.evaluation(children[i]);//*children[i].turn;
 					if(max<children[i].e){max = children[i].e; v = i;}
 				}
 
@@ -66,6 +66,7 @@ class AI extends EV {
 		if(showStatus){
 			console.log(`NegaScout\nread nodes: ${num_readnode}\nevaluation: ${value}`);
 		}
+		this.num_readnode = num_readnode;
 		return value;
 	}
 
@@ -105,11 +106,14 @@ class AI extends EV {
 		children[0] = children[rand];
 		children[rand] = temp;
 		
+		const process_time = (performance.now()-startTime).toPrecision(4);
+		const node_per_second = (~~(this.num_readnode/process_time)).toPrecision(4);
+
 		if(showStatus){
 			console.log(
 				"read " + this.num_readnode + " nodes\n" + 
-				"process time " + (performance.now()-startTime) + " ms\n" + 
-				(~~(this.num_readnode/(performance.now()-startTime))) + " nodes per ms\n" + 
+				"process time " + process_time + " ms\n" + 
+				node_per_second + " nodes per ms\n" + 
 				"cpu put at " + children[rand].hand + "\n"
 			);
 		}

@@ -513,22 +513,35 @@ class BOARD {
 
 	horizontalLines(){
 		const lines = new Array(16);
-		lines[0] = (this.black1>>>24) & 0xff;
-		lines[1] = (this.black1>>>16) & 0xff;
-		lines[2] = (this.black1>>>8) & 0xff;
-		lines[3] = (this.black1>>>0) & 0xff;
-		lines[4] = (this.black2>>>24) & 0xff;
-		lines[5] = (this.black2>>>16) & 0xff;
-		lines[6] = (this.black2>>>8) & 0xff;
-		lines[7] = (this.black2>>>0) & 0xff;
-		lines[8] = (this.white1>>>24) & 0xff;
-		lines[9] = (this.white1>>>16) & 0xff;
-		lines[10] = (this.white1>>>8) & 0xff;
-		lines[11] = (this.white1>>>0) & 0xff;
-		lines[12] = (this.white2>>>24) & 0xff;
-		lines[13] = (this.white2>>>16) & 0xff;
-		lines[14] = (this.white2>>>8) & 0xff;
-		lines[15] = (this.white2>>>0) & 0xff;
+		let black1, black2, white1, white2;
+		if(this.turn===1){
+			black1 = this.black1;
+			black2 = this.black2;
+			white1 = this.white1;
+			white2 = this.white2;
+		}else{
+			black1 = this.white1;
+			black2 = this.white2;
+			white1 = this.black1;
+			white2 = this.black2;
+		}
+
+		lines[0] = (black1>>>24) & 0xff;
+		lines[1] = (black1>>>16) & 0xff;
+		lines[2] = (black1>>>8)  & 0xff;
+		lines[3] = (black1>>>0)  & 0xff;
+		lines[4] = (black2>>>24) & 0xff;
+		lines[5] = (black2>>>16) & 0xff;
+		lines[6] = (black2>>>8)  & 0xff;
+		lines[7] = (black2>>>0)  & 0xff;
+		lines[8] = (white1>>>24) & 0xff;
+		lines[9] = (white1>>>16) & 0xff;
+		lines[10] = (white1>>>8) & 0xff;
+		lines[11] = (white1>>>0) & 0xff;
+		lines[12] = (white2>>>24) & 0xff;
+		lines[13] = (white2>>>16) & 0xff;
+		lines[14] = (white2>>>8)  & 0xff;
+		lines[15] = (white2>>>0)  & 0xff;
 		
 		return lines
 	}
