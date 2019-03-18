@@ -13,9 +13,12 @@ class CONSTANTS{
 		this.learning_rate = 1/2/2/2/2;
 		this.colorOfCpu = -1;
         this.num_readnode = 0;
-        this.depth = [2,4];
+		this.depth = [2, 4];
+		this.depth0 = 4;
+		this.depth1 = 4;
     }
 }
+const c = new CONSTANTS;
 
 const createElement = (element='',className='', id='')=>{
     if(element===''){
@@ -100,7 +103,7 @@ const package = createElement('div');
 
 	
 	// set click event of search depth
-	document.body.addEventListener('click', (e)=>{
+	const changeDepth = (e)=>{
 		const target = e.target;
 		
 		if(target.id==='depth0'){
@@ -108,13 +111,21 @@ const package = createElement('div');
 			const indexof = list.indexOf(target.innerText);
 			const depth = list[indexof + 1];
 			target.innerText = depth;
+			c.depth0 = parseInt(depth, 10);
 		}
 		if(target.id==='depth1'){
 			const list = ['4', '6', '8', '12', '16', '4'];
 			const indexof = list.indexOf(target.innerText);
 			const depth = list[indexof + 1];
 			target.innerText = depth;
+			c.depth1 = parseInt(depth, 10);
 		} 
+	};
+	document.body.addEventListener("touchstart", (e)=>{
+		changeDepth(e);
+	});
+	document.body.addEventListener('click', (e)=>{
+		changeDepth(e);
 	});
 	
 })();

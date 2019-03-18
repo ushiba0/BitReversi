@@ -61,7 +61,7 @@ class GRAPHIC extends CONSTANTS{
 	showEval(node=this.now, alpha=-100,beta=100, depth=-1){
 		
 		const search_depth = (depth===-1)?
-			(this.depth[1]>=64-node.stones ? -1 : this.depth[0]):
+			(c.depth1>=64-node.stones ? -1 : c.depth0):
 			depth;
 		const evals = ai.cpuHand(node, alpha, beta, search_depth);
 
@@ -214,7 +214,7 @@ class MASTER extends GRAPHIC {
 		
 		const cpu_turn = ()=>{ return new Promise((resolve)=>{
 			if(this.now.state()===1){
-				const search_depth = this.depth[1]>=64-this.now.stones ? -1 : this.depth[0]; 
+				const search_depth = c.depth1>=64-this.now.stones ? -1 : c.depth0; 
 				const move = ai.cpuHand(this.now, -100, 100, search_depth, true);
 				this.record.push(move[0]);
 			}else if(this.now.state()===2){
