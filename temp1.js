@@ -13,3 +13,6 @@ self.addEventListener('message', e=>{
     }
     self.postMessage(arr[0]);
 });
+
+
+
