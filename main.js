@@ -11,6 +11,11 @@ property.num_readnode = 0;
 property.depth = [2, 4];
 property.depth0 = 4;
 property.depth1 = 4;
+property.clickDisabled = false;
+property.touchScreen = false;
+
+
+
 
 
 const createElement = (element="div", property={})=>{
@@ -30,7 +35,18 @@ display.comment = createElement('div', {id:"comment"});
 display.board = createElement('div', {id:"board"});
 
 
+
+
 (()=>{
+	//detect touch screen
+	for(const name of ["iPhone", "Android", "Mobile", "iPad"]){
+		property.touchScreen = false;
+		if(navigator.userAgent.indexOf(name)!==-1){
+			property.touchScreen = true;
+			break;
+		}
+	}
+
 	// generate board table
     const table = createElement('table');
 	for(let i=0;i<8;i++){
@@ -39,12 +55,7 @@ display.board = createElement('div', {id:"board"});
 			const td = createElement('td');
 			const div = createElement('div', {className:"blank"});
 			// on mouse click
-			td.addEventListener('mousedown', ()=>{
-				const e = i*8 + j;
-				master.play(i<4?1<<(31-e):0, i<4?0:1<<(63-e));
-			});
-			// on touch start
-			td.addEventListener('touchstart', ()=>{
+			td.addEventListener(property.touchScreen?"touchend":"mouseup", ()=>{
 				const e = i*8 + j;
 				master.play(i<4?1<<(31-e):0, i<4?0:1<<(63-e));
 			});
@@ -85,6 +96,9 @@ display.board = createElement('div', {id:"board"});
 	
 	// set click event of search depth
 	const changeDepth = (e)=>{
+
+	};
+	document.body.addEventListener(property.touchScreen?"touchend":"mouseup", (e)=>{
 		const target = e.target;
 		
 		if(target.id==='depth0'){
@@ -93,6 +107,7 @@ display.board = createElement('div', {id:"board"});
 			const depth = list[indexof + 1];
 			target.innerText = depth;
 			property.depth0 = parseInt(depth, 10);
+			return;
 		}
 		if(target.id==='depth1'){
 			const list = ['4', '6', '8', '12', '16', '4'];
@@ -100,16 +115,24 @@ display.board = createElement('div', {id:"board"});
 			const depth = list[indexof + 1];
 			target.innerText = depth;
 			property.depth1 = parseInt(depth, 10);
-		} 
-	};
-	document.body.addEventListener("touchstart", (e)=>{
-		changeDepth(e);
-	});
-	document.body.addEventListener('click', (e)=>{
-		changeDepth(e);
+			return;
+		}
+
+		//三回連続クリックの判定
+		touchcount++;
+		setTimeout(()=>{touchcount=0;}, 300);
+		if(touchcount>=3){
+			const comment_text = display.comment.innerText;
+			display.comment.innerText = "開発モード";
+			touchcount = -1e9;
+			setTimeout(() => {
+				display.comment.innerText = comment_text;
+				touchcount = 0;
+			}, 3000);
+		}
 	});
 })();
 
-
+let touchcount =0;
 document.body.appendChild(display.comment);
 document.body.appendChild(display.board);
