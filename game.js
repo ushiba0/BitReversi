@@ -1,11 +1,6 @@
-// しくみ
-// 
 
-
-class GRAPHIC extends CONSTANTS{
-	constructor(){
-		super();
-	}
+class GRAPHIC {
+	constructor(){}
 
 	render(node=this.now){
 		
@@ -14,8 +9,8 @@ class GRAPHIC extends CONSTANTS{
 		const board = node.board;
 		
 		//評価値を消す
-		for(let value of squares){
-			value.className = '';
+		for(let value of display.circles){
+			value.innerText = '';
 		}
 		
 		//石の数をカウント
@@ -30,28 +25,28 @@ class GRAPHIC extends CONSTANTS{
 		//石を置く
 		for(let i=1;i<65;i++){
 			if(board[i]===1){
-				circles[i-1].className = 'black';
+				display.circles[i-1].className = 'black';
 			}else if(board[i]===-1){
-				circles[i-1].className = 'white';	
+				display.circles[i-1].className = 'white';	
 			}else{
-				circles[i-1].className = 'blank';
+				display.circles[i-1].className = 'blank';
 			}
 		}
 		
-		black_score.innerText = black + '';
-		white_score.innerText = white + '';
+		display.black_score.innerText = black + '';
+		display.white_score.innerText = white + '';
 		
-		if(node.turn!==this.colorOfCpu){
-			comment.innerText = 'player turn';
+		if(node.turn!==property.colorOfCpu){
+			display.comment.innerText = 'player turn';
 		}
 		
 		if(node.state()===3){//終局
 			if(black > white){
-				comment.innerText = 'black win';
+				display.comment.innerText = 'black win';
 			}else if(black < white){
-				comment.innerText = 'white win';
+				display.comment.innerText = 'white win';
 			}else{
-				comment.innerText = 'draw';
+				display.comment.innerText = 'draw';
 			}
 			
 			return;
@@ -70,31 +65,30 @@ class GRAPHIC extends CONSTANTS{
 		}
 
 		// delete former evels
-		for(const element of circles){
+		for(const element of display.circles){
 			element.innerText = '';
 		}
 
 		for(const node of evals){
-			const hand = node.hand;
 			let put = 0;
-			if(hand[0]<0){
+			if(node.hand1<0){
 				put = 0;
-			}else if(hand[0]>0){
-				put = 31-Math.log2(hand[0]);
+			}else if(node.hand1>0){
+				put = 31-Math.log2(node.hand1);
 			}
-			if(hand[1]<0){
+			if(node.hand2<0){
 				put = 32;
-			}else if(hand[1]>0){
-				put = 63-Math.log2(hand[1]);
+			}else if(node.hand2>0){
+				put = 63-Math.log2(node.hand2);
 			}
 
-			circles[put].innerText = node.e;
+			display.circles[put].innerText = node.e;
 			if(node.e>0){
-				circles[put].className = 'eval_plus';
-				circles[put].innerText = (node.e + '').slice(0, 5);
+				display.circles[put].className = 'eval_plus';
+				display.circles[put].innerText = (node.e + '').slice(0, 5);
 			}else{
-				circles[put].className = 'eval_minus';
-				circles[put].innerText = (node.e + '').slice(0, 5);
+				display.circles[put].className = 'eval_minus';
+				display.circles[put].innerText = (node.e + '').slice(0, 5);
 			}
 		}
 		
@@ -125,9 +119,9 @@ class GRAPHIC extends CONSTANTS{
 		
 		for(let i=1;i<65;i++){
 			if(board[i]===1){
-				squares[i-1].className = 'legal';
+				display.squares[i-1].className = 'legal';
 			}else{
-				squares[i-1].className = '';
+				display.squares[i-1].className = '';
 			}
 		}
 	}
@@ -136,8 +130,8 @@ class GRAPHIC extends CONSTANTS{
 		// this.nowにhandプロパティがなかったら
 		if(node.hand1===0 && node.hand2===0){
 			for(let i=0;i<64;i++){
-				if(squares[i].className==='lastput'){
-					squares[i].className==='';
+				if(display.squares[i].className==='lastput'){
+					display.squares[i].className==='';
 				}
 			}
 			return;
@@ -161,7 +155,7 @@ class GRAPHIC extends CONSTANTS{
 			x = e%8;
 		}
 		
-		squares[y*8+x].className = 'lastput';
+		display.squares[y*8+x].className = 'lastput';
 	}
 }
 
@@ -201,7 +195,7 @@ class MASTER extends GRAPHIC {
 		clickDisabled = true;
 
 		const player_turn = ()=>{ return new Promise((resolve)=>{
-			if(this.now.turn===this.colorOfCpu){
+			if(this.now.turn===property.colorOfCpu){
 				resolve();
 			}else{
 				const newNode = this.now.putStone(hand1, hand2);
@@ -214,7 +208,7 @@ class MASTER extends GRAPHIC {
 		
 		const cpu_turn = ()=>{ return new Promise((resolve)=>{
 			if(this.now.state()===1){
-				const search_depth = c.depth1>=64-this.now.stones ? -1 : c.depth0; 
+				const search_depth = property.depth1>=64-this.now.stones ? -1 : property.depth0; 
 				const move = ai.cpuHand(this.now, -100, 100, search_depth, true);
 				this.record.push(move[0]);
 			}else if(this.now.state()===2){
@@ -316,7 +310,7 @@ class DEVELOP extends MASTER{
     }
     
     generateNode(N=64){
-		const n = ~~Math.max(Math.min(64, N), 4);
+		const n = Math.max(Math.min(64, ~~N), 4);
 		let node_now = new BOARD();
 		
 		while(true){

@@ -1,6 +1,6 @@
-const asdf = new SharedArrayBuffer(2**30);
-const a = new Int32Array(asdf);
-a[0] = 0;
+//const asdf = new SharedArrayBuffer(2**30);
+//const a = new Int32Array(asdf);
+//a[0] = 0;
 
 
 const cpuHand = (node, alpha=-100, beta=100, depth=0, showStatus=false)=>{

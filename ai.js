@@ -113,8 +113,7 @@ class AI extends EV {
 			console.log(
 				"read " + this.num_readnode + " nodes\n" + 
 				"process time " + process_time + " ms\n" + 
-				node_per_second + " nodes per ms\n" + 
-				"cpu put at " + children[rand].hand + "\n"
+				node_per_second + " nodes per ms\n"
 			);
 		}
 		

@@ -549,7 +549,8 @@ class BOARD {
 	shape(){
 		const [b0, b1, b2, b3, b4, b5, b6, b7, w0, w1, w2, w3, w4, w5, w6, w7] = this.horizontalLines();
 		const list = new Array(80);
-		let lineb, linew;
+		let lineb = 0;
+		let linew = 0;
 
 		//horizontal 1
 		//上辺
@@ -637,12 +638,11 @@ class BOARD {
 		linew = (w7&128)|(w6&64)|(w5&32)|(w4&16)|(w3&8)|(w2&4)|(w1&2)|(w0&1);
 		list[32] = lineb;
 		list[33] = linew;
+		list[34] = lineb;
+		list[35] = linew;
 		//右肩下がり
 		lineb = (b7&1)|(b6&2)|(b5&4)|(b4&8)|(b3&16)|(b2&32)|(b1&64)|(b0&128);
 		linew = (w7&1)|(w6&2)|(w5&4)|(w4&8)|(w3&16)|(w2&32)|(w1&64)|(w0&128);
-		list[34] = lineb;
-		list[35] = linew;
-
 		list[36] = lineb;
 		list[37] = linew;
 		list[38] = lineb;
@@ -743,6 +743,8 @@ class BOARD {
 		linew = ((w7&1)<<7)|((w7&2)<<5)|((w7&4)<<3)|((w7&8)<<1)|((w6&1)<<3)|((w6&2)<<1)|((w6&4)>>>1)|((w6&8)>>>3);
 		list[70] = lineb;
 		list[71] = linew;
+
+
 		//vertical upper left
 		lineb = ((b0&128)>>>0)|((b1&128)>>>1)|((b2&128)>>>2)|((b3&128)>>>3)|((b0&64)>>>3)|((b1&64)>>>4)|((b2&64)>>>5)|((b3&64)>>>6);
 		linew = ((w0&128)>>>0)|((w1&128)>>>1)|((w2&128)>>>2)|((w3&128)>>>3)|((w0&64)>>>3)|((w1&64)>>>4)|((w2&64)>>>5)|((w3&64)>>>6);
