@@ -71,11 +71,11 @@ class AI extends EV {
 	}
 
 	cpuHand(node, alpha=-100, beta=100, depth=0, showStatus=false){
-		
+		display.switch.innerText = "990";
 		const startTime = performance.now();
 		const children = node.expand();
 		let rand=0, temp=0;
-
+		display.switch.innerText = "991";
 		if(children.length===0){
 			return children;
 		}
