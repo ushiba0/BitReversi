@@ -59,6 +59,9 @@ display.switch = document.getElementById("switch_colors");
 				if(property.clickDisabled){
 					return;
 				}
+				if(property.pass){
+					return;
+				}
 				property.clickDisabled = true;
 				const e = i*8 + j;
 				master.play(i<4?1<<(31-e):0, i<4?0:1<<(63-e))

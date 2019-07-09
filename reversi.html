@@ -28,6 +28,14 @@
 				
 				margin: 20px;
 			}
+
+			select{
+				-webkit-appearance: none;
+				appearance: none;
+				padding: 0.5em 1em;
+				border-radius: 0px;
+				background: transparent;
+			}
 			
 			.square{
 				width: 30px;
@@ -246,12 +254,12 @@
 		<select id="depth">
 			<option value="1">1 moves</option>
 			<option value="2">2 moves</option>
-			<option value="4">4 moves</option>
+			<option value="4" selected>4 moves</option>
 			<option value="6">6 moves</option>
 			<option value="8">8 moves</option>
 		</select>
 		<select id="depth_last">
-			<option value="4">4 moves</option>
+			<option value="4" selected>4 moves</option>
 			<option value="6">6 moves</option>
 			<option value="8">8 moves</option>
 			<option value="12">12 moves</option>
