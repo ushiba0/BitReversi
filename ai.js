@@ -79,7 +79,7 @@ class AI extends EV {
 		if(children.length===0){
 			return children;
 		}
-		
+		display.switch.innerText = "1001";
 		for(const child of children){
 			// calc eval of child
 			child.e = -this.negaScout(child, alpha, beta, depth);
@@ -87,7 +87,7 @@ class AI extends EV {
 			child.hand1 = (node.black1|node.white1)^(child.black1|child.white1);
 			child.hand2 = (node.black2|node.white2)^(child.black2|child.white2);
 		}
-
+		display.switch.innerText = "1002";
 		// sort
 		children.sort((a,b)=>{return b.e-a.e;});
 		
@@ -99,16 +99,16 @@ class AI extends EV {
 				break;
 			}
 		}
-		
+		display.switch.innerText = "1003";
 		//0番目とrand番目を入れ替える
 		rand = ~~(Math.random() * rand);
 		temp = children[0];
 		children[0] = children[rand];
 		children[rand] = temp;
-		
+		display.switch.innerText = "1004";
 		const process_time = (performance.now()-startTime).toPrecision(4);
 		const node_per_second = (~~(this.num_readnode/process_time)).toPrecision(4);
-
+		display.switch.innerText = "1005";
 		if(showStatus){
 			console.log(
 				"read " + this.num_readnode + " nodes\n" + 
