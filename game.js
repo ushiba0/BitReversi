@@ -204,26 +204,28 @@ class MASTER extends GRAPHIC {
 		
 		const cpu_turn = ()=>{
 			return new Promise((resolve, reject)=>{
+				display.switch.innerText = "11";
 				if(this.now.state()===1){
 					const search_depth = property.depth1>=64-this.now.stones ? -1 : property.depth0; 
 					const move = ai.cpuHand(this.now, -100, 100, search_depth, true);
 					this.record.push(move[0]);
 				}
-
+				display.switch.innerText = "12";
 				if(this.now.state()===2){
 					const newNode = new BOARD(this.now);
 					newNode.hand1 = this.now.hand1;
 					newNode.hand2 = this.now.hand2;
 					newNode.turn *= -1;
 					this.record.push(newNode);
-
+					display.switch.innerText = "13";
 					if(this.now.turn===property.colorOfCpu){
 						property.player_state_pass = true;
 						display.pass.classList.add("pass_availble");
 						window.stop();
 					}
+					display.switch.innerText = "1";
 				}
-
+				display.switch.innerText = "1";
 				resolve();
 			});
 		};
@@ -239,13 +241,10 @@ class MASTER extends GRAPHIC {
 			});
 		};
 		
-		display.switch.innerText = "1";
 		await player_turn();
-		display.switch.innerText = "2";
 		await render();
-		display.switch.innerText = "3";
 		await cpu_turn();
-		display.switch.innerText = "4";
+		display.switch.innerText = "cpu turn executed";
 		await render();
 		
 		return;
