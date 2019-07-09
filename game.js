@@ -181,9 +181,7 @@ class MASTER extends GRAPHIC {
 	
 	//ゲームを進行する
 	async play(hand1=0, hand2=0){
-		
 		const [move1, move2] = this.now.getMove();
-		
 		//handle illegal hand
 		if(!(hand1===0 && hand2===0)){
 			if(!(move1&hand1)&&!(move2&hand2)){
@@ -191,7 +189,6 @@ class MASTER extends GRAPHIC {
 				return;
 			}
 		}
-		
 
 		const player_turn = ()=>{
 			return new Promise(resolve=>{
@@ -226,7 +223,7 @@ class MASTER extends GRAPHIC {
 						window.stop();
 					}
 				}
-				
+
 				resolve();
 			});
 		};
@@ -242,9 +239,13 @@ class MASTER extends GRAPHIC {
 			});
 		};
 		
+		display.switch.innerText = "1";
 		await player_turn();
+		display.switch.innerText = "2";
 		await render();
+		display.switch.innerText = "3";
 		await cpu_turn();
+		display.switch.innerText = "4";
 		await render();
 		
 		return;

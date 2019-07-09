@@ -33,6 +33,7 @@ display.white_score = createElement('div', {id:"white_score"});
 display.comment = createElement('div', {id:"comment"});
 display.board = createElement('div', {id:"board"});
 display.pass = document.getElementById("pass");
+display.switch = document.getElementById("switch_colors");
 
 
 
@@ -120,10 +121,7 @@ display.pass = document.getElementById("pass");
 	//pass button
 	document.getElementById("pass").addEventListener(property.touchScreen?"touchend":"mouseup", e=>{
 		if(property.player_state_pass){
-
 			display.pass.classList.remove("pass_availble");
-
-
 			property.player_state_pass = false;
 			master.play();
 		}
