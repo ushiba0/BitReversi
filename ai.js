@@ -162,4 +162,3 @@ class AI extends EV {
 	
 }
 
-const ai = new AI();
