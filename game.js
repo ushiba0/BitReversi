@@ -206,7 +206,6 @@ class MASTER extends GRAPHIC {
 			return new Promise((resolve, reject)=>{
 				if(this.now.state()===1){
 					const search_depth = property.depth1>=64-this.now.stones ? -1 : property.depth0;
-					display.switch.innerText = "102";
 
 					let move = ai.cpuHand(this.now, -100, 100, search_depth, true);
 					this.record.push(move[0]);
@@ -241,7 +240,6 @@ class MASTER extends GRAPHIC {
 		await player_turn();
 		await render();
 		await cpu_turn();
-		display.switch.innerText = "cpu turn executed";
 		await render();
 		
 		return;
