@@ -1,7 +1,7 @@
 
 class WEIGHTS_MANAGER{
 	constructor(){
-		const buffer = new ArrayBuffer(6561*property.num_phase*property.num_shape);
+		const buffer = new SharedArrayBuffer(6561*property.num_phase*property.num_shape);
 
 		this.buffer = buffer;
 		this.weights = new Int8Array(buffer);

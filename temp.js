@@ -1,111 +1,105 @@
-//const asdf = new SharedArrayBuffer(2**30);
-//const a = new Int32Array(asdf);
-//a[0] = 0;
 
 
-const cpuHand = (node, alpha=-100, beta=100, depth=0, showStatus=false)=>{
-		
-    const startTime = performance.now();
-    const children = node.expand();
-    let rand=0, temp=0;
+const genworker = async ()=>{
 
-    if(children.length===0){
-        return children;
+    for(let i=0;i<100;i++){
+        const res = await calc();
+        console.log(res);
     }
-    
-    for(const child of children){
-        // calc eval of child
-        child.e = -this.negaScout(child, alpha, beta, depth);
-        // どこにおいたかを調べる
-        child.hand1 = (node.black1|node.white1)^(child.black1|child.white1);
-        child.hand2 = (node.black2|node.white2)^(child.black2|child.white2);
-    }
-
-    // sort
-    children.sort((a,b)=>{return b.e-a.e;});
-    
-    //最大値がいくつあるかをrandにカウント
-    for(let i=1;i<children.length;i++){
-        if(~~children[0].e===~~children[i].e){
-            rand = i;
-        }else{
-            break;
-        }
-    }
-    
-    //0番目とrand番目を入れ替える
-    rand = ~~(Math.random() * rand);
-    temp = children[0];
-    children[0] = children[rand];
-    children[rand] = temp;
-    
-    const process_time = (performance.now()-startTime).toPrecision(4);
-    const node_per_second = (~~(this.num_readnode/process_time)).toPrecision(4);
-
-    if(showStatus){
-        console.log(
-            "read " + this.num_readnode + " nodes\n" + 
-            "process time " + process_time + " ms\n" + 
-            node_per_second + " nodes per ms\n" + 
-            "cpu put at " + children[rand].hand + "\n"
-        );
-    }
-    
-    return children;
+    console.log("fin");
 }
+ai.weights[0]=2
 
-
-
-const genWorker = ()=>{
-
-    return new Promise((resolve)=>{
+const calc = ()=>{
+    return new Promise(resolve=>{
         const worker = new Worker("temp1.js");
 
-        worker.addEventListener("message", msg=>{
-            console.log(msg.data);
-            //worker.terminate();
-            resolve(msg.data);
+        //worker.postMessage(ai.weights.buffer, [ai.weights.buffer]);
+        worker.postMessage(buf, [buf]);
+        //worker.postMessage(ai.weights);
+        //worker.postMessage(buf)
+        
+        worker.addEventListener("message", e=>{
+            const arg = e.data;
+            resolve(arg);
         });
-        worker.postMessage(a.buffer);
-        //worker.postMessage(a.buffer, [a.buffer]);
     });
-};
-
-const execJobs = (N=1)=>{
-    const jobs = new Array;
-
-    for(let i=0;i<N;i++){
-        const job = genWorker();
-        jobs.push(job);
-    }
-
-    Promise.all(jobs).then(results=>{
-        console.log(results);
-    });
-};
-
-
-
-const wait = (t=0, m=0)=>{
-    return new Promise(resolve=>{
-        setTimeout(() => {
-            console.log(m)
-            resolve();
-        }, t);
-    })
 }
 
 
-const f1 = ()=>{
-    return new Promise((resolve)=>{
-        resolve(123);
+const buf = new SharedArrayBuffer(1e7);
+const arr = new Int8Array(buf);
+
+const work = (boardList)=>{
+    boardList = [board1, board2, board3];
+    const jobs = [];
+    for(let i=0;i<3;i++){
+        const worker = new Worker("temp1.js");
+        const promise = new Promise(resolve=>{
+            worker.addEventListener("message", message=>{
+                resolve(message.data);
+            });
+        });
+
+        let n=18;
+        arr[i*n+0] = (boardList[i].black1>>>0)&0xff;
+        arr[i*n+1] = (boardList[i].black1>>>8)&0xff;
+        arr[i*n+2] = (boardList[i].black1>>>16)&0xff;
+        arr[i*n+3] = (boardList[i].black1>>>24)&0xff;
+        arr[i*n+4] = (boardList[i].black2>>>0)&0xff;
+        arr[i*n+5] = (boardList[i].black2>>>8)&0xff;
+        arr[i*n+6] = (boardList[i].black2>>>16)&0xff;
+        arr[i*n+7] = (boardList[i].black2>>>24)&0xff;
+        arr[i*n+8] = (boardList[i].white1>>>0)&0xff;
+        arr[i*n+9] = (boardList[i].white1>>>8)&0xff;
+        arr[i*n+10] = (boardList[i].white1>>>16)&0xff;
+        arr[i*n+11] = (boardList[i].white1>>>24)&0xff;
+        arr[i*n+12] = (boardList[i].white2>>>0)&0xff;
+        arr[i*n+13] = (boardList[i].white2>>>8)&0xff;
+        arr[i*n+14] = (boardList[i].white2>>>16)&0xff;
+        arr[i*n+15] = (boardList[i].white2>>>24)&0xff;
+        arr[i*n+16] = boardList[i].stones;
+        arr[i*n+17] = boardList[i].turn;
+
+        jobs.push(promise);
+        worker.postMessage({buffer:buf, id:i});
+    }
+
+    Promise.all(jobs).then(result=>{
+        console.log("end", result);
     });
-};
+}
 
-const f2 = async ()=>{
-    await wait(1000);
-    await wait(1000);
-    await wait(1000);
-    await wait(1000);
-};
 
+
+
+
+board1 = new BOARD();
+Object.assign(board1, 
+{black1: 1693509860,
+black2: -524239872,
+e: 0,
+stones: 60,
+turn: 1,
+white1: 403576603,
+white2: 524239871})
+
+board2 = new BOARD();
+Object.assign(board2, 
+{black1: 3682383,
+black2: -805884159,
+e: 0,
+stones: 60,
+turn: 1,
+white1: 2135346864,
+white2: 805884158})
+
+board3 = new BOARD();
+Object.assign(board3, 
+{black1: 8134757,
+black2: 1259538944,
+e: 0,
+stones: 60,
+turn: 1,
+white1: 2139332506,
+white2: -1259539202})

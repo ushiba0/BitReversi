@@ -180,86 +180,72 @@ class MASTER extends GRAPHIC {
 	}
 	
 	//ゲームを進行する
-	play(hand1=0, hand2=0){
+	async play(hand1=0, hand2=0){
 		
 		const [move1, move2] = this.now.getMove();
 		
-		if(!(hand1===0 && hand2===0)){//handle illegal hand
+		//handle illegal hand
+		if(!(hand1===0 && hand2===0)){
 			if(!(move1&hand1)&&!(move2&hand2)){
 				console.error(`error (${hand1}, ${hand2}) is illegal hand`);
 				return;
 			}
 		}
 		
-		//思考中のタッチ操作を無効にする
-		clickDisabled = true;
 
-		const player_turn = ()=>{ return new Promise((resolve)=>{
-			if(this.now.turn===property.colorOfCpu){
+		const player_turn = ()=>{
+			return new Promise(resolve=>{
+				if(this.now.turn!==property.colorOfCpu){
+					const newNode = this.now.putStone(hand1, hand2);
+					newNode.hand1 = hand1;
+					newNode.hand2 = hand2;
+					this.record.push(newNode);
+				}
 				resolve();
-			}else{
-				const newNode = this.now.putStone(hand1, hand2);
-				this.record.push(newNode);
-				this.now.hand1 = hand1;
-				this.now.hand2 = hand2;
-				resolve();
-			}
-		});};
-		
-		const cpu_turn = ()=>{ return new Promise((resolve)=>{
-			if(this.now.state()===1){
-				const search_depth = property.depth1>=64-this.now.stones ? -1 : property.depth0; 
-				const move = ai.cpuHand(this.now, -100, 100, search_depth, true);
-				this.record.push(move[0]);
-			}else if(this.now.state()===2){
-				const hand1 = this.now.hand1;
-				const hand2 = this.now.hand2;
-				this.record.push(new BOARD(this.now));
-				this.now.turn *= -1;
-				this.now.hand1 = hand1;
-				this.now.hand2 = hand2;
-				resolve();
-			}else{
-				console.log('終局');
-				resolve();
-			}
-			
-			if(this.now.state()===1){
-				resolve();
-			}else if(this.now.state()===2){
-				const hand1 = this.now.hand1;
-				const hand2 = this.now.hand2;
-				this.record.push(new BOARD(this.now));
-				this.now.turn *= -1;
-				this.now.hand1 = hand1;
-				this.now.hand2 = hand2;
-				this.play();
-				resolve();
-			}else{
-				resolve();
-			}
-		});};
-		
-		const render = ()=>{ return new Promise((resolve)=>{
-			setTimeout(() => {
-				resolve();
-			}, 50);
-			this.render(this.now);
-			this.showMove(this.now);
-			this.showHand(this.now);
-		});};
-		
-
-		player_turn()
-			.then(render)
-			.then(cpu_turn)
-			.then(render)
-			.catch(e=>{
-				console.error(e);
 			});
-			
-		//クリック操作を有効化
-		clickDisabled = false;
+		};
+		
+		const cpu_turn = ()=>{
+			return new Promise((resolve, reject)=>{
+				if(this.now.state()===1){
+					const search_depth = property.depth1>=64-this.now.stones ? -1 : property.depth0; 
+					const move = ai.cpuHand(this.now, -100, 100, search_depth, true);
+					this.record.push(move[0]);
+				}
+
+				if(this.now.state()===2){
+					const newNode = new BOARD(this.now);
+					newNode.hand1 = this.now.hand1;
+					newNode.hand2 = this.now.hand2;
+					newNode.turn *= -1;
+					this.record.push(newNode);
+
+					if(this.now.turn===property.colorOfCpu){
+						property.player_state_pass = true;
+						display.pass.classList.add("pass_availble");
+						window.stop();
+					}
+				}
+				
+				resolve();
+			});
+		};
+		
+		const render = ()=>{
+			return new Promise((resolve)=>{
+				this.render(this.now);
+				this.showMove(this.now);
+				this.showHand(this.now);
+				setTimeout(() => {
+					resolve();
+				}, 50);
+			});
+		};
+		
+		await player_turn();
+		await render();
+		await cpu_turn();
+		await render();
 		
 		return;
 	}
@@ -340,3 +326,14 @@ class DEVELOP extends MASTER{
 }
 const develop = new DEVELOP;
 
+
+const p = ()=>{
+	return new Promise((resolve, reject)=>{
+		reject("reject");
+	})
+}
+
+const afunc = async ()=>{
+	const res = await p();
+	console.log(res);
+}

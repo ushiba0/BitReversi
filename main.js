@@ -1,5 +1,4 @@
 const size = 40;
-let clickDisabled = false;
 
 
 const property = new Object();
@@ -13,7 +12,7 @@ property.depth0 = 4;
 property.depth1 = 4;
 property.clickDisabled = false;
 property.touchScreen = false;
-
+property.player_state_pass = false;
 
 
 
@@ -33,7 +32,7 @@ display.black_score = createElement('div', {id:"black_score"});
 display.white_score = createElement('div', {id:"white_score"});
 display.comment = createElement('div', {id:"comment"});
 display.board = createElement('div', {id:"board"});
-
+display.pass = document.getElementById("pass");
 
 
 
@@ -56,8 +55,15 @@ display.board = createElement('div', {id:"board"});
 			const div = createElement('div', {className:"blank"});
 			// on mouse click
 			td.addEventListener(property.touchScreen?"touchend":"mouseup", ()=>{
+				if(property.clickDisabled){
+					return;
+				}
+				property.clickDisabled = true;
 				const e = i*8 + j;
-				master.play(i<4?1<<(31-e):0, i<4?0:1<<(63-e));
+				master.play(i<4?1<<(31-e):0, i<4?0:1<<(63-e))
+				.then(()=>{
+					property.clickDisabled = false;
+				});
 			});
 
 			td.appendChild(div);
@@ -83,41 +89,10 @@ display.board = createElement('div', {id:"board"});
     document.body.appendChild(white_stone);
 	document.body.appendChild(display.white_score);
 
-
-	// append search depth box
-	const depth0 = createElement('div', {id:"depth0"});
-	const depth1 = createElement('div', {id:"depth1"});
-	depth0.innerText = 4;
-	depth1.innerText = 4;
-	document.body.appendChild(depth0);
-	document.body.appendChild(depth1);
-
-
 	
-	// set click event of search depth
-	const changeDepth = (e)=>{
-
-	};
 	document.body.addEventListener(property.touchScreen?"touchend":"mouseup", (e)=>{
 		const target = e.target;
 		
-		if(target.id==='depth0'){
-			const list = ['1', '2', '4', '6', '8', '1'];
-			const indexof = list.indexOf(target.innerText);
-			const depth = list[indexof + 1];
-			target.innerText = depth;
-			property.depth0 = parseInt(depth, 10);
-			return;
-		}
-		if(target.id==='depth1'){
-			const list = ['4', '6', '8', '12', '16', '4'];
-			const indexof = list.indexOf(target.innerText);
-			const depth = list[indexof + 1];
-			target.innerText = depth;
-			property.depth1 = parseInt(depth, 10);
-			return;
-		}
-
 		//三回連続クリックの判定
 		touchcount++;
 		setTimeout(()=>{touchcount=0;}, 300);
@@ -129,6 +104,28 @@ display.board = createElement('div', {id:"board"});
 				display.comment.innerText = comment_text;
 				touchcount = 0;
 			}, 3000);
+		}
+	});
+
+	//on pulldown menu changed (depth)
+	document.getElementById("depth").addEventListener("change", e=>{
+		property.depth0 = parseInt(e.target.value, 10);
+	});
+
+	//on pulldown menu changed (depth_last)
+	document.getElementById("depth_last").addEventListener("change", e=>{
+		property.depth1 = parseInt(e.target.value, 10);
+	});
+
+	//pass button
+	document.getElementById("pass").addEventListener(property.touchScreen?"touchend":"mouseup", e=>{
+		if(property.player_state_pass){
+
+			display.pass.classList.remove("pass_availble");
+
+
+			property.player_state_pass = false;
+			master.play();
 		}
 	});
 })();

@@ -919,12 +919,3 @@ const measureTime = (func, iter)=>{
 	const averageTime = (endTime-startTime)/iter*1000;
 	console.log(`average time: ${averageTime.toPrecision(4)} μs`);
 };
-
-var _b = new BOARD;
-_b.black1= -1057177963
-_b.black2= -455067384
-_b.e= 0
-_b.stones= 50
-_b.turn= 1
-_b.white1= 268451946
-_b.white2= 455017991
