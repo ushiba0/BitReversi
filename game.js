@@ -207,7 +207,7 @@ class MASTER extends GRAPHIC {
 				if(this.now.state()===1){
 					const search_depth = property.depth1>=64-this.now.stones ? -1 : property.depth0;
 					display.switch.innerText = "102";
-					try{ai.cpuHand(this.now, -100, 100, search_depth, true)}catch(e){
+					try{const a= ai}catch(e){
 						display.switch.innerText=e;
 						document.write(e)
 
