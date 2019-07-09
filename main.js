@@ -59,7 +59,7 @@ display.switch = document.getElementById("switch_colors");
 				if(property.clickDisabled){
 					return;
 				}
-				if(property.pass){
+				if(property.player_state_pass){
 					return;
 				}
 				property.clickDisabled = true;
