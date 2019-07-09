@@ -205,13 +205,13 @@ class MASTER extends GRAPHIC {
 		const cpu_turn = ()=>{
 			return new Promise((resolve, reject)=>{
 				if(this.now.state()===1){
-					display.switch.innerText = "11";
+					display.switch.innerText = "101";
 					const search_depth = property.depth1>=64-this.now.stones ? -1 : property.depth0;
-					display.switch.innerText = "12";
+					display.switch.innerText = "102";
 					const move = ai.cpuHand(this.now, -100, 100, search_depth, true);
-					display.switch.innerText = "13";
+					display.switch.innerText = "103";
 					this.record.push(move[0]);
-					display.switch.innerText = "14";
+					display.switch.innerText = "104";
 				}
 				if(this.now.state()===2){
 					const newNode = new BOARD(this.now);
