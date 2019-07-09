@@ -22,7 +22,7 @@
 				text-align:center;
 
 				display: grid;
-				grid-template-rows: 30px 300px 30px 30px;
+				grid-template-rows: 30px 300px 30px 30px 30px;
 				grid-template-columns: 1fr 30px 30px 30px 30px 30px 30px 30px 30px 30px 30px 1fr;
 				/*grid-template-columns: 1fr 30px 20px 10px 30px 20px 10px 160px 20px 1fr;*/
 				
@@ -112,10 +112,6 @@
 
 			.minimize{
 				transform: scale(0.7, 0.7);
-			}
-
-			.pass_availble{
-				background: #9f9fff;
 			}
 						
 			@keyframes bounce {
@@ -224,14 +220,15 @@
 			}
 
 			#pass{
-				grid-row: 4;
-				grid-column: 6/9;
+				grid-row: 5;
+				grid-column: 2/12;
 				display: flex;
 				font-size: 14px;
 				justify-content: center;
 				align-items: center;
 				border: solid 0.5px #aaa;
 				margin: 0px;
+				background: #9fff9f;
 			}
 
 			#undo{
@@ -266,7 +263,7 @@
 			<option value="16">16 moves</option>
 		</select>
 
-		<div id="pass">pass</div>
+		<div id="pass" style="display:none;">pass</div>
 		<div id="undo">undo</div>
 		<div id="switch_colors">switch colors</div>
 		

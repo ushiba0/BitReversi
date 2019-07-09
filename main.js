@@ -124,7 +124,7 @@ display.switch = document.getElementById("switch_colors");
 	//pass button
 	document.getElementById("pass").addEventListener(property.touchScreen?"touchend":"mouseup", e=>{
 		if(property.player_state_pass){
-			display.pass.classList.remove("pass_availble");
+			display.pass.style.display = "none";
 			property.player_state_pass = false;
 			master.play();
 		}

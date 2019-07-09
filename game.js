@@ -218,7 +218,7 @@ class MASTER extends GRAPHIC {
 					this.record.push(newNode);
 					if(this.now.turn===property.colorOfCpu){
 						property.player_state_pass = true;
-						display.pass.classList.add("pass_availble");
+						display.pass.style.display = "block";
 						window.stop();
 					}
 				}
