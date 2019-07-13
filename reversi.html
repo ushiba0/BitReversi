@@ -16,17 +16,19 @@
 				-webkit-user-select:none;
 			}
 
+			:root{
+				--s: calc(1.0);
+			}
+
 			body{
 				background:#ffffff;
 				font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', '游ゴシック  Medium', meiryo, sans-serif;
 				text-align:center;
-
 				display: grid;
 				grid-template-rows: 30px 300px 30px 30px 30px;
 				grid-template-columns: 1fr 30px 30px 30px 30px 30px 30px 30px 30px 30px 30px 1fr;
-				/*grid-template-columns: 1fr 30px 20px 10px 30px 20px 10px 160px 20px 1fr;*/
-				
-				margin: 20px;
+				margin: 0px;
+				transform: scale(var(--s), var(--s));
 			}
 
 			select{
@@ -34,15 +36,15 @@
 				appearance: none;
 				padding: 0em 1em ;
 				border-radius: 0px;
+				border: solid 0.5px #aaa;
 				background: transparent;
-				font-size: 10px;
+				font-size: 14px;
 			}
 			
 			.square{
 				width: 30px;
 				height: 30px;
 				position: absolute;
-				/*背景色*/
 				background: #cacaca;
 			}
 

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,user-scalable=no">
+		<title>BitReversi</title>
+		
+		
+		<style>
+			*{
+				margin: 0px;
+				padding: 0px;
+				-webkit-touch-callout:none;
+				-webkit-user-select:none;
+			}
+
+			:root{
+				--s: calc(1.0);
+			}
+
+			body{
+				background:#ffffff;
+				font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', '游ゴシック  Medium', meiryo, sans-serif;
+				text-align:center;
+				margin: 0px;
+			}
+
+			select{
+				-webkit-appearance: none;
+				appearance: none;
+				padding: 0em 1em ;
+				border-radius: 0px;
+				border: solid 0.5px #aaa;
+				background: transparent;
+				font-size: 14px;
+
+                width: 100px;
+                height:30px;
+			}
+
+            table{
+                background: #eaeaea;
+                border-collapse:  collapse;
+                border: solid 3px #a0a0a0;
+                margin: auto;
+            }
+
+            td{
+                border: solid 1px #404040;
+                padding: 0px;
+            }
+
+            div{
+                /*inline-blockのすきまをなくす*/
+                font-size: 0px;
+            }
+			
+			.black{
+				width: 80%;
+				height: 85%;
+				border-radius: 50%;
+				background: #202020;
+				border: solid 0.5px #202020;
+                margin: auto;
+			}
+
+			.white{
+				width: 29px;
+				height: 29px;
+				border-radius: 50%;
+				background: #f8f8f8;
+				border: solid 0.5px #a0a0a0;
+                transform: scale(0.85, 0.85)
+			}
+
+			.blank{
+				width: 30px;
+				height: 30px;
+			}
+
+			.eval_plus{
+				width: 30px;
+				height: 30px;
+				font-size: 8px;
+				color: #ff0000;
+				display:table-cell;
+				vertical-align: middle;
+			}
+			
+			.eval_minus{
+				width: 30px;
+				height: 30px;
+				font-size: 8px;
+				color: #000000;
+				display:table-cell;
+				vertical-align: middle;
+			}
+
+			.legal{
+				background: #9f9fff;
+			}
+
+			.lastput{
+				background: #9fff9f;
+			}
+
+			.minimize{
+				transform: scale(0.7, 0.7);
+			}
+
+            .bounce{
+                animation: bounce 0.5s 1 ease;
+                transform-origin: center;
+                animation-play-state:running;
+            }
+						
+			@keyframes bounce {
+				0% { transform: scale(0.4, 0.4); }
+				25% { transform: scale(1, 1); }
+				50% { transform: scale(0.8, 0.8); }
+				75% { transform: scale(1.1, 1.1); }
+				100% { transform: scale(1, 1); }
+			}
+
+			#black_stone{
+                display: inline-block;
+                vertical-align: top;
+				width: 29px;
+				height: 29px;
+				border-radius: 50%;
+				background: #202020;
+				border: solid 0.5px #202020;
+                transform: scale(1, 1);
+			}
+			#black_score{
+                display: inline-block;
+                line-height: 31px;
+				width: 30px;
+				height: 30px;
+                vertical-align: top;
+                font-size: 14px;
+			}
+			#white_stone{
+                display: inline-block;
+                vertical-align: top;
+				width: 29px;
+				height: 29px;
+				border-radius: 50%;
+				background: #f8f8f8;
+				border: solid 0.5px #a0a0a0;
+			}
+			#white_score{
+                display: inline-block;
+                line-height: 31px;
+				width: 30px;
+				height: 30px;
+                vertical-align: top;
+                font-size: 14px;
+			}
+			#comment{
+				background: #eee;
+				display: inline-block;
+                line-height: 30px;
+                width: 120px;
+				padding: 0px;
+                font-size: 14px;
+			}
+
+			#board{
+				background: #fff;
+			}
+
+			#yominofukasa{
+				display: inline-block;
+				font-size: 14px;
+				border: solid 0.5px #aaa;
+				margin: 0px;
+                line-height: 31px;
+				width: 150px;
+				height: 30px;
+			}
+
+			#switch_colors{
+				display: inline-block;
+				font-size: 14px;
+				border: solid 0.5px #aaa;
+				margin: 0px;
+                line-height: 31px;
+				width: 100px;
+				height: 30px;
+			}
+            #undo{
+				display: inline-block;
+				font-size: 14px;
+				border: solid 0.5px #aaa;
+				margin: 0px;
+                line-height: 31px;
+				width: 100px;
+				height: 30px;
+			}
+
+			#pass{
+				display: flex;
+				font-size: 14px;
+				justify-content: center;
+				align-items: center;
+				border: solid 0.5px #aaa;
+				margin: 0px;
+				background: #9fff9f;
+			}
+
+			
+		</style>
+		
+	</head>
+	
+	
+	<body>
+		
+        <div>
+            <div id="black_stone"></div>
+            <div id="black_score"></div>
+            <div id="white_stone"></div>
+            <div id="white_score"></div>
+            <div id="comment"></div>
+        </div>
+
+        <div id="board"></div>
+
+
+		<div id="pass" style="display:none;">pass</div>
+
+        <div>
+            <div id="switch_colors">switch colors</div>
+            <div id="undo">undo</div>
+
+            <select id="search_depth">
+                <option value="1/1">1 moves</option>
+                <option value="2/2">2 moves</option>
+                <option value="4/4">4 moves</option>
+                <option value="4/12">4 / 12 moves</option>
+                <option value="6/12">6 / 12 moves</option>
+                <option value="8/16">8 / 16 moves</option>
+            </select>
+        </div>
+
+		
+		
+
+		<script src="data2png.js"></script>
+		<script src="main.js"></script>
+		<script src="board.js"></script>
+		<script src="eval.js"></script>
+		<script src="ai.js"></script>
+		<script src="game.js"></script>
+		<script src="initializer.js"></script>
+
+
+		<script src="temp.js"></script>
+		<script src="temp1.js"></script>
+
+	</body>
+</html>

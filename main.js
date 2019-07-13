@@ -28,13 +28,20 @@ const createElement = (element="div", property={})=>{
 const display = new Object();
 display.squares = new Array();
 display.circles = new Array();
-display.black_score = createElement('div', {id:"black_score"});
-display.white_score = createElement('div', {id:"white_score"});
-display.comment = createElement('div', {id:"comment"});
-display.board = createElement('div', {id:"board"});
+display.black_score = document.getElementById("black_score");
+display.white_score = document.getElementById("white_score");
+
+display.comment = document.getElementById("comment");
+display.board = document.getElementById("board");
 display.pass = document.getElementById("pass");
 display.switch = document.getElementById("switch_colors");
 
+
+
+let w = Math.max(Math.min(window.innerWidth, 750), 200);
+window.addEventListener("resize", ()=>{
+	
+});
 
 
 (()=>{
@@ -86,12 +93,12 @@ display.switch = document.getElementById("switch_colors");
     display.board.appendChild(table);
 
     // set score box
-    const black_stone = createElement('div', {className:"black minimize", id:"black_stone"});
+    /*const black_stone = createElement('div', {className:"black minimize", id:"black_stone"});
 	const white_stone = createElement('div', {className:"white minimize", id:"white_stone"});
     document.body.appendChild(black_stone);
     document.body.appendChild(display.black_score);
     document.body.appendChild(white_stone);
-	document.body.appendChild(display.white_score);
+	document.body.appendChild(display.white_score);*/
 
 	
 	document.body.addEventListener(property.touchScreen?"touchend":"mouseup", (e)=>{
@@ -112,13 +119,10 @@ display.switch = document.getElementById("switch_colors");
 	});
 
 	//on pulldown menu changed (depth)
-	document.getElementById("depth").addEventListener("change", e=>{
-		property.depth0 = parseInt(e.target.value, 10);
-	});
-
-	//on pulldown menu changed (depth_last)
-	document.getElementById("depth_last").addEventListener("change", e=>{
-		property.depth1 = parseInt(e.target.value, 10);
+	document.getElementById("search_depth").addEventListener("change", e=>{
+		const value = e.target.value.split("/").map(x=>parseInt(x));
+		property.depth0 = value[0];
+		property.depth1 = value[1];
 	});
 
 	//pass button
@@ -132,5 +136,13 @@ display.switch = document.getElementById("switch_colors");
 })();
 
 let touchcount =0;
-document.body.appendChild(display.comment);
-document.body.appendChild(display.board);
+//document.body.appendChild(display.comment);
+//document.body.appendChild(display.board);
+
+
+
+const tds = document.getElementsByTagName("td");
+for(let i=0;i<tds.length;i++){
+	tds[i].style.height = "35px";
+	tds[i].style.width = "35px";
+}
