@@ -907,6 +907,14 @@ class BOARD {
 		
 		return search(this, alpha, beta, depth);
 	}
+
+	static a(){
+		const s = new BOARD();
+
+		s.putStone(1,0)
+
+		return s;
+	}
 }
 
 

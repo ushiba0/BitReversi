@@ -83,11 +83,7 @@
 			.lastput{
 				background: #9fff9f;
 			}
-
-			.minimize{
-				transform: scale(0.7, 0.7);
-			}
-
+            
             .bounce{
                 animation: bounce 0.5s 1 ease;
                 transform-origin: center;
@@ -102,14 +98,26 @@
 				100% { transform: scale(1, 1); }
 			}
 
+            #header{
+                width: 300px;
+                margin: 5px auto;
+            }
+            #black_wrap{
+                display: inline-block;
+                vertical-align: top;
+                background: #ddd;
+                border-radius: 9px;
+                margin: 0% 2% 0% 0%;
+            }
 			#black_stone{
                 display: inline-block;
                 vertical-align: top;
-				width: 29px;
-				height: 29px;
+				width: 30px;
+				height: 30px;
 				border-radius: 50%;
 				background: #202020;
 				border: solid 0.5px #202020;
+                box-sizing:border-box;
                 transform: scale(0.8, 0.8);
 			}
 			#black_score{
@@ -120,14 +128,22 @@
                 vertical-align: top;
                 font-size: 14px;
 			}
+            #white_wrap{
+                display: inline-block;
+                vertical-align: top;
+                background: #ddd;
+                border-radius: 9px;
+                margin: 0% 2% 0% 0%;
+            }
 			#white_stone{
                 display: inline-block;
                 vertical-align: top;
-				width: 29px;
-				height: 29px;
+				width: 30px;
+				height: 30px;
 				border-radius: 50%;
 				background: #f8f8f8;
 				border: solid 0.5px #a0a0a0;
+                box-sizing:border-box;
                 transform: scale(0.8, 0.8);
 			}
 			#white_score{
@@ -139,104 +155,142 @@
                 font-size: 14px;
 			}
 			#comment{
-				background: #eee;
+				background: #ddd;
 				display: inline-block;
+                border-radius: 9px;
                 line-height: 30px;
-                width: 128px;
+                width: 130px;
 				padding: 0px;
                 font-size: 14px;
+                margin: 0px 0px 0px calc(96% - 250px);
 			}
 
 			#board{
 				background: #fff;
 			}
 
-			#yominofukasa{
-				display: inline-block;
-				font-size: 14px;
-				border: solid 0.5px #aaa;
-				margin: 0px;
-                line-height: 31px;
-				width: 150px;
-				height: 30px;
-			}
-
-			#switch_colors{
-				display: inline-block;
-				font-size: 14px;
-				border: solid 0.5px #aaa;
-				margin: 0px;
-                line-height: 31px;
-				width: 100px;
-				height: 30px;
-			}
-            #undo{
-				display: inline-block;
-				font-size: 14px;
-				border: solid 0.5px #aaa;
-				margin: 0px;
-                line-height: 31px;
-				width: 100px;
-				height: 30px;
-			}
-
 			#pass{
-				display: flex;
+				display: inline-block;
+                border-radius: 9px;
 				font-size: 14px;
-				justify-content: center;
-				align-items: center;
-				border: solid 0.5px #aaa;
 				margin: 0px;
+                line-height: 31px;
+				width: 240px;
+				height: 30px;
+                margin: 3px auto;
 				background: #9fff9f;
 			}
 
             #test{
                 display: inline-block;
+                width: 300px;
+                height: 300px;
+            }
+            .board_row{
+                width: 100%;
+                height: 12.5%;
             }
             .board_box{
 				border: solid 0.5px #aaa;
-                width: 12vmin;
-                height: 12vmin;
+                width: 12.5%;
+                height: 100%;
 				vertical-align: top;
+                box-sizing:border-box;
             }
-			
+
+            #footer1{
+                width: 300px;
+                margin: auto;
+            }
+            #switch{
+				display: inline-block;
+                border-radius: 9px;
+				font-size: 14px;
+				border: solid 0.5px #aaa;
+				margin: 2px 0px 2px 0px;
+                line-height: 31px;
+				width: 32%;
+				height: 30px;
+                box-sizing:border-box;
+            }
+            #restart{
+				display: inline-block;
+                border-radius: 9px;
+				font-size: 14px;
+				border: solid 0.5px #aaa;
+				margin: 2px 2% 2px 2%;
+                line-height: 31px;
+				width: 32%;
+				height: 30px;
+                box-sizing:border-box;
+            }
+            #undo{
+				display: inline-block;
+                border-radius: 9px;
+				font-size: 14px;
+				border: solid 0.5px #aaa;
+				margin: 2px 0px 2px 0px;
+                line-height: 31px;
+				width: 32%;
+				height: 30px;
+                box-sizing:border-box;
+            }
+
+            .button{
+				display: inline-block;
+                border-radius: 9px;
+				font-size: 14px;
+				border: solid 0.5px #aaa;
+				margin: 0px;
+                line-height: 31px;
+				width: 30vmin;
+				height: 30px;
+                margin: 3px;
+            }
+            
 		</style>
 		
 	</head>
 	
 	
 	<body>
-		
-        <div>
-            <div id="black_stone"></div>
-            <div id="black_score"></div>
-            <div id="white_stone"></div>
-            <div id="white_score"></div>
+        
+        <div id="header">
+            <div id="black_wrap">
+                <div id="black_stone"></div>
+                <div id="black_score"></div>
+            </div>
+            <div id="white_wrap">
+                <div id="white_stone"></div>
+                <div id="white_score"></div>
+            </div>
             <div id="comment"></div>
         </div>
 
         <div id="test"></div>
 
-
-		<div id="pass" style="display:none;">pass</div>
-
         <div>
-            <div id="switch_colors">switch</div>
-            <div id="switch_colors">restart</div>
-            <div id="undo">undo</div>
+            <div id="pass" style="display:none;">pass</div>
+        </div>
+		
 
-            <select id="search_depth">
-                <option value="1/1">1 moves</option>
-                <option value="2/2">2 moves</option>
-                <option value="4/4">4 moves</option>
-                <option value="4/12">4 / 12 moves</option>
-                <option value="6/12">6 / 12 moves</option>
-                <option value="8/16">8 / 16 moves</option>
-            </select>
+        <div id="footer1">
+            <div id="switch" class="button">switch</div>
+            <div id="restart" class="button">restart</div>
+            <div id="undo" class="button">undo</div>
         </div>
 
-		
-		
+        <select id="search_depth">
+            <optgroup label="読みの深さ">
+            <option value="1/1">1 moves</option>
+            <option value="2/2">2 moves</option>
+            <option value="4/4">4 moves</option>
+            <option value="4/12" selected>4 / 12 moves</option>
+            <option value="6/12">6 / 12 moves</option>
+            <option value="8/16">8 / 16 moves</option>
+            </optgroup>
+        </select>
+        
 
 		<script src="data2png.js"></script>
 		<script src="main.js"></script>

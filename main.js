@@ -58,6 +58,7 @@ display.switch = document.getElementById("switch_colors");
 			const box = document.createElement("div");
 			const div = document.createElement("div");
 			box.classList.add("board_box");
+			row.classList.add("board_row");
 			row.appendChild(box);
 			box.appendChild(div);
 			box.style.display = "inline-block";
@@ -90,8 +91,6 @@ display.switch = document.getElementById("switch_colors");
 	
 
 	document.body.addEventListener(property.touchScreen?"touchend":"mouseup", (e)=>{
-		const target = e.target;
-		
 		//三回連続クリックの判定
 		touchcount++;
 		setTimeout(()=>{touchcount=0;}, 300);
@@ -120,6 +119,37 @@ display.switch = document.getElementById("switch_colors");
 			property.player_state_pass = false;
 			master.play();
 		}
+	});
+
+	//undo button
+	document.getElementById("undo").addEventListener(property.touchScreen?"touchend":"mouseup", e=>{
+		master.undo();
+	});
+
+	//restart button
+	document.getElementById("restart").addEventListener(property.touchScreen?"touchend":"mouseup", e=>{
+		if(confirm("restart geme")){
+			master.restart();
+		}
+	});
+
+	//on window resized, fit board width to window
+	const changeElementSize = ()=>{
+		const w0 = Math.max(Math.min(500, window.innerWidth), 260);
+		const w = w0 -4 + "px";
+		
+		const header = document.getElementById("header");
+		header.style.width = w;
+		const test = document.getElementById("test");
+		test.style.width = w;
+		test.style.height = w;
+		const footer1 = document.getElementById("footer1");
+		footer1.style.width = w;
+	};
+	changeElementSize();
+	//pass button
+	window.addEventListener("resize", ()=>{
+		changeElementSize();
 	});
 })();
 

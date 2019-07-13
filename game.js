@@ -175,6 +175,10 @@ class GRAPHIC {
 			x = e%8;
 		}
 		
+		//handが定義されていない場合
+		if(!x || !y){
+			return;
+		}
 		display.squares[y*8+x].classList.add("lastput");
 	}
 }
@@ -188,11 +192,6 @@ class MASTER extends GRAPHIC {
 		this.record = [new BOARD()];
 	}
 
-	resetGame(){
-		this.mode = 'gameb';
-		this.record = [new BOARD()];
-		this.render(this.now);
-	}
 	
 	//最新のBoardを返す
 	get now(){
@@ -263,6 +262,29 @@ class MASTER extends GRAPHIC {
 		await render();
 		
 		return;
+	}
+
+	undo(){
+		if(this.record.length<6){
+			return;
+		}
+		this.record.pop();
+		while(true){
+			if(this.record[this.record.length-1].turn===property.colorOfCpu){
+				this.record.pop();
+			}else{
+				break;
+			}
+		}
+		this.render();
+		this.showMove();
+		this.showHand();
+	}
+
+	restart(){
+		this.record = [new BOARD()];
+		this.render(this.now);
+		this.showMove();
 	}
 }
 const master = new MASTER();
