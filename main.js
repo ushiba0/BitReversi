@@ -38,11 +38,6 @@ display.switch = document.getElementById("switch_colors");
 
 
 
-let w = Math.max(Math.min(window.innerWidth, 750), 200);
-window.addEventListener("resize", ()=>{
-	
-});
-
 
 (()=>{
 	//detect touch screen
@@ -53,16 +48,31 @@ window.addEventListener("resize", ()=>{
 			break;
 		}
 	}
-
-	// generate board table
-    const table = createElement('table');
+	
+	
+	//generate reversi board
+	const reversiBoard = document.getElementById("test");
 	for(let i=0;i<8;i++){
-		const tr = createElement('tr');
+		const row = document.createElement("div");
+		for(let i=0;i<8;i++){
+			const box = document.createElement("div");
+			const div = document.createElement("div");
+			box.classList.add("board_box");
+			row.appendChild(box);
+			box.appendChild(div);
+			box.style.display = "inline-block";
+			display.squares.push(box);
+			display.circles.push(div);
+		}
+		reversiBoard.appendChild(row);
+	}
+
+	
+	//add eventlistener to each cell
+	for(let i=0;i<8;i++){
 		for(let j=0;j<8;j++){
-			const td = createElement('td');
-			const div = createElement('div', {className:"blank"});
-			// on mouse click
-			td.addEventListener(property.touchScreen?"touchend":"mouseup", ()=>{
+			const e = i*8 + j;
+			display.circles[e].addEventListener(property.touchScreen?"touchend":"mouseup", ()=>{
 				if(property.clickDisabled){
 					return;
 				}
@@ -70,37 +80,15 @@ window.addEventListener("resize", ()=>{
 					return;
 				}
 				property.clickDisabled = true;
-				const e = i*8 + j;
 				master.play(i<4?1<<(31-e):0, i<4?0:1<<(63-e))
 				.then(()=>{
 					property.clickDisabled = false;
 				});
 			});
-
-			td.appendChild(div);
-			tr.appendChild(td);
-			display.squares.push(td);
-			display.circles.push(div);
 		}
-		table.appendChild(tr);
 	}
-
-
-    // initialize comment box
-    display.comment.innerText = 'player turn';
-    
-
-    display.board.appendChild(table);
-
-    // set score box
-    /*const black_stone = createElement('div', {className:"black minimize", id:"black_stone"});
-	const white_stone = createElement('div', {className:"white minimize", id:"white_stone"});
-    document.body.appendChild(black_stone);
-    document.body.appendChild(display.black_score);
-    document.body.appendChild(white_stone);
-	document.body.appendChild(display.white_score);*/
-
 	
+
 	document.body.addEventListener(property.touchScreen?"touchend":"mouseup", (e)=>{
 		const target = e.target;
 		
@@ -136,13 +124,6 @@ window.addEventListener("resize", ()=>{
 })();
 
 let touchcount =0;
-//document.body.appendChild(display.comment);
-//document.body.appendChild(display.board);
 
 
 
-const tds = document.getElementsByTagName("td");
-for(let i=0;i<tds.length;i++){
-	tds[i].style.height = "35px";
-	tds[i].style.width = "35px";
-}

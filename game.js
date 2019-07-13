@@ -12,6 +12,21 @@ class GRAPHIC {
 		for(let value of display.circles){
 			value.innerText = '';
 		}
+
+		//最後に置いた場所を消す
+		for(const item of display.squares){
+			item.classList.remove("lastput");
+		}
+
+		//石を消す
+		for(const item of display.circles){
+			const list = item.classList;
+			list.remove("black");
+			list.remove("white");
+			list.remove("blank");
+			list.remove("eval_plus");
+			list.remove("eval_minus");
+		}
 		
 		//石の数をカウント
 		for(let i=1;i<65;i++){
@@ -24,12 +39,13 @@ class GRAPHIC {
 		
 		//石を置く
 		for(let i=1;i<65;i++){
+			const t = display.circles[i-1].classList;
 			if(board[i]===1){
-				display.circles[i-1].className = 'black';
+				t.add("black");
 			}else if(board[i]===-1){
-				display.circles[i-1].className = 'white';	
+				t.add("white");
 			}else{
-				display.circles[i-1].className = 'blank';
+				t.add("blank")
 			}
 		}
 		
@@ -38,6 +54,8 @@ class GRAPHIC {
 		
 		if(node.turn!==property.colorOfCpu){
 			display.comment.innerText = 'player turn';
+		}else{
+			display.comment.innerText = 'cpu turn';
 		}
 		
 		if(node.state()===3){//終局
@@ -82,13 +100,14 @@ class GRAPHIC {
 				put = 63-Math.log2(node.hand2);
 			}
 
-			display.circles[put].innerText = node.e;
+			const circle = display.circles[put];
+			circle.innerText = node.e;
 			if(node.e>0){
-				display.circles[put].className = 'eval_plus';
-				display.circles[put].innerText = (node.e + '').slice(0, 5);
+				circle.classList.add("eval_plus");
+				circle.innerText = (node.e + '').slice(0, 5);
 			}else{
-				display.circles[put].className = 'eval_minus';
-				display.circles[put].innerText = (node.e + '').slice(0, 5);
+				circle.classList.add("eval_minus");
+				circle.innerText = (node.e + '').slice(0, 5);
 			}
 		}
 		
@@ -96,6 +115,9 @@ class GRAPHIC {
 	}
 	
 	showMove(node=this.now){
+		for(const item of display.squares){
+			item.classList.remove("legal");
+		}
 
 		let [move1, move2] = node.getMove();
 		const board = new Array();
@@ -119,9 +141,7 @@ class GRAPHIC {
 		
 		for(let i=1;i<65;i++){
 			if(board[i]===1){
-				display.squares[i-1].className = 'legal';
-			}else{
-				display.squares[i-1].className = '';
+				display.squares[i-1].classList.add("legal");
 			}
 		}
 	}
@@ -130,8 +150,8 @@ class GRAPHIC {
 		// this.nowにhandプロパティがなかったら
 		if(node.hand1===0 && node.hand2===0){
 			for(let i=0;i<64;i++){
-				if(display.squares[i].className==='lastput'){
-					display.squares[i].className==='';
+				if(display.squares[i].classList.contains("lastput")){
+					display.squares[i].classList.remove("lastput");;
 				}
 			}
 			return;
@@ -155,7 +175,7 @@ class GRAPHIC {
 			x = e%8;
 		}
 		
-		display.squares[y*8+x].className = 'lastput';
+		display.squares[y*8+x].classList.add("lastput");
 	}
 }
 
