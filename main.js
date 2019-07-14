@@ -73,7 +73,7 @@ display.switch = document.getElementById("switch_colors");
 	for(let i=0;i<8;i++){
 		for(let j=0;j<8;j++){
 			const e = i*8 + j;
-			display.circles[e].addEventListener(property.touchScreen?"touchend":"mouseup", ()=>{
+			display.squares[e].addEventListener(property.touchScreen?"touchend":"mouseup", ()=>{
 				if(property.clickDisabled){
 					return;
 				}
@@ -136,7 +136,7 @@ display.switch = document.getElementById("switch_colors");
 	//on window resized, fit board width to window
 	const changeElementSize = ()=>{
 		const w0 = Math.max(Math.min(500, window.innerWidth), 260);
-		const w = w0 -4 + "px";
+		const w = w0 - 4 + "px";
 		
 		const header = document.getElementById("header");
 		header.style.width = w;

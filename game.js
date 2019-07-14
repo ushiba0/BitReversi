@@ -26,6 +26,8 @@ class GRAPHIC {
 			list.remove("blank");
 			list.remove("eval_plus");
 			list.remove("eval_minus");
+			list.remove("searching");
+			list.remove("legal");
 		}
 		
 		//石の数をカウント
@@ -141,9 +143,41 @@ class GRAPHIC {
 		
 		for(let i=1;i<65;i++){
 			if(board[i]===1){
-				display.squares[i-1].classList.add("legal");
+				display.circles[i-1].classList.add("legal");
 			}
 		}
+	}
+
+	showSearchingCell(hand1, hand2){
+		return new Promise(resolve=>{
+			let x, y;
+			if(hand1<0){
+				y = 0;
+				x = 0;
+			}else if(hand1>0){
+				const e = 31 - Math.log2(hand1);
+				y = ~~(e/8);
+				x = e%8;
+			}
+			if(hand2<0){
+				y = 4;
+				x = 0;
+			}else if(hand2>0){
+				const e = 63 - Math.log2(hand2);
+				y = ~~(e/8);
+				x = e%8;
+			}
+			
+			//handが定義されていない場合
+			if(isNaN(x*y)){
+				throw new Error("okasii yo");
+			}
+	
+			display.circles[y*8+x].classList.add("searching");
+			setTimeout(() => {
+				resolve();
+			}, 0);
+		});
 	}
 	
 	showHand(node=this.now){
@@ -176,8 +210,8 @@ class GRAPHIC {
 		}
 		
 		//handが定義されていない場合
-		if(!x || !y){
-			return;
+		if(isNaN(x*y)){
+			throw new Error("okasii yo");
 		}
 		display.squares[y*8+x].classList.add("lastput");
 	}
@@ -222,11 +256,11 @@ class MASTER extends GRAPHIC {
 		};
 		
 		const cpu_turn = ()=>{
-			return new Promise((resolve, reject)=>{
+			return new Promise(async (resolve, reject)=>{
 				if(this.now.state()===1){
 					const search_depth = property.depth1>=64-this.now.stones ? -1 : property.depth0;
 
-					let move = ai.cpuHand(this.now, -100, 100, search_depth, true);
+					const move = await ai.cpuHand(this.now, -100, 100, search_depth, true);
 					this.record.push(move[0]);
 				}
 				if(this.now.state()===2){

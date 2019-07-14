@@ -70,7 +70,7 @@ class AI extends EV {
 		return value;
 	}
 
-	cpuHand(node, alpha=-100, beta=100, depth=0, showStatus=false){
+	async cpuHand(node, alpha=-100, beta=100, depth=0, showStatus=false, showSearching=false){
 		const startTime = performance.now();
 		const children = node.expand();
 		let rand=0, temp=0;
@@ -78,11 +78,15 @@ class AI extends EV {
 			return children;
 		}
 		for(const child of children){
-			// calc eval of child
-			child.e = -this.negaScout(child, alpha, beta, depth);
 			// どこにおいたかを調べる
 			child.hand1 = (node.black1|node.white1)^(child.black1|child.white1);
 			child.hand2 = (node.black2|node.white2)^(child.black2|child.white2);
+			// calc eval of child
+			child.e = -this.negaScout(child, alpha, beta, depth);
+
+			//if(showSearching){
+				await master.showSearchingCell(child.hand1, child.hand2);
+			//}
 		}
 		// sort
 		children.sort((a,b)=>{return b.e-a.e;});
