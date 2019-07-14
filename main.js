@@ -1,5 +1,4 @@
-const size = 40;
-
+//property, display, confirmwindow
 
 const property = new Object();
 property.num_phase = 61;
@@ -7,24 +6,15 @@ property.num_shape = 10;
 property.learning_rate = 1/8/2;
 property.colorOfCpu = -1;
 property.num_readnode = 0;
-property.depth = [2, 4];
-property.depth0 = 4;
-property.depth1 = 12;
+property.depth = 4;
+property.depth_last = 12;
 property.alpha = -100;
 property.beta = 100;
 property.clickDisabled = false;
-property.touchScreen = false;
 property.player_state_pass = false;
+property.touchcount = 0;
+property.eventName = "mouseup";
 
-
-
-
-const createElement = (element="div", property={})=>{
-    const div = document.createElement(element);
-    div.className = property.className || "";
-    div.id = property.id || "";
-    return div;
-};
 
 
 const display = new Object();
@@ -32,7 +22,6 @@ display.squares = new Array();
 display.circles = new Array();
 display.black_score = document.getElementById("black_score");
 display.white_score = document.getElementById("white_score");
-
 display.comment = document.getElementById("comment");
 display.board = document.getElementById("board");
 display.pass = document.getElementById("pass");
@@ -44,9 +33,8 @@ display.switch = document.getElementById("switch_colors");
 (()=>{
 	//detect touch screen
 	for(const name of ["iPhone", "Android", "Mobile", "iPad"]){
-		property.touchScreen = false;
 		if(navigator.userAgent.indexOf(name)!==-1){
-			property.touchScreen = true;
+			property.eventName = "touchend";
 			break;
 		}
 	}
@@ -75,7 +63,7 @@ display.switch = document.getElementById("switch_colors");
 	for(let i=0;i<8;i++){
 		for(let j=0;j<8;j++){
 			const e = i*8 + j;
-			display.squares[e].addEventListener(property.touchScreen?"touchend":"mouseup", ()=>{
+			display.squares[e].addEventListener(property.eventName, ()=>{
 				if(property.clickDisabled){
 					return;
 				}
@@ -92,17 +80,18 @@ display.switch = document.getElementById("switch_colors");
 	}
 	
 
-	document.body.addEventListener(property.touchScreen?"touchend":"mouseup", (e)=>{
-		//三回連続クリックの判定
-		touchcount++;
-		setTimeout(()=>{touchcount=0;}, 300);
-		if(touchcount>=3){
+	//detect 3-times-touch and go to kaihatsu-mode
+	display.comment.addEventListener(property.eventName, e=>{
+		e.preventDefault();
+		property.touchcount++;
+		setTimeout(()=>{property.touchcount=0;}, 300);
+		if(property.touchcount>=3){
 			const comment_text = display.comment.innerText;
 			display.comment.innerText = "開発モード";
-			touchcount = -1e9;
+			property.touchcount = -1e9;
 			setTimeout(() => {
 				display.comment.innerText = comment_text;
-				touchcount = 0;
+				property.touchcount = 0;
 			}, 3000);
 		}
 	});
@@ -110,14 +99,14 @@ display.switch = document.getElementById("switch_colors");
 	//on pulldown menu changed (depth)
 	document.getElementById("search_depth").addEventListener("change", e=>{
 		const value = e.target.value.split("/").map(x=>parseInt(x));
-		property.depth0 = value[0];
-		property.depth1 = value[1];
+		property.depth = value[0];
+		property.depth_last = value[1];
 		property.alpha = value[2];
 		property.beta = value[3];
 	});
 
 	//pass button
-	document.getElementById("pass").addEventListener(property.touchScreen?"touchend":"mouseup", e=>{
+	document.getElementById("pass").addEventListener(property.eventName, e=>{
 		if(property.player_state_pass){
 			display.pass.style.display = "none";
 			property.player_state_pass = false;
@@ -126,12 +115,12 @@ display.switch = document.getElementById("switch_colors");
 	});
 
 	//undo button
-	document.getElementById("undo").addEventListener(property.touchScreen?"touchend":"mouseup", e=>{
+	document.getElementById("undo").addEventListener(property.eventName, e=>{
 		master.undo();
 	});
 
 	//restart button
-	document.getElementById("restart").addEventListener(property.touchScreen?"touchend":"mouseup", e=>{
+	document.getElementById("restart").addEventListener(property.eventName, e=>{
 		confirmWindow(()=>{
 			master.restart();
 		})
@@ -149,6 +138,8 @@ display.switch = document.getElementById("switch_colors");
 		test.style.height = w;
 		const footer1 = document.getElementById("footer1");
 		footer1.style.width = w;
+		const footer2 = document.getElementById("footer2");
+		footer2.style.width = w;
 	};
 	changeElementSize();
 	//pass button
@@ -156,8 +147,6 @@ display.switch = document.getElementById("switch_colors");
 		changeElementSize();
 	});
 })();
-
-let touchcount =0;
 
 
 

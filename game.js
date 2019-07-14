@@ -16,6 +16,8 @@ class GRAPHIC {
 		//最後に置いた場所を消す
 		for(const item of display.squares){
 			item.classList.remove("lastput");
+			item.classList.remove("eval_plus");
+			item.classList.remove("eval_minus");
 		}
 
 		//石を消す
@@ -24,8 +26,6 @@ class GRAPHIC {
 			list.remove("black");
 			list.remove("white");
 			list.remove("blank");
-			list.remove("eval_plus");
-			list.remove("eval_minus");
 			list.remove("searching");
 			list.remove("legal");
 		}
@@ -73,12 +73,12 @@ class GRAPHIC {
 		}
 	}
 	
-	showEval(node=this.now, alpha=-100,beta=100, depth=-1){
+	async showEval(node=this.now, alpha=-100,beta=100, depth=-1){
 		
 		const search_depth = (depth===-1)?
 			(c.depth1>=64-node.stones ? -1 : c.depth0):
 			depth;
-		const evals = ai.cpuHand(node, alpha, beta, search_depth);
+		const evals = await ai.cpuHand(node, alpha, beta, search_depth);
 
 		if(evals.length===0){
 			return;
@@ -102,7 +102,7 @@ class GRAPHIC {
 				put = 63-Math.log2(node.hand2);
 			}
 
-			const circle = display.circles[put];
+			const circle = display.squares[put];
 			circle.innerText = node.e;
 			if(node.e>0){
 				circle.classList.add("eval_plus");
@@ -258,9 +258,9 @@ class MASTER extends GRAPHIC {
 		const cpu_turn = ()=>{
 			return new Promise(async (resolve, reject)=>{
 				if(this.now.state()===1){
-					const search_depth = property.depth1>=64-this.now.stones ? -1 : property.depth0;
+					const search_depth = property.depth_last>=64-this.now.stones ? -1 : property.depth;
 
-					const move = await ai.cpuHand(this.now, property.alpha, property.beta, search_depth, true);
+					const move = await ai.cpuHand(this.now, property.alpha, property.beta, search_depth, true, true);
 					this.record.push(move[0]);
 				}
 				if(this.now.state()===2){
@@ -286,7 +286,7 @@ class MASTER extends GRAPHIC {
 				this.showHand(this.now);
 				setTimeout(() => {
 					resolve();
-				}, 50);
+				}, 5);
 			});
 		};
 		
@@ -321,7 +321,6 @@ class MASTER extends GRAPHIC {
 		this.showMove();
 	}
 }
-const master = new MASTER();
 
 
 
@@ -395,5 +394,4 @@ class DEVELOP extends MASTER{
 		}
 	}
 }
-const develop = new DEVELOP;
 

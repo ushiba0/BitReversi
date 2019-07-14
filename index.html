@@ -26,12 +26,16 @@
 			select{
 				-webkit-appearance: none;
 				appearance: none;
-				padding: 0em 1em ;
-				border-radius: 0px;
+				padding: 0em 0.5em ;
+				border-radius: 9px;
 				border: solid 0.5px #aaa;
 				background: transparent;
 				font-size: 14px;
-                height:31px;
+                height: 31px;
+				width: 32%;
+				margin: 0px;
+				text-align: center;
+                box-sizing:border-box;
 			}
 
             div{
@@ -182,14 +186,8 @@
 			}
 
 			#pass{
-				display: inline-block;
-                border-radius: 9px;
-				font-size: 14px;
-				margin: 0px;
-                line-height: 31px;
-				width: 240px;
-				height: 30px;
-                margin: 3px auto;
+				margin: 4px;
+				width: calc(100% - 6px);
 				background: #9fff9f;
 			}
 
@@ -212,52 +210,41 @@
 
             #footer1{
                 width: 300px;
-                margin: auto;
+                margin: 4px auto;
             }
             #switch{
-				display: inline-block;
-                border-radius: 9px;
-				font-size: 14px;
-				border: solid 0.5px #aaa;
-				margin: 2px 0px 2px 0px;
-                line-height: 31px;
 				width: 32%;
-				height: 30px;
-                box-sizing:border-box;
             }
             #restart{
-				display: inline-block;
-                border-radius: 9px;
-				font-size: 14px;
-				border: solid 0.5px #aaa;
 				margin: 2px 2% 2px 2%;
-                line-height: 31px;
 				width: 32%;
-				height: 30px;
-                box-sizing:border-box;
             }
             #undo{
-				display: inline-block;
-                border-radius: 9px;
-				font-size: 14px;
-				border: solid 0.5px #aaa;
-				margin: 2px 0px 2px 0px;
-                line-height: 31px;
 				width: 32%;
-				height: 30px;
-                box-sizing:border-box;
             }
+
+			#footer2{
+                width: 300px;
+                margin: auto;
+            }
+			#setup{
+				margin: 2px 2% 2px 2%;
+				width: 32%;
+			}
+			#disp_reset{
+				width: 32%;
+			}
 
             .button{
 				display: inline-block;
                 border-radius: 9px;
 				font-size: 14px;
 				border: solid 0.5px #aaa;
-				margin: 0px;
                 line-height: 31px;
-				width: 30vmin;
+				width: 32%;
 				height: 30px;
-                margin: 3px;
+                margin: 0px;
+                box-sizing:border-box;
             }
             
 		</style>
@@ -282,7 +269,7 @@
         <div id="test"></div>
 
         <div>
-            <div id="pass" style="display:none;">pass</div>
+            <div id="pass" class="button" style="display:none;">pass</div>
         </div>
 		
 
@@ -290,22 +277,31 @@
             <div id="switch" class="button">switch</div>
             <div id="restart" class="button">restart</div>
             <div id="undo" class="button">undo</div>
+		</div>
+		
+
+
+		<div id="footer2">
+			<select id="search_depth">
+				<optgroup label="読みの深さ">
+				<option value="1/1/-100/100">1 moves</option>
+				<option value="2/2/-100/100">2 moves</option>
+				<option value="4/4/-100/100">4 moves</option>
+				<option value="4/12/-100/100" selected>4/12 moves</option>
+				<option value="6/12/-100/100">6/12 moves</option>
+				<option value="8/16/-100/100">8/16 moves</option>
+				<option value="8/16/-1/1">8*/16* moves</option>
+				<option value="10/20/-1/1">10*/20* moves</option>
+				</optgroup>
+			</select>
+            <div id="setup" class="button">setup board</div>
+            <div id="disp_reset" class="button">disp reset</div>
         </div>
 
-        <select id="search_depth">
-            <optgroup label="読みの深さ">
-            <option value="1/1/-100/100">1 moves</option>
-            <option value="2/2/-100/100">2 moves</option>
-            <option value="4/4/-100/100">4 moves</option>
-            <option value="4/12/-100/100" selected>4/12 moves</option>
-            <option value="6/12/-100/100">6/12 moves</option>
-			<option value="8/16/-100/100">8/16 moves</option>
-			<option value="8/16/-1/1">8*/16* moves</option>
-			<option value="10/20/-1/1">10*/20* moves</option>
-            </optgroup>
-        </select>
+
         
 
+		<script src="thread.js"></script>
 		<script src="data2png.js"></script>
 		<script src="main.js"></script>
 		<script src="board.js"></script>

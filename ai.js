@@ -77,7 +77,6 @@ class AI extends EV {
 		if(children.length===0){
 			return children;
 		}
-		console.log(alpha, beta, depth);
 		for(const child of children){
 			// どこにおいたかを調べる
 			child.hand1 = (node.black1|node.white1)^(child.black1|child.white1);
@@ -85,9 +84,9 @@ class AI extends EV {
 			// calc eval of child
 			child.e = -this.negaScout(child, alpha, beta, depth);
 
-			//if(showSearching){
+			if(showSearching){
 				await master.showSearchingCell(child.hand1, child.hand2);
-			//}
+			}
 		}
 		// sort
 		children.sort((a,b)=>{return b.e-a.e;});

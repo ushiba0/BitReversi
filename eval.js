@@ -50,7 +50,6 @@ weights_manager.loadPng();
 class EV {
 	constructor(){
 		this.weights = weights_manager.weights;
-		this.temp_weights;
         
 		// generate index table
 		this.indexb = new Uint16Array(256);
@@ -61,8 +60,6 @@ class EV {
 		}
 	}
 	
-	//
-
 	evaluation(board){
 		const shape = board.shape();
 		const weights = this.weights;
@@ -124,64 +121,6 @@ class EV {
 			weights[offset + index] += delta;
 			offset += 6561;
 		}
-	}
-	
-	trainAll(s=0, n1=0, n2=n1){
-		let count = 0, loss = 0;
-		
-		//最小値と最大値を整える
-		if(n1===0 && n2===0){
-			n1 = 4;
-			n2 = 64;
-		}else{
-			const a = ~~n1;
-			const b = ~~n2;
-			n1 = Math.min(a,b);
-			n2 = Math.max(a,b);
-		}
-
-		// 重みを入れ替え
-		const temp = this.weights;
-		this.weights = new Float32Array(6561*property.num_phase*property.num_shape);
-		this.weights.set(temp);
-		
-		const startTime = performance.now();
-		while(true){
-			const list = develop.getSelfPlayGame();
-			for(const node of list){
-				if(node.stones>=n1 && node.stones<=n2){
-					const nodes = new Array(8);
-					nodes[0] = node;
-					nodes[1] = nodes[0].rotate();
-					nodes[2] = nodes[1].rotate();
-					nodes[3] = nodes[2].rotate();
-					nodes[4] = nodes[0].flip();
-					nodes[5] = nodes[4].rotate();
-					nodes[6] = nodes[5].rotate();
-					nodes[7] = nodes[6].rotate();
-
-					for(const node_ of nodes){
-						this.updateWeights(node_, node_.e);
-					}
-
-					const true_value = node.e;
-					const pred_value = this.evaluation(node);
-		
-					loss += Math.pow(true_value-pred_value, 2);
-					count++;
-				}
-			}
-
-			const endTime = performance.now();
-			if(endTime-startTime>s){ break; }
-		}
-
-		for(let i=0;i<this.weights.length;i++){
-			this.weights[i] = Math.min(Math.max(this.weights[i], -128), 127);
-		}
-		temp.set(this.weights);
-		this.weights = temp;
-		console.log(`complete ${count} trainings\nloss ${Math.sqrt(loss/count).toPrecision(4)}`);
 	}
 	
 	trainOne(s=0, n=64, depth=-1){

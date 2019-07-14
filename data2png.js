@@ -11,7 +11,9 @@ class data2png {
     constructor(){
         this.width = 100;
         this.height = 100;
-        this.array = [];
+		this.array = [];
+		this.cvs;
+		this.weightsVersion = "2.4";
     }
 
 	toPng(arr){
@@ -20,8 +22,7 @@ class data2png {
 		const ctx = cvs.getContext('2d');
 		cvs.width = this.width;
         cvs.height = Math.max(this.height, 2 + ~~(arr.length/3/this.width));
-        const imagedata = ctx.getImageData(0, 0 , cvs.width, cvs
-            .height);
+        const imagedata = ctx.getImageData(0, 0 , cvs.width, cvs.height);
 		const data = imagedata.data;
         
         
@@ -115,9 +116,14 @@ class data2png {
 		let arr = this.array;
 		const that = this;
 		const img = new Image();
+		if(window.localStorage.weightsVersion===this.weightsVersion){
+			name = window.localStorage.weightsSRC;
+		}
 		img.src = name;
 		const cvs = document.createElement('canvas');
 		const ctx = cvs.getContext('2d');
+
+		this.cvs = cvs;
 		
 		img.onload = ()=> {
 			cvs.width = img.naturalWidth;
@@ -135,7 +141,12 @@ class data2png {
                 }
                 arr[i] = data[k++];
             }
-            that.array = arr;
+			that.array = arr;
+			
+			if(window.localStorage.weightsVersion!==this.weightsVersion){
+				window.localStorage.weightsSRC = cvs.toDataURL();
+				window.localStorage.weightsVersion = this.weightsVersion;
+			}
             
             func();
 			cvs.remove();
