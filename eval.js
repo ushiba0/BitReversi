@@ -17,33 +17,21 @@ class WEIGHTS_MANAGER{
         d2p.toPng(newarr);
 	}
 
-	selectPng(){
-        const func = ()=>{
-			const newarr = new Int8Array(this.buffer);
-			for(let i=0;i<this.buffer.byteLength;i++){
-				newarr[i] = d2p.array[i] - 128;
-			}
-            this.weights = newarr;
-        }
-        const d2p = new data2png();
-        d2p.selectPng(func);
-	}
-	
 	loadPng(){
 		const func = ()=>{
 			const newarr = new Int8Array(this.buffer);
 			for(let i=0;i<this.buffer.byteLength;i++){
 				newarr[i] = d2p.array[i] - 128;
 			}
-			this.weights = newarr;
+			this.weights = newarr;			
 		};
-        const d2p = new data2png();
-		d2p.loadPng('weights.png', func);
+		const d2p = new data2png();
+		const size = property.num_phase*property.num_shape*6561;
+		d2p.loadPng('weights.png', func, size);
 	}
 }
 const weights_manager = new WEIGHTS_MANAGER();
 weights_manager.loadPng();
-
 
 
 

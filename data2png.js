@@ -34,7 +34,7 @@ class data2png {
         data[4] = (len&0xff000000)>>>24;
         data[5] = 0;
         data[6] = 0;
-        data[7] = 255;
+		data[7] = 255;
         for(let i=2;i<this.width;i++){
             data[i*4+0] = 255;
             data[i*4+1] = 255;
@@ -111,7 +111,7 @@ class data2png {
 		fileform.remove();
 	}
 	
-	loadPng(name, func){
+	loadPng(name, func, size){
 		this.array = [];
 		let arr = this.array;
 		const that = this;
@@ -133,9 +133,10 @@ class data2png {
 			const imagedata = ctx.getImageData(0,0,cvs.width,cvs.height);
             const data = imagedata.data;
             
-            const len = data[0]|(data[1]<<8)|(data[2]<<16)|(data[4]<<24);
-            arr = new Uint8ClampedArray(len);
-            for(let i=0, k=cvs.width*4;i<len;i++){
+			const len = data[0]|(data[1]<<8)|(data[2]<<16)|(data[4]<<24);
+			console.log(len);
+            arr = new Uint8ClampedArray(size);
+            for(let i=0, k=cvs.width*4;i<size;i++){
                 if(k%4===3){
                     k++;
                 }

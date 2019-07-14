@@ -1,5 +1,17 @@
 //property, display, confirmwindow
 
+
+const timerStart = ()=>{
+	window.startTime = performance.now();
+};
+
+const timerEnd = ()=>{
+	const endTime = performance.now();
+	const time = endTime - startTime;
+	console.log(`process time: ${time.toPrecision(7)}`);
+};
+
+
 const property = new Object();
 property.num_phase = 61;
 property.num_shape = 10;
@@ -215,5 +227,6 @@ const confirmWindow = (res=()=>{}, rej=()=>{}, text_="are you sure?")=>{
 	});
 
 }
+
 
 
