@@ -70,16 +70,16 @@ class EV {
 			index = indexb[shape[i8+6]] + indexw[shape[i8+7]];
 			score += weights[offset + index];
 			offset += 6561;
-			if(isNaN(score)){
-				window.errboard = board;
-				throw new Error(`error score is NaN\noffset+index=${offset+index}, i=${i}`);
-			}
+			//if(isNaN(score)){
+			//	window.errboard = board;
+			//	throw new Error(`error score is NaN\noffset+index=${offset+index}, i=${i}`);
+			//}
 		}
 		
-		if(isNaN(score)){
-			window.errboard = board;
-			throw new Error(`error score is NaN\nindex=${index}, offset=${offset}`);
-		}
+		//if(isNaN(score)){
+		//	window.errboard = board;
+		//	throw new Error(`error score is NaN\nindex=${index}, offset=${offset}`);
+		//}
 		return score/16;
 	}
 	

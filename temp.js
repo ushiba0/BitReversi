@@ -1,105 +1,95 @@
 
 
-const genworker = async ()=>{
+class EVmin {
+	constructor(arg){
+		this.weights = arg;
+		// generate index table
+		this.indexb = new Uint16Array(256);
+		this.indexw = new Uint16Array(256);
+		for(let i=0;i<256;i++){
+			this.indexb[i] = parseInt(parseInt(i.toString(2),10)*2, 3);
+			this.indexw[i] = this.indexb[i]/2;
+		}
+	}
+	
+	evaluation(board){
+		const shape = board.shape();   
+		const weights = this.weights;
+		const indexb = this.indexb;
+		const indexw = this.indexw;
+		const num_shape = property.num_shape;
+		const phase = Math.min(Math.max(10, board.stones-4), 60);
+		let index = 0;
+		let score = 0;
+		let offset = num_shape*6561*phase;
 
-    for(let i=0;i<100;i++){
-        const res = await calc();
-        console.log(res);
+		for(let i=0;i<num_shape;i++){
+			const i8 = i*8;
+			index = indexb[shape[i8+0]] + indexw[shape[i8+1]];
+			score += weights[offset + index];
+			index = indexb[shape[i8+2]] + indexw[shape[i8+3]];
+			score += weights[offset + index];
+			index = indexb[shape[i8+4]] + indexw[shape[i8+5]];
+			score += weights[offset + index];
+			index = indexb[shape[i8+6]] + indexw[shape[i8+7]];
+			score += weights[offset + index];
+			offset += 6561;
+			if(isNaN(score)){
+				window.errboard = board;
+				throw new Error(`error score is NaN\noffset+index=${offset+index}, i=${i}`);
+			}
+		}
+		
+		if(isNaN(score)){
+			window.errboard = board;
+			throw new Error(`error score is NaN\nindex=${index}, offset=${offset}`);
+		}
+		return score/16;
+	}
+}
+
+class AImin extends EVmin {
+	constructor(arg){
+		super(arg);
+	}
+	
+	negaAlpha(node, alpha, beta, depth){
+        const argnode = new BOARD(node);
+		const search = (board, alpha, beta, depth)=>{
+			if(depth===0){
+				return this.evaluation(board)*board.turn;
+			}
+		
+			const state = board.state();
+			
+			if(state===1){
+				const children = board.expand();
+
+				for(const child of children){
+					child.e = -this.evaluation(child);
+				}
+				
+				//move ordering
+				if(board.stones<60){
+					children.sort((a,b)=>{return b.e-a.e});
+				}
+				
+				for(const child of children){
+					alpha = Math.max(alpha, -search(child, -beta, -alpha, depth-1));
+					if(alpha>=beta){return alpha;}
+				}
+				
+				return alpha;
+			}else if(state===2){ //pass
+				const child = new BOARD(board);
+				child.turn *= -1;
+				return -search(child, -beta, -alpha, depth-1);
+			}else{ //game finish
+				return board.black_white()*board.turn;
+			}
+        }
+
+        return search(argnode, alpha, beta, depth);
     }
-    console.log("fin");
-}
-ai.weights[0]=2
-
-const calc = ()=>{
-    return new Promise(resolve=>{
-        const worker = new Worker("temp1.js");
-
-        //worker.postMessage(ai.weights.buffer, [ai.weights.buffer]);
-        worker.postMessage(buf, [buf]);
-        //worker.postMessage(ai.weights);
-        //worker.postMessage(buf)
-        
-        worker.addEventListener("message", e=>{
-            const arg = e.data;
-            resolve(arg);
-        });
-    });
 }
 
-
-const buf = new SharedArrayBuffer(1e7);
-const arr = new Int8Array(buf);
-
-const work = (boardList)=>{
-    boardList = [board1, board2, board3];
-    const jobs = [];
-    for(let i=0;i<3;i++){
-        const worker = new Worker("temp1.js");
-        const promise = new Promise(resolve=>{
-            worker.addEventListener("message", message=>{
-                resolve(message.data);
-            });
-        });
-
-        let n=18;
-        arr[i*n+0] = (boardList[i].black1>>>0)&0xff;
-        arr[i*n+1] = (boardList[i].black1>>>8)&0xff;
-        arr[i*n+2] = (boardList[i].black1>>>16)&0xff;
-        arr[i*n+3] = (boardList[i].black1>>>24)&0xff;
-        arr[i*n+4] = (boardList[i].black2>>>0)&0xff;
-        arr[i*n+5] = (boardList[i].black2>>>8)&0xff;
-        arr[i*n+6] = (boardList[i].black2>>>16)&0xff;
-        arr[i*n+7] = (boardList[i].black2>>>24)&0xff;
-        arr[i*n+8] = (boardList[i].white1>>>0)&0xff;
-        arr[i*n+9] = (boardList[i].white1>>>8)&0xff;
-        arr[i*n+10] = (boardList[i].white1>>>16)&0xff;
-        arr[i*n+11] = (boardList[i].white1>>>24)&0xff;
-        arr[i*n+12] = (boardList[i].white2>>>0)&0xff;
-        arr[i*n+13] = (boardList[i].white2>>>8)&0xff;
-        arr[i*n+14] = (boardList[i].white2>>>16)&0xff;
-        arr[i*n+15] = (boardList[i].white2>>>24)&0xff;
-        arr[i*n+16] = boardList[i].stones;
-        arr[i*n+17] = boardList[i].turn;
-
-        jobs.push(promise);
-        worker.postMessage({buffer:buf, id:i});
-    }
-
-    Promise.all(jobs).then(result=>{
-        console.log("end", result);
-    });
-}
-
-
-
-
-
-board1 = new BOARD();
-Object.assign(board1, 
-{black1: 1693509860,
-black2: -524239872,
-e: 0,
-stones: 60,
-turn: 1,
-white1: 403576603,
-white2: 524239871})
-
-board2 = new BOARD();
-Object.assign(board2, 
-{black1: 3682383,
-black2: -805884159,
-e: 0,
-stones: 60,
-turn: 1,
-white1: 2135346864,
-white2: 805884158})
-
-board3 = new BOARD();
-Object.assign(board3, 
-{black1: 8134757,
-black2: 1259538944,
-e: 0,
-stones: 60,
-turn: 1,
-white1: 2139332506,
-white2: -1259539202})
