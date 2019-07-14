@@ -50,6 +50,25 @@ display.switch = document.getElementById("switch_colors");
 			break;
 		}
 	}
+
+	//on window resized, fit board width to window
+	const changeElementSize = ()=>{
+		const w0 = Math.max(Math.min(500, window.innerWidth), 260);
+		const w = w0 - 4 + "px";
+		
+		const header = document.getElementById("header");
+		header.style.width = w;
+		const test = document.getElementById("test");
+		test.style.width = w;
+		test.style.height = w;
+		const footer1 = document.getElementById("footer1");
+		footer1.style.width = w;
+		const footer2 = document.getElementById("footer2");
+		footer2.style.width = w;
+		const footer3 = document.getElementById("footer3");
+		footer3.style.width = w;
+	};
+	changeElementSize();
 	
 	
 	//generate reversi board
@@ -145,24 +164,6 @@ display.switch = document.getElementById("switch_colors");
 		changeElementSize();
 	});
 
-	//on window resized, fit board width to window
-	const changeElementSize = ()=>{
-		const w0 = Math.max(Math.min(500, window.innerWidth), 260);
-		const w = w0 - 4 + "px";
-		
-		const header = document.getElementById("header");
-		header.style.width = w;
-		const test = document.getElementById("test");
-		test.style.width = w;
-		test.style.height = w;
-		const footer1 = document.getElementById("footer1");
-		footer1.style.width = w;
-		const footer2 = document.getElementById("footer2");
-		footer2.style.width = w;
-		const footer3 = document.getElementById("footer3");
-		footer3.style.width = w;
-	};
-	changeElementSize();
 	//pass button
 	window.addEventListener("resize", ()=>{
 		changeElementSize();

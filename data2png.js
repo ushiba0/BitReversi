@@ -13,7 +13,7 @@ class data2png {
         this.height = 100;
 		this.array = [];
 		this.cvs;
-		this.weightsVersion = "2.4";
+		this.weightsVersion = "2.5";
     }
 
 	toPng(arr){

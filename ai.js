@@ -16,7 +16,7 @@ class AI extends EV {
 			num_readnode++;
 
 			if(depth===0){
-				return this.evaluation(board);//*board.turn;
+				return this.evaluation(board)*board.turn;
 			}
 		
 			const state = board.state(board);
@@ -70,6 +70,55 @@ class AI extends EV {
 		return value;
 	}
 
+	negaAlpha(node, alpha, beta, depth, showStatus=false){
+
+		const argnode = new BOARD(node);
+		let num_readnode = 0;
+		let value = 0;
+
+		
+		const search = (board, alpha, beta, depth)=>{
+			if(depth===0){
+				return this.evaluation(board)*board.turn;
+			}
+		
+			const state = board.state();
+			
+			if(state===1){
+				const children = board.expand();
+
+				for(const child of children){
+					child.e = -this.evaluation(child);
+				}
+				
+				//move ordering
+				if(board.stones<60){
+					children.sort((a,b)=>{return b.e-a.e});
+				}
+				
+				for(const child of children){
+					alpha = Math.max(alpha, -search(child, -beta, -alpha, depth-1));
+					if(alpha>=beta){return alpha;}
+				}
+				
+				return alpha;
+			}else if(state===2){ //pass
+				const child = new BOARD(board);
+				child.turn *= -1;
+				return -search(child, -beta, -alpha, depth-1);
+			}else{ //game finish
+				return board.black_white()*board.turn;
+			}
+		}
+
+		value = search(argnode, alpha, beta, depth);
+		if(showStatus){
+			console.log(`NegaAlpha\nread nodes: ${num_readnode}\nevaluation: ${value}`);
+		}
+		this.num_readnode = num_readnode;
+		return value;
+	}
+
 	async cpuHand(node, alpha=-100, beta=100, depth=0, showStatus=false, showSearching=false){
 		const startTime = performance.now();
 		const children = node.expand();
@@ -82,7 +131,7 @@ class AI extends EV {
 			child.hand1 = (node.black1|node.white1)^(child.black1|child.white1);
 			child.hand2 = (node.black2|node.white2)^(child.black2|child.white2);
 			// calc eval of child
-			child.e = -this.negaScout(child, alpha, beta, depth);
+			child.e = -this.negaAlpha(child, alpha, beta, depth);
 
 			if(showSearching){
 				await master.showSearchingCell(child.hand1, child.hand2);

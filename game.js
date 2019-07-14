@@ -399,3 +399,15 @@ class DEVELOP extends MASTER{
 	}
 }
 
+
+const tboard = new BOARD();
+Object.assign(tboard,
+{black1: 1668975,
+black2: 1329561351,
+e: 2,
+hand1: 262144,
+hand2: 0,
+stones: 58,
+turn: 1,
+white1: -2021226352,
+white2: -1329561352});
