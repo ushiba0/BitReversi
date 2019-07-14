@@ -77,6 +77,7 @@ class AI extends EV {
 		if(children.length===0){
 			return children;
 		}
+		console.log(alpha, beta, depth);
 		for(const child of children){
 			// どこにおいたかを調べる
 			child.hand1 = (node.black1|node.white1)^(child.black1|child.white1);

@@ -9,7 +9,9 @@ property.colorOfCpu = -1;
 property.num_readnode = 0;
 property.depth = [2, 4];
 property.depth0 = 4;
-property.depth1 = 4;
+property.depth1 = 12;
+property.alpha = -100;
+property.beta = 100;
 property.clickDisabled = false;
 property.touchScreen = false;
 property.player_state_pass = false;
@@ -110,6 +112,8 @@ display.switch = document.getElementById("switch_colors");
 		const value = e.target.value.split("/").map(x=>parseInt(x));
 		property.depth0 = value[0];
 		property.depth1 = value[1];
+		property.alpha = value[2];
+		property.beta = value[3];
 	});
 
 	//pass button
