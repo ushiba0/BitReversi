@@ -265,7 +265,7 @@ class MASTER extends GRAPHIC {
 	}
 
 	undo(){
-		if(this.record.length<6){
+		if(this.record.length<3){
 			return;
 		}
 		this.record.pop();
