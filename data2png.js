@@ -134,7 +134,6 @@ class data2png {
             const data = imagedata.data;
             
 			const len = data[0]|(data[1]<<8)|(data[2]<<16)|(data[4]<<24);
-			console.log(len);
             arr = new Uint8ClampedArray(size);
             for(let i=0, k=cvs.width*4;i<size;i++){
                 if(k%4===3){

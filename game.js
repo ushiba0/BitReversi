@@ -15,9 +15,10 @@ class GRAPHIC {
 
 		//最後に置いた場所を消す
 		for(const item of display.squares){
-			item.classList.remove("lastput");
-			item.classList.remove("eval_plus");
-			item.classList.remove("eval_minus");
+			const list = item.classList;
+			list.remove("lastput");
+			list.remove("eval_plus");
+			list.remove("eval_minus");
 		}
 
 		//石を消す
@@ -76,9 +77,9 @@ class GRAPHIC {
 	async showEval(node=this.now, alpha=-100,beta=100, depth=-1){
 		
 		const search_depth = (depth===-1)?
-			(c.depth1>=64-node.stones ? -1 : c.depth0):
+			(property.depth_last>=64-node.stones ? -1 : property.depth):
 			depth;
-		const evals = await ai.cpuHand(node, alpha, beta, search_depth);
+		const evals = await ai.cpuHand(node, alpha, beta, search_depth, 1, 1);
 
 		if(evals.length===0){
 			return;
@@ -102,8 +103,11 @@ class GRAPHIC {
 				put = 63-Math.log2(node.hand2);
 			}
 
-			const circle = display.squares[put];
-			circle.innerText = node.e;
+			const circle = display.circles[put];
+			circle.classList.remove("legal");
+			circle.classList.remove("searching");
+			circle.classList.remove("eval_plus");
+			circle.classList.remove("eval_minus");
 			if(node.e>0){
 				circle.classList.add("eval_plus");
 				circle.innerText = (node.e + '').slice(0, 5);

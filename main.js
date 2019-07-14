@@ -105,6 +105,8 @@ display.switch = document.getElementById("switch_colors");
 				display.comment.innerText = comment_text;
 				property.touchcount = 0;
 			}, 3000);
+
+			document.getElementById("footer3").style.display = "inline-block";
 		}
 	});
 
@@ -135,7 +137,12 @@ display.switch = document.getElementById("switch_colors");
 	document.getElementById("restart").addEventListener(property.eventName, e=>{
 		confirmWindow(()=>{
 			master.restart();
-		})
+		}, ()=>{}, "restart game?");
+	});
+
+	//restart button
+	document.getElementById("disp_reset").addEventListener(property.eventName, e=>{
+		changeElementSize();
 	});
 
 	//on window resized, fit board width to window
@@ -152,11 +159,18 @@ display.switch = document.getElementById("switch_colors");
 		footer1.style.width = w;
 		const footer2 = document.getElementById("footer2");
 		footer2.style.width = w;
+		const footer3 = document.getElementById("footer3");
+		footer3.style.width = w;
 	};
 	changeElementSize();
 	//pass button
 	window.addEventListener("resize", ()=>{
 		changeElementSize();
+	});
+
+	//evaluate boardd
+	document.getElementById("evaluate").addEventListener(property.eventName, e=>{
+		master.showEval(master.now, property.alpha, property.beta, -1);
 	});
 })();
 
@@ -170,7 +184,7 @@ const confirmWindow = (res=()=>{}, rej=()=>{}, text_="are you sure?")=>{
 	background.style.width = innerWidth + "px";
 	background.style.height = innerHeight + "px";
 	background.style.background = "#555555";
-	background.style.opacity = "0.8";
+	background.style.opacity = "0.9";
 
 	const box = document.createElement("div");
 	box.style.position = "fixed";
