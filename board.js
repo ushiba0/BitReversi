@@ -31,27 +31,27 @@ class BOARD {
 
 	
 	get board(){
-		const board = new Int8Array(65);
+		const board = new Int8Array(64);
 		
 		for(let i=0;i<32;i++){
 			if(this.black1&(1<<i)){
-				board[32-i] = 1;
+				board[31-i] = 1;
 			}
 		}
 		for(let i=0;i<32;i++){
 			if(this.black2&(1<<i)){
-				board[64-i] = 1;
+				board[63-i] = 1;
 			}
 		}
 			
 		for(let i=0;i<32;i++){
 			if(this.white1&(1<<i)){
-				board[32-i] = -1;
+				board[31-i] = -1;
 			}
 		}
 		for(let i=0;i<32;i++){
 			if(this.white2&(1<<i)){
-				board[64-i] = -1;
+				board[63-i] = -1;
 			}
 		}
 		return board;
@@ -99,12 +99,12 @@ class BOARD {
 	}
 
 	set setBoard(arr_){
-		const arr = new Int8Array(65);
+		const arr = new Int8Array(64);
 		
 		//reset board array
 		this.black1 = this.black2 = this.white1 = this.white2 = 0;
 		
-		for(let i=1;i<65;i++){
+		for(let i=0;i<64;i++){
 			if(arr_[i]===1){
 				arr[i] = 1;
 			}else{
@@ -114,12 +114,12 @@ class BOARD {
 
 		//set black stone
 		for(let i=0;i<32;i++){
-			this.black1 |= arr[32-i]<<i;
-			this.black2 |= arr[64-i]<<i
+			this.black1 |= arr[31-i]<<i;
+			this.black2 |= arr[63-i]<<i
 		}
 		
 
-		for(let i=1;i<65;i++){
+		for(let i=0;i<64;i++){
 			if(arr_[i]===-1){
 				arr[i] = 1;
 			}else{
@@ -129,8 +129,8 @@ class BOARD {
 
 		//set white stone
 		for(let i=0;i<32;i++){
-			this.white1 |= arr[32-i]<<i;
-			this.white2 |= arr[64-i]<<i;
+			this.white1 |= arr[31-i]<<i;
+			this.white2 |= arr[63-i]<<i;
 		}
 
 		let num_stones = 0;
@@ -151,9 +151,7 @@ class BOARD {
 
 		this.stones = num_stones;
 
-		this.turn = (arr_[0]===-1) ? -1 : 1;
-
-
+		this.turn = 1;
 	}
 	
 	putStone(hand1, hand2){

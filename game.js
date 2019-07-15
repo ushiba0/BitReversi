@@ -32,7 +32,7 @@ class GRAPHIC {
 		}
 		
 		//石の数をカウント
-		for(let i=1;i<65;i++){
+		for(let i=0;i<64;i++){
 			if(board[i]===1){
 				black++;
 			}else if(board[i]===-1){
@@ -41,8 +41,8 @@ class GRAPHIC {
 		}
 		
 		//石を置く
-		for(let i=1;i<65;i++){
-			const t = display.circles[i-1].classList;
+		for(let i=0;i<64;i++){
+			const t = display.circles[i].classList;
 			if(board[i]===1){
 				t.add("black");
 			}else if(board[i]===-1){
@@ -52,8 +52,12 @@ class GRAPHIC {
 			}
 		}
 		
-		display.black_score.innerText = black + '';
-		display.white_score.innerText = white + '';
+		display.black_score.innerText = black;
+		display.white_score.innerText = white;
+
+		if(property.mode==="setup"){
+			return;
+		}
 		
 		if(node.turn!==property.colorOfCpu){
 			display.comment.innerText = 'player turn';
@@ -128,26 +132,26 @@ class GRAPHIC {
 		let [move1, move2] = node.getMove();
 		const board = new Array();
 		
-		for(let i=0;i<65;i++){
+		for(let i=0;i<64;i++){
 			board[i] = 0;
 		}
 		
-		for(let i=32;i>0;i--){
+		for(let i=31;i>-1;i--){
 			if(move1&1 === 1){
 				board[i] = 1;
 			}
 			move1 = move1 >>> 1;
 		}
-		for(let i=64;i>32;i--){
+		for(let i=63;i>31;i--){
 			if(move2&1 === 1){
 				board[i] = 1;
 			}
 			move2 = move2 >>> 1;
 		}
 		
-		for(let i=1;i<65;i++){
+		for(let i=0;i<64;i++){
 			if(board[i]===1){
-				display.circles[i-1].classList.add("legal");
+				display.circles[i].classList.add("legal");
 			}
 		}
 	}
@@ -194,7 +198,7 @@ class GRAPHIC {
 			}
 			return;
 		}
-
+		
 		let x, y;
 		if(node.hand1<0){
 			y = 0;
@@ -215,7 +219,8 @@ class GRAPHIC {
 		
 		//handが定義されていない場合
 		if(isNaN(x*y)){
-			throw new Error("okasii yo");
+			return;
+			//throw new Error("okasii yo");
 		}
 		display.squares[y*8+x].classList.add("lastput");
 	}
@@ -398,16 +403,3 @@ class DEVELOP extends MASTER{
 		}
 	}
 }
-
-
-const tboard = new BOARD();
-Object.assign(tboard,
-{black1: 1668975,
-black2: 1329561351,
-e: 2,
-hand1: 262144,
-hand2: 0,
-stones: 58,
-turn: 1,
-white1: -2021226352,
-white2: -1329561352});

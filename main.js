@@ -26,7 +26,7 @@ property.clickDisabled = false;
 property.player_state_pass = false;
 property.touchcount = 0;
 property.eventName = "mouseup";
-
+property.mode = "black";
 
 
 const display = new Object();
@@ -101,11 +101,23 @@ display.switch = document.getElementById("switch_colors");
 				if(property.player_state_pass){
 					return;
 				}
-				property.clickDisabled = true;
-				master.play(i<4?1<<(31-e):0, i<4?0:1<<(63-e))
-				.then(()=>{
-					property.clickDisabled = false;
-				});
+				// game mode
+				if(property.mode==="black" || property.mode==="white"){
+					property.clickDisabled = true;
+					master.play(i<4?1<<(31-e):0, i<4?0:1<<(63-e))
+					.then(()=>{
+						property.clickDisabled = false;
+					});
+				}
+				// setup mode
+				else if(property.mode="setup"){
+					const board = master.board_temp.board;
+					if(board[e]===1) board[e] = -1;
+					else if(board[e]===-1) board[e] = 0;
+					else board[e] = 1;
+					master.board_temp.setBoard = board;
+					master.render(master.board_temp);
+				}
 			});
 		}
 	}
@@ -155,8 +167,33 @@ display.switch = document.getElementById("switch_colors");
 	//restart button
 	document.getElementById("restart").addEventListener(property.eventName, e=>{
 		confirmWindow(()=>{
+			property.mode = "black";
 			master.restart();
 		}, ()=>{}, "restart game?");
+	});
+
+	//switch button
+	document.getElementById("switch").addEventListener(property.eventName, ()=>{
+		if(property.mode==="black"){
+			property.colorOfCpu = 1;
+			master.play();
+		}
+	});
+
+	//setup button
+	document.getElementById("setup").addEventListener(property.eventName, ()=>{
+		if(property.mode!=="setup"){
+			master.board_temp = new BOARD(master.now);
+			property.mode = "setup";
+			display.comment.innerText = "setup mode";
+			master.render(master.board_temp);
+		}else{
+			master.record = [master.board_temp];
+			confirmWindow(()=>{
+				property.mode = "black";
+				master.showMove();
+			},()=>{},"black turn?")
+		}
 	});
 
 	//restart button
