@@ -191,6 +191,7 @@ display.switch = document.getElementById("switch_colors");
 			master.record = [master.board_temp];
 			confirmWindow(()=>{
 				property.mode = "black";
+				master.render();
 				master.showMove();
 			},()=>{},"black turn?")
 		}

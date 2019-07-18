@@ -3,135 +3,100 @@
 class AI extends EV {
 	constructor(arg){
 		super(arg);
+		this.num_readnode = 0;
 	}
 	
-	negaScout(node, alpha, beta, depth, showStatus=false){
-
-		const argnode = new BOARD(node);
-		let num_readnode = 0;
-		let value = 0;
-
-		
-		const search = (board, alpha, beta, depth)=>{
-			num_readnode++;
-
+	negaScout(node, alpha, beta, depth){
+		const search = (node, alpha, beta, depth)=>{
+			this.num_readnode++;
 			if(depth===0){
-				return this.evaluation(board)*board.turn;
+				return this.evaluation(node)*node.turn;
 			}
-		
-			const state = board.state(board);
 			let max = -128, v = 0;
-			
-			if(state===1){
-				//expand child node
-				const children = board.expand();
-				
-				for(let i=0;i<children.length;i++){
-					children[i].e = -this.evaluation(children[i]);//*children[i].turn;
-					if(max<children[i].e){max = children[i].e; v = i;}
-				}
-
-				max = v = -search(children[v], -beta, -alpha, depth-1);
-				if(beta<=v){return v;} //cut
-				if(alpha<v){alpha = v;}
-				
-				//move ordering
-				if(board.stones<60){
-					children.sort((a,b)=>{return b.e-a.e});
-				}
-				
-				for(let i=1;i<children.length;i++){
-					v = -search(children[i], -alpha-1, -alpha, depth-1);
-					if(beta<=v){return v;}
-					if(alpha<v){
-						alpha = v;
-						v = -search(children[i], -beta, -alpha, depth-1);
-						if(beta<=v){return v;}
-						if(alpha<v){alpha = v;}
+			switch(node.state()){
+				case 1:
+					const children = node.expand();
+					for(const child of children){
+						child.e = this.evaluation(child)*node.turn;
 					}
-					if(max<v){max = v;}
-				}
-				
-				return max;
-			}else if(state===2){ //pass
-				const child = new BOARD(board);
-				child.turn *= -1;
-				return -search(child, -beta, -alpha, depth-1);
-			}else{ //game finish
-				return board.black_white()*board.turn;
+					//move ordering
+					if(node.stones<60){
+						children.sort((a,b)=>{return b.e-a.e});
+					}
+
+					max = v = -search(children[0], -beta, -alpha, depth-1);
+					if(beta<=v){return v;} //cut
+					if(alpha<v){alpha = v;}
+
+					for(let i=1;i<children.length;i++){
+						v = -search(children[i], -alpha-1, -alpha, depth-1);
+						if(beta<=v){return v;}
+						if(alpha<v){
+							alpha = v;
+							v = -search(children[i], -beta, -alpha, depth-1);
+							if(beta<=v){return v;}
+							if(alpha<v){alpha = v;}
+						}
+						if(max<v){max = v;}
+					}
+					return max;
+				case 2:
+					const child = new BOARD(node);
+					child.turn *= -1;
+					return -search(child, -beta, -alpha, depth-1);
+				case 3:
+					return node.black_white()*node.turn;
 			}
 		}
-
-		value = search(argnode, alpha, beta, depth);
-		if(showStatus){
-			console.log(`NegaScout\nread nodes: ${num_readnode}\nevaluation: ${value}`);
-		}
-		this.num_readnode = num_readnode;
-		return value;
+		return search(node, alpha, beta, depth);
 	}
 
-	negaAlpha(node, alpha, beta, depth, showStatus=false){
-
-		const argnode = new BOARD(node);
-		let num_readnode = 0;
-		let value = 0;
-
-		
-		const search = (board, alpha, beta, depth)=>{
+	negaAlpha(node, alpha, beta, depth){
+		const search = (node, alpha, beta, depth)=>{
+			this.num_readnode++;
 			if(depth===0){
-				return this.evaluation(board)*board.turn;
+				return this.evaluation(node)*node.turn;
 			}
-		
-			const state = board.state();
-			
-			if(state===1){
-				const children = board.expand();
-
-				for(const child of children){
-					child.e = -this.evaluation(child);
-				}
-				
-				//move ordering
-				if(board.stones<60){
-					children.sort((a,b)=>{return b.e-a.e});
-				}
-				
-				for(const child of children){
-					alpha = Math.max(alpha, -search(child, -beta, -alpha, depth-1));
-					if(alpha>=beta){return alpha;}
-				}
-				
-				return alpha;
-			}else if(state===2){ //pass
-				const child = new BOARD(board);
-				child.turn *= -1;
-				return -search(child, -beta, -alpha, depth-1);
-			}else{ //game finish
-				return board.black_white()*board.turn;
+			switch(node.state()){
+				case 1:
+					const children = node.expand();
+					for(const child of children){
+						child.e = this.evaluation(child)*node.turn;
+					}
+					//move ordering
+					if(node.stones<60){
+						children.sort((a,b)=>{return b.e-a.e});
+					}
+					for(const child of children){
+						alpha = Math.max(alpha, -search(child, -beta, -alpha, depth-1));
+						if(alpha>=beta){return alpha;}
+					}
+					return alpha;
+				case 2:
+					const child = new BOARD(node);
+					child.turn *= -1;
+					return -search(child, -beta, -alpha, depth-1);
+				case 3:
+					return node.black_white()*node.turn;
 			}
 		}
-
-		value = search(argnode, alpha, beta, depth);
-		if(showStatus){
-			console.log(`NegaAlpha\nread nodes: ${num_readnode}\nevaluation: ${value}`);
-		}
-		this.num_readnode = num_readnode;
-		return value;
+		return search(node, alpha, beta, depth);
 	}
 
 	async cpuHand(node, alpha=-100, beta=100, depth=0, showStatus=false, showSearching=false){
 		const startTime = performance.now();
 		const children = node.expand();
-		let rand=0, temp=0;
+		this.num_readnode = 0;
+
 		if(children.length===0){
-			return children;
+			return [];
 		}
 		for(const child of children){
 			// どこにおいたかを調べる
 			child.hand1 = (node.black1|node.white1)^(child.black1|child.white1);
 			child.hand2 = (node.black2|node.white2)^(child.black2|child.white2);
 			// calc eval of child
-			child.e = -this.negaAlpha(child, alpha, beta, depth);
+			child.e = this.negaAlpha(child, alpha, beta, depth)*master.now.turn;
 
 			if(showSearching){
 				await master.showSearchingCell(child.hand1, child.hand2);
@@ -140,27 +105,28 @@ class AI extends EV {
 		// sort
 		children.sort((a,b)=>{return b.e-a.e;});
 		
-		//最大値がいくつあるかをrandにカウント
+		const score = children[0].e;
+		
+		//最大値の中からランダムに選ぶ
+		let flag = false;
 		for(let i=1;i<children.length;i++){
 			if(~~children[0].e===~~children[i].e){
-				rand = i;
+				flag = true;
 			}else{
+				if(flag){
+					const random = ~~(Math.random()*(i-1));
+					const temp = children[0];
+					children[0] = children[random];
+					children[random] = temp;
+				}
 				break;
 			}
 		}
-		//0番目とrand番目を入れ替える
-		rand = ~~(Math.random() * rand);
-		temp = children[0];
-		children[0] = children[rand];
-		children[rand] = temp;
-		const process_time = (performance.now()-startTime).toPrecision(4);
-		const node_per_second = (~~(this.num_readnode/process_time)).toPrecision(4);
+		
+		const process_time = ((performance.now()-startTime)/1000).toPrecision(4);
+		const node_per_second = (this.num_readnode/process_time).toPrecision(4);
 		if(showStatus){
-			console.log(
-				"read " + this.num_readnode + " nodes\n" + 
-				"process time " + process_time + " ms\n" + 
-				node_per_second + " nodes per ms\n"
-			);
+			console.log(`read ${this.num_readnode} nodes\nprocess time ${process_time} ms\n${node_per_second} npms\nscore ${score}`);
 		}
 		
 		return children;
@@ -208,3 +174,25 @@ class AI extends EV {
 	
 }
 
+
+
+const ffo40 = Object.assign(new BOARD(),
+{
+black1: 16855331,
+black2: 50397440,
+e: 0,
+stones: 44,
+turn: 1,
+white1: -1635856676,
+white2: -65140736
+});
+
+const ffo41 = Object.assign(new BOARD(), {
+black1: 131320,
+black2: 1680611328,
+e: 0,
+stones: 42,
+turn: 1,
+white1: 2084339206,
+white2: 416294002
+});

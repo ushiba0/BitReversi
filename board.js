@@ -877,32 +877,32 @@ class BOARD {
 	}
 
 	negaAlpha(alpha=-100, beta=100, depth=1){
+		let num_readnode = 0;
 		const search = (node, alpha, beta, depth)=>{
+			num_readnode++;
 			if(depth===0){
 				return node.black_white()*node.turn;
 			}
-		
-			const state = node.state();
-			
-			if(state===1){
-				const children = node.expand();// expand child node
-
-				for(const child of children){
-					alpha = Math.max(alpha, -search(child, -beta, -alpha, depth-1));
-					if(alpha>=beta){
-						return alpha;
+			switch(node.state()){
+				case 1:
+					const children = node.expand();
+					for(const child of children){
+						alpha = Math.max(alpha, -search(child, -beta, -alpha, depth-1));
+						if(alpha>=beta){
+							return alpha;
+						}
 					}
-				}
-				return alpha;
-			}else if(state===2){ //pass
-				const child = new BOARD(node);
-				child.turn *= -1;
-				return -search(child, -beta, -alpha, depth-1);
-			}else{ //game finish
-				return node.black_white()*node.turn;
+					return alpha;
+				case 2:
+					const child = new BOARD(node);
+					child.turn *= -1;
+					return -search(child, -beta, -alpha, depth-1);
+				case 3:
+					return node.black_white()*node.turn;
 			}
 		}
-		
-		return search(this, alpha, beta, depth);
+		const score = search(this, alpha, beta, depth);
+		console.log(`read ${num_readnode} nodes`);
+		return score;
 	}
 }
