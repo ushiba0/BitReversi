@@ -96,7 +96,7 @@ class AI extends EV {
 			child.hand1 = (node.black1|node.white1)^(child.black1|child.white1);
 			child.hand2 = (node.black2|node.white2)^(child.black2|child.white2);
 			// calc eval of child
-			child.e = this.negaAlpha(child, alpha, beta, depth)*master.now.turn;
+			child.e = -this.negaScout(child, alpha, beta, depth)*master.now.turn;
 
 			if(showSearching){
 				await master.showSearchingCell(child.hand1, child.hand2);
@@ -124,9 +124,9 @@ class AI extends EV {
 		}
 		
 		const process_time = ((performance.now()-startTime)/1000).toPrecision(4);
-		const node_per_second = (this.num_readnode/process_time).toPrecision(4);
+		const node_per_second = ((this.num_readnode/process_time)/1000).toPrecision(4);
 		if(showStatus){
-			console.log(`read ${this.num_readnode} nodes\nprocess time ${process_time} ms\n${node_per_second} npms\nscore ${score}`);
+			console.log(`read ${this.num_readnode} nodes\nprocess time ${process_time} s\n${node_per_second} knps\nscore ${score}`);
 		}
 		
 		return children;

@@ -544,6 +544,254 @@ class BOARD {
 		return lines
 	}
 
+	___shape(){
+		let black1, black2, white1, white2;
+		if(this.turn===1){
+			black1 = this.black1;
+			black2 = this.black2;
+			white1 = this.white1;
+			white2 = this.white2;
+		}else{
+			black1 = this.white1;
+			black2 = this.white2;
+			white1 = this.black1;
+			white2 = this.black2;
+		}
+		const b0 = (black1>>>24)&0xff;
+		const w0 = (white1>>>24)&0xff;
+		const b1 = (black1>>>16)&0xff;
+		const w1 = (white1>>>16)&0xff;
+		const b2 = (black1>>>8)&0xff;
+		const w2 = (white1>>>8)&0xff;
+		const b3 = (black1)&0xff;
+		const w3 = (white1)&0xff;
+		const b4 = (black2>>>24)&0xff;
+		const w4 = (white2>>>24)&0xff;
+		const b5 = (black2>>>16)&0xff;
+		const w5 = (white2>>>16)&0xff;
+		const b6 = (black2>>>8)&0xff;
+		const w6 = (white2>>>8)&0xff;
+		const b7 = (black2)&0xff;
+		const w7 = (white2)&0xff;
+
+		const list = new Array(80);
+		let lineb = 0;
+		let linew = 0;
+
+		const black3 = black1>>>4;
+		const black4 = black2>>>4;
+		const white3 = white1>>>4;
+		const white4 = white2>>>4;
+		const magic7R = 2151686160;
+		const mask7 = 0x01010101;
+		const magic6R = 1075843080;
+		const mask6 = 0x02020202;
+		const magic5R = 537921540;
+		const mask5 = 0x04040404;
+		const magic4R = 268960770;
+		const mask4 = 0x08080808;
+
+		//horizontal 1
+		//上辺
+		list[0] = b0;
+		list[1] = w0;
+		//下辺
+		list[2] = b7;
+		list[3] = w7;
+		//右辺
+		list[4] = ((((black1&mask7)*magic7R)>>>28)&0x0f)|((((black2&mask7)*magic7R)>>>24)&0xf0);
+		list[5] = ((((white1&mask7)*magic7R)>>>28)&0x0f)|((((white2&mask7)*magic7R)>>>24)&0xf0);
+		//左辺
+		list[6] = ((((black3&mask4)*magic4R)>>>28)&0x0f)|((((black4&mask4)*magic4R)>>>24)&0xf0);
+		list[7] = ((((white3&mask4)*magic4R)>>>28)&0x0f)|((((white4&mask4)*magic4R)>>>24)&0xf0);
+		
+		
+		
+		//horizontal 2
+		//上辺
+		list[8] = b1;
+		list[9] = w1;
+		//下辺
+		list[10] = b6;
+		list[11] = w6;
+		//右辺
+		list[12] = ((((black1&mask6)*magic6R)>>>28)&0x0f)|((((black2&mask6)*magic6R)>>>24)&0xf0);
+		list[13] = ((((white1&mask6)*magic6R)>>>28)&0x0f)|((((white2&mask6)*magic6R)>>>24)&0xf0);
+		//左辺
+		list[14] = ((((black3&mask5)*magic5R)>>>28)&0x0f)|((((black4&mask5)*magic5R)>>>24)&0xf0);
+		list[15] = ((((white3&mask5)*magic5R)>>>28)&0x0f)|((((white4&mask5)*magic5R)>>>24)&0xf0);
+		
+	
+		
+		//horizontal 3
+		//上辺
+		list[16] = b2;
+		list[17] = w2;
+		//下辺
+		list[18] = b5;
+		list[19] = w5;
+		//右辺
+		list[20] = ((((black1&mask5)*magic5R)>>>28)&0x0f)|((((black2&mask5)*magic5R)>>>24)&0xf0);
+		list[21] = ((((white1&mask5)*magic5R)>>>28)&0x0f)|((((white2&mask5)*magic5R)>>>24)&0xf0);
+		//左辺
+		list[22] = ((((black3&mask6)*magic6R)>>>28)&0x0f)|((((black4&mask6)*magic6R)>>>24)&0xf0);
+		list[23] = ((((white3&mask6)*magic6R)>>>28)&0x0f)|((((white4&mask6)*magic6R)>>>24)&0xf0);
+	
+	
+		
+		//horizontal 4
+		//上辺
+		list[24] = b3;
+		list[25] = w3;
+		//下辺
+		list[26] = b4;
+		list[27] = w4;
+		//右辺
+		list[28] = ((((black1&mask4)*magic4R)>>>28)&0x0f)|((((black2&mask4)*magic4R)>>>24)&0xf0);
+		list[29] = ((((white1&mask4)*magic4R)>>>28)&0x0f)|((((white2&mask4)*magic4R)>>>24)&0xf0);
+		//左辺
+		list[30] = ((((black3&mask7)*magic7R)>>>28)&0x0f)|((((black4&mask7)*magic7R)>>>24)&0xf0);
+		list[31] = ((((white3&mask7)*magic7R)>>>28)&0x0f)|((((white4&mask7)*magic7R)>>>24)&0xf0);
+		
+	
+		
+		//diagonal 8
+		//右肩上がり
+		lineb = (b7&128)|(b6&64)|(b5&32)|(b4&16)|(b3&8)|(b2&4)|(b1&2)|(b0&1);
+		linew = (w7&128)|(w6&64)|(w5&32)|(w4&16)|(w3&8)|(w2&4)|(w1&2)|(w0&1);
+		list[32] = lineb;
+		list[33] = linew;
+		list[34] = lineb;
+		list[35] = linew;
+		//右肩下がり
+		lineb = (b7&1)|(b6&2)|(b5&4)|(b4&8)|(b3&16)|(b2&32)|(b1&64)|(b0&128);
+		linew = (w7&1)|(w6&2)|(w5&4)|(w4&8)|(w3&16)|(w2&32)|(w1&64)|(w0&128);
+		list[36] = lineb;
+		list[37] = linew;
+		list[38] = lineb;
+		list[39] = linew;
+		
+		
+		
+		//corner 8
+		//upper left
+		lineb = ((b0&128))|((b1&128)>>>1)|((b0&64)>>>1)|((b2&128)>>>3)|((b1&64)>>>3)|((b0&32)>>>3)|((b3&128)>>>6)|((b0&16)>>>4);
+		linew = ((w0&128))|((w1&128)>>>1)|((w0&64)>>>1)|((w2&128)>>>3)|((w1&64)>>>3)|((w0&32)>>>3)|((w3&128)>>>6)|((w0&16)>>>4);
+		list[40] = lineb;
+		list[41] = linew;
+		//upper right
+		lineb = ((b0&1)<<7)|((b1&1)<<6)|((b0&2)<<4)|((b2&1)<<4)|((b1&2)<<2)|((b0&4)<<0)|((b3&1)<<1)|((b0&8)>>>3);
+		linew = ((w0&1)<<7)|((w1&1)<<6)|((w0&2)<<4)|((w2&1)<<4)|((w1&2)<<2)|((w0&4)<<0)|((w3&1)<<1)|((w0&8)>>>3);
+		list[42] = lineb;
+		list[43] = linew;
+		//lower left
+		lineb = ((b7&128))|((b6&128)>>>1)|((b7&64)>>>1)|((b5&128)>>>3)|((b6&64)>>>3)|((b7&32)>>>3)|((b4&128)>>>6)|((b7&16)>>>4);
+		linew = ((w7&128))|((w6&128)>>>1)|((w7&64)>>>1)|((w5&128)>>>3)|((w6&64)>>>3)|((w7&32)>>>3)|((w4&128)>>>6)|((w7&16)>>>4);
+		list[44] = lineb;
+		list[45] = linew;
+		//lower right
+		lineb = ((b7&1)<<7)|((b6&1)<<6)|((b7&2)<<4)|((b5&1)<<4)|((b6&2)<<2)|((b7&4)<<0)|((b4&1)<<1)|((b7&8)>>>3);
+		linew = ((w7&1)<<7)|((w6&1)<<6)|((w7&2)<<4)|((w5&1)<<4)|((w6&2)<<2)|((w7&4)<<0)|((w4&1)<<1)|((w7&8)>>>3);
+		list[46] = lineb;
+		list[47] = linew;
+		
+		
+		
+		//diagonal 7
+		//upper left
+		lineb = (b6&128)|(b5&64)|(b4&32)|(b3&16)|(b2&8)|(b1&4)|(b0&2);
+		linew = (w6&128)|(w5&64)|(w4&32)|(w3&16)|(w2&8)|(w1&4)|(w0&2);
+		list[48] = lineb>>>1;
+		list[49] = linew>>>1;
+		//lower right
+		lineb = (b1&1)|(b2&2)|(b3&4)|(b4&8)|(b5&16)|(b6&32)|(b7&64);
+		linew = (w1&1)|(w2&2)|(w3&4)|(w4&8)|(w5&16)|(w6&32)|(w7&64);
+		list[50] = lineb;
+		list[51] = linew;
+		//lower left
+		lineb = (b1&128)|(b2&64)|(b3&32)|(b4&16)|(b5&8)|(b6&4)|(b7&2);
+		linew = (w1&128)|(w2&64)|(w3&32)|(w4&16)|(w5&8)|(w6&4)|(w7&2);
+		list[52] = lineb>>>1;
+		list[53] = linew>>>1;
+		//upper right
+		lineb = (b6&1)|(b5&2)|(b4&4)|(b3&8)|(b2&16)|(b1&32)|(b0&64);
+		linew = (w6&1)|(w5&2)|(w4&4)|(w3&8)|(w2&16)|(w1&32)|(w0&64);
+		list[54] = lineb;
+		list[55] = linew;
+	
+		
+		
+		//diagonal 6
+		//upper left
+		lineb = (b5&128)|(b4&64)|(b3&32)|(b2&16)|(b1&8)|(b0&4);
+		linew = (w5&128)|(w4&64)|(w3&32)|(w2&16)|(w1&8)|(w0&4);
+		list[56] = lineb>>>2;
+		list[57] = linew>>>2;
+		//lower right
+		lineb = (b2&1)|(b3&2)|(b4&4)|(b5&8)|(b6&16)|(b7&32);
+		linew = (w2&1)|(w3&2)|(w4&4)|(w5&8)|(w6&16)|(w7&32);
+		list[58] = lineb;
+		list[59] = linew;
+		//lower left
+		lineb = (b2&128)|(b3&64)|(b4&32)|(b5&16)|(b6&8)|(b7&4);
+		linew = (w2&128)|(w3&64)|(w4&32)|(w5&16)|(w6&8)|(w7&4);
+		list[60] = lineb>>>2;
+		list[61] = linew>>>2;
+		//upper right
+		lineb = (b5&1)|(b4&2)|(b3&4)|(b2&8)|(b1&16)|(b0&32);
+		linew = (w5&1)|(w4&2)|(w3&4)|(w2&8)|(w1&16)|(w0&32);
+		list[62] = lineb;
+		list[63] = linew;
+	
+		
+		
+		//corner24
+		//horizontal upper left
+		lineb = (b0&0xf0)|((b1&0xf0)>>>4);
+		linew = (w0&0xf0)|((w1&0xf0)>>>4);
+		list[64] = lineb;
+		list[65] = linew;
+		//horizontal lower left
+		lineb = (b7&0xf0)|((b6&0xf0)>>>4);
+		linew = (w7&0xf0)|((w6&0xf0)>>>4);
+		list[66] = lineb;
+		list[67] = linew;
+		//horizontal upper right
+		lineb = ((b0&1)<<7)|((b0&2)<<5)|((b0&4)<<3)|((b0&8)<<1)|((b1&1)<<3)|((b1&2)<<1)|((b1&4)>>>1)|((b1&8)>>>3);
+		linew = ((w0&1)<<7)|((w0&2)<<5)|((w0&4)<<3)|((w0&8)<<1)|((w1&1)<<3)|((w1&2)<<1)|((w1&4)>>>1)|((w1&8)>>>3);
+		list[68] = lineb;
+		list[69] = linew;
+		//horizontal lower right
+		lineb = ((b7&1)<<7)|((b7&2)<<5)|((b7&4)<<3)|((b7&8)<<1)|((b6&1)<<3)|((b6&2)<<1)|((b6&4)>>>1)|((b6&8)>>>3);
+		linew = ((w7&1)<<7)|((w7&2)<<5)|((w7&4)<<3)|((w7&8)<<1)|((w6&1)<<3)|((w6&2)<<1)|((w6&4)>>>1)|((w6&8)>>>3);
+		list[70] = lineb;
+		list[71] = linew;
+
+
+		//vertical upper left
+		lineb = ((b0&128)>>>0)|((b1&128)>>>1)|((b2&128)>>>2)|((b3&128)>>>3)|((b0&64)>>>3)|((b1&64)>>>4)|((b2&64)>>>5)|((b3&64)>>>6);
+		linew = ((w0&128)>>>0)|((w1&128)>>>1)|((w2&128)>>>2)|((w3&128)>>>3)|((w0&64)>>>3)|((w1&64)>>>4)|((w2&64)>>>5)|((w3&64)>>>6);
+		list[72] = lineb;
+		list[73] = linew;
+		//vertical lower left
+		lineb = ((b7&128)>>>0)|((b6&128)>>>1)|((b5&128)>>>2)|((b4&128)>>>3)|((b7&64)>>>3)|((b6&64)>>>4)|((b5&64)>>>5)|((b4&64)>>>6);
+		linew = ((w7&128)>>>0)|((w6&128)>>>1)|((w5&128)>>>2)|((w4&128)>>>3)|((w7&64)>>>3)|((w6&64)>>>4)|((w5&64)>>>5)|((w4&64)>>>6);
+		list[74] = lineb;
+		list[75] = linew;
+		//vertical upper right
+		lineb = ((b0&1)<<7)|((b1&1)<<6)|((b2&1)<<5)|((b3&1)<<4)|((b0&2)<<2)|((b1&2)<<1)|((b2&2)<<0)|((b3&2)>>>1);
+		linew = ((w0&1)<<7)|((w1&1)<<6)|((w2&1)<<5)|((w3&1)<<4)|((w0&2)<<2)|((w1&2)<<1)|((w2&2)<<0)|((w3&2)>>>1);
+		list[76] = lineb;
+		list[77] = linew;
+		//vertical lower right
+		lineb = ((b7&1)<<7)|((b6&1)<<6)|((b5&1)<<5)|((b4&1)<<4)|((b7&2)<<2)|((b6&2)<<1)|((b5&2)<<0)|((b4&2)>>>1);
+		linew = ((w7&1)<<7)|((w6&1)<<6)|((w5&1)<<5)|((w4&1)<<4)|((w7&2)<<2)|((w6&2)<<1)|((w5&2)<<0)|((w4&2)>>>1);
+		list[78] = lineb;
+		list[79] = linew;
+		
+		return list;
+	}
+
 	shape(){
 		const [b0, b1, b2, b3, b4, b5, b6, b7, w0, w1, w2, w3, w4, w5, w6, w7] = this.horizontalLines();
 		const list = new Array(80);
@@ -906,3 +1154,31 @@ class BOARD {
 		return score;
 	}
 }
+
+
+
+function searchMagic(start, end){
+	const list1 = [7,6,5,4];
+	const list2 = list1.map(x=>31-x);
+
+	loop:for(let magic=start;magic<end;magic++){
+		for(const a of [0,1]){
+			for(const b of [0,1]){
+				for(const c of [0,1]){
+					for(const d of [0,1]){
+						const board = (d<<list2[3])|(c<<list2[2])|(b<<list2[1])|(a<<list2[0]);
+						if(((((board*magic)|0)>>>28)&0xf)!==((d<<0)|(c<<1)|(b<<2)|(a<<3))){
+							continue loop;
+						}
+					}
+				}
+			}
+		}
+
+		return magic;
+	}
+	return 'failed';
+}
+
+
+
