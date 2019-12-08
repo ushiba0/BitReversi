@@ -116,9 +116,9 @@ class data2png {
 		let arr = this.array;
 		const that = this;
 		const img = new Image();
-		if(window.localStorage.weightsVersion===this.weightsVersion){
+		/*if(window.localStorage.weightsVersion===this.weightsVersion){
 			name = window.localStorage.weightsSRC;
-		}
+		}*/
 		img.src = name;
 		const cvs = document.createElement('canvas');
 		const ctx = cvs.getContext('2d');
@@ -134,19 +134,19 @@ class data2png {
             const data = imagedata.data;
             
 			const len = data[0]|(data[1]<<8)|(data[2]<<16)|(data[4]<<24);
-            arr = new Uint8ClampedArray(size);
+			arr = new Uint8ClampedArray(size);
             for(let i=0, k=cvs.width*4;i<size;i++){
                 if(k%4===3){
                     k++;
                 }
-                arr[i] = data[k++];
+				arr[i] = data[k++];
             }
 			that.array = arr;
 			
-			if(window.localStorage.weightsVersion!==this.weightsVersion){
+			/*if(window.localStorage.weightsVersion!==this.weightsVersion){
 				window.localStorage.weightsSRC = cvs.toDataURL();
 				window.localStorage.weightsVersion = this.weightsVersion;
-			}
+			}*/
             
             func();
 			cvs.remove();

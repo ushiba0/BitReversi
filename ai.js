@@ -173,26 +173,3 @@ class AI extends EV {
 	}
 	
 }
-
-
-
-const ffo40 = Object.assign(new BOARD(),
-{
-black1: 16855331,
-black2: 50397440,
-e: 0,
-stones: 44,
-turn: 1,
-white1: -1635856676,
-white2: -65140736
-});
-
-const ffo41 = Object.assign(new BOARD(), {
-black1: 131320,
-black2: 1680611328,
-e: 0,
-stones: 42,
-turn: 1,
-white1: 2084339206,
-white2: 416294002
-});

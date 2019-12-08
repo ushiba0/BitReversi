@@ -78,11 +78,9 @@ class GRAPHIC {
 		}
 	}
 	
-	async showEval(node=this.now, alpha=-100,beta=100, depth=-1){
+	async showEval(node=this.now, alpha=-100,beta=100, depth){
 		
-		const search_depth = (depth===-1)?
-			(property.depth_last>=64-node.stones ? -1 : property.depth):
-			depth;
+		const search_depth = (!depth)?(property.depth_last>=64-node.stones ? -1 : property.depth):depth;
 		const evals = await ai.cpuHand(node, alpha, beta, search_depth, 1, 1);
 
 		if(evals.length===0){
@@ -374,7 +372,7 @@ class DEVELOP extends MASTER{
 		return nodes;
     }
     
-    generateNode(N=64){
+    async generateNode(N=64){
 		const n = Math.max(Math.min(64, ~~N), 4);
 		let node_now = new BOARD();
 		
@@ -387,7 +385,7 @@ class DEVELOP extends MASTER{
 			const state = node_now.state();
 
 			if(state===1){
-				const moves = ai.cpuHand(node_now, -100, 100, 1);
+				const moves = await ai.cpuHand(node_now, -100, 100, 1);
 				const key = Math.random()<0.05 ? ~~(Math.random()*moves.length) : 0;
 				node_now = node_now.putStone(moves[key].hand1, moves[key].hand2)
 			}else if(state===2){

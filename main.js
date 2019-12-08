@@ -13,8 +13,8 @@ const timerEnd = ()=>{
 
 
 const property = new Object();
-property.num_phase = 61;
-property.num_shape = 10;
+property.num_phase = 12;
+property.num_shape = 5;
 property.learning_rate = 1/8/2;
 property.colorOfCpu = -1;
 property.num_readnode = 0;

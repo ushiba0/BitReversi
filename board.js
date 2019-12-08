@@ -153,17 +153,17 @@ class BOARD {
 
 		this.turn = 1;
 	}
-	
+
 	putStone(hand1, hand2){
 		let black1 = this.black1;
 		let black2 = this.black2;
 		let white1 = this.white1;
 		let white2 = this.white2;
 		
-		let temp, temp1, temp2;
+		let temp1, temp2;
 	
 		if(this.turn===-1){//white turn
-			temp = white1;
+			let temp = white1;
 			white1 = black1;
 			black1 = temp;
 			temp = white2;
@@ -209,36 +209,36 @@ class BOARD {
 		
 	
 		//+8
-		temp1  = verticalMask1&(hand1>>>8); temp2  = verticalMask2&(hand2>>>8|hand1<<24);
-		temp1 |= verticalMask1&(temp1>>>8); temp2 |= verticalMask2&(temp2>>>8|temp1<<24);
-		temp1 |= verticalMask1&(temp1>>>8); temp2 |= verticalMask2&(temp2>>>8|temp1<<24);
-		temp1 |= verticalMask1&(temp1>>>8); temp2 |= verticalMask2&(temp2>>>8|temp1<<24);
-		temp1 |= verticalMask1&(temp1>>>8); temp2 |= verticalMask2&(temp2>>>8|temp1<<24);
-		temp1 |= verticalMask1&(temp1>>>8); temp2 |= verticalMask2&(temp2>>>8|temp1<<24);
+		temp1  = verticalMask1&(hand1>>>8);
+		temp1 |= verticalMask1&(temp1>>>8);
+		temp1 |= verticalMask1&(temp1>>>8);
+		temp2  = verticalMask2&(hand2>>>8|temp1<<24|hand1<<24);
+		temp2 |= verticalMask2&(temp2>>>8);
+		temp2 |= verticalMask2&(temp2>>>8);
 		if(((temp1>>>8)&black1)|((temp2>>>8|temp1<<24)&black2)){
 			black1 ^= temp1; black2 ^= temp2;
 			white1 ^= temp1; white2 ^= temp2;
 		}
 	
 		//-8
-		temp1  = verticalMask1&(hand1<<8|hand2>>>24); temp2  = verticalMask2&(hand2<<8);
-		temp1 |= verticalMask1&(temp1<<8|temp2>>>24); temp2 |= verticalMask2&(temp2<<8);
-		temp1 |= verticalMask1&(temp1<<8|temp2>>>24); temp2 |= verticalMask2&(temp2<<8);
-		temp1 |= verticalMask1&(temp1<<8|temp2>>>24); temp2 |= verticalMask2&(temp2<<8);
-		temp1 |= verticalMask1&(temp1<<8|temp2>>>24); temp2 |= verticalMask2&(temp2<<8);
-		temp1 |= verticalMask1&(temp1<<8|temp2>>>24); temp2 |= verticalMask2&(temp2<<8);
+		temp2  = verticalMask2&(hand2<<8);
+		temp2 |= verticalMask2&(temp2<<8);
+		temp2 |= verticalMask2&(temp2<<8);
+		temp1  = verticalMask1&(hand1<<8|temp2>>>24|hand2>>>24);
+		temp1 |= verticalMask1&(temp1<<8);
+		temp1 |= verticalMask1&(temp1<<8);
 		if(((temp1<<8|temp2>>>24)&black1)|((temp2<<8)&black2)){
 			black1 ^= temp1; black2 ^= temp2;
 			white1 ^= temp1; white2 ^= temp2;
 		}
 		
 		//-7
-		temp1  = edgeMask1&(hand1<<7|hand2>>>25); temp2  = edgeMask2&(hand2<<7);
-		temp1 |= edgeMask1&(temp1<<7|temp2>>>25); temp2 |= edgeMask2&(temp2<<7);
-		temp1 |= edgeMask1&(temp1<<7|temp2>>>25); temp2 |= edgeMask2&(temp2<<7);
-		temp1 |= edgeMask1&(temp1<<7|temp2>>>25); temp2 |= edgeMask2&(temp2<<7);
-		temp1 |= edgeMask1&(temp1<<7|temp2>>>25); temp2 |= edgeMask2&(temp2<<7);
-		temp1 |= edgeMask1&(temp1<<7|temp2>>>25); temp2 |= edgeMask2&(temp2<<7);
+		temp2  = edgeMask2&(hand2<<7);
+		temp2 |= edgeMask2&(temp2<<7);
+		temp2 |= edgeMask2&(temp2<<7);
+		temp1  = edgeMask1&(hand1<<7|temp2>>>25|hand2>>>25);
+		temp1 |= edgeMask1&(temp1<<7);
+		temp1 |= edgeMask1&(temp1<<7);
 		if(((temp1<<7|temp2>>>25)&black1)|((temp2<<7)&black2)){
 			black1 ^= temp1; black2 ^= temp2;
 			white1 ^= temp1; white2 ^= temp2;
@@ -246,36 +246,36 @@ class BOARD {
 		
 		
 		//-9
-		temp1  = edgeMask1&(hand1<<9|hand2>>>23); temp2  = edgeMask2&(hand2<<9);
-		temp1 |= edgeMask1&(temp1<<9|temp2>>>23); temp2 |= edgeMask2&(temp2<<9);
-		temp1 |= edgeMask1&(temp1<<9|temp2>>>23); temp2 |= edgeMask2&(temp2<<9);
-		temp1 |= edgeMask1&(temp1<<9|temp2>>>23); temp2 |= edgeMask2&(temp2<<9);
-		temp1 |= edgeMask1&(temp1<<9|temp2>>>23); temp2 |= edgeMask2&(temp2<<9);
-		temp1 |= edgeMask1&(temp1<<9|temp2>>>23); temp2 |= edgeMask2&(temp2<<9);
+		temp2  = edgeMask2&(hand2<<9);
+		temp2 |= edgeMask2&(temp2<<9);
+		temp2 |= edgeMask2&(temp2<<9);
+		temp1  = edgeMask1&(hand1<<9|temp2>>>23|hand2>>>23); 
+		temp1 |= edgeMask1&(temp1<<9);
+		temp1 |= edgeMask1&(temp1<<9);
 		if(((temp1<<9|temp2>>>23)&black1)|((temp2<<9)&black2)){
 			black1 ^= temp1; black2 ^= temp2;
 			white1 ^= temp1; white2 ^= temp2;
 		}
 		
 		//+7
-		temp1  = edgeMask1&(hand1>>>7); temp2  = edgeMask2&(hand2>>>7|hand1<<25);
-		temp1 |= edgeMask1&(temp1>>>7); temp2 |= edgeMask2&(temp2>>>7|temp1<<25);
-		temp1 |= edgeMask1&(temp1>>>7); temp2 |= edgeMask2&(temp2>>>7|temp1<<25);
-		temp1 |= edgeMask1&(temp1>>>7); temp2 |= edgeMask2&(temp2>>>7|temp1<<25);
-		temp1 |= edgeMask1&(temp1>>>7); temp2 |= edgeMask2&(temp2>>>7|temp1<<25);
-		temp1 |= edgeMask1&(temp1>>>7); temp2 |= edgeMask2&(temp2>>>7|temp1<<25);
+		temp1  = edgeMask1&(hand1>>>7);
+		temp1 |= edgeMask1&(temp1>>>7);
+		temp1 |= edgeMask1&(temp1>>>7);
+		temp2  = edgeMask2&(hand2>>>7|temp1<<25|hand1<<25);
+		temp2 |= edgeMask2&(temp2>>>7);
+		temp2 |= edgeMask2&(temp2>>>7);
 		if(((temp1>>>7)&black1)|((temp2>>>7|temp1<<25)&black2)){
 			black1 ^= temp1; black2 ^= temp2;
 			white1 ^= temp1; white2 ^= temp2;
 		}
 		
 		//+9
-		temp1  = edgeMask1&(hand1>>>9); temp2  = edgeMask2&(hand2>>>9|hand1<<23);
-		temp1 |= edgeMask1&(temp1>>>9); temp2 |= edgeMask2&(temp2>>>9|temp1<<23);
-		temp1 |= edgeMask1&(temp1>>>9); temp2 |= edgeMask2&(temp2>>>9|temp1<<23);
-		temp1 |= edgeMask1&(temp1>>>9); temp2 |= edgeMask2&(temp2>>>9|temp1<<23);
-		temp1 |= edgeMask1&(temp1>>>9); temp2 |= edgeMask2&(temp2>>>9|temp1<<23);
-		temp1 |= edgeMask1&(temp1>>>9); temp2 |= edgeMask2&(temp2>>>9|temp1<<23);
+		temp1  = edgeMask1&(hand1>>>9);
+		temp1 |= edgeMask1&(temp1>>>9);
+		temp1 |= edgeMask1&(temp1>>>9);
+		temp2  = edgeMask2&(hand2>>>9|temp1<<23|hand1<<23);
+		temp2 |= edgeMask2&(temp2>>>9);
+		temp2 |= edgeMask2&(temp2>>>9);
 		if(((temp1>>>9)&black1)|((temp2>>>9|temp1<<23)&black2)){
 			black1 ^= temp1; black2 ^= temp2;
 			white1 ^= temp1; white2 ^= temp2;
@@ -285,7 +285,7 @@ class BOARD {
 		black2 |= hand2;
 	
 		if(this.turn===-1){//white turn
-			temp = white1;
+			let temp = white1;
 			white1 = black1;
 			black1 = temp;
 			temp = white2;
@@ -304,116 +304,141 @@ class BOARD {
 		
 		return child;
 	}
-
-	getMove(){
-		let move1 = 0, move2 = 0;
-		let temp, temp1, temp2;
-		
-		let black1 = this.black1;
-		let black2 = this.black2;
-		let white1 = this.white1;
-		let white2 = this.white2;
 	
-		if(this.turn===-1){//white turn
-			temp = white1;
-			white1 = black1;
-			black1 = temp;
-			temp = white2;
-			white2 = black2;
-			black2 = temp;
+	getMove(){
+		let p1, p0, o1, o0;
+		if(this.turn===1){
+			p1 = this.black1;
+			p0 = this.black2;
+			o1 = this.white1;
+			o0 = this.white2;
+		}else{
+			p1 = this.white1;
+			p0 = this.white2;
+			o1 = this.black1;
+			o0 = this.black2;
 		}
-		
-		const horizontalMask1 = 0x7e7e7e7e&white1;
-		const horizontalMask2 = 0x7e7e7e7e&white2;
-		const verticalMask1 = 0x00ffffff&white1;
-		const verticalMask2 = 0xffffff00&white2;
-		const edgeMask1 = 0x007e7e7e&white1;
-		const edgeMask2 = 0x7e7e7e00&white2;
-		const blankBoard1 = ~(black1|white1);
-		const blankBoard2 = ~(black2|white2);
-		
-		
-		//-1
-		temp1 = horizontalMask1&(black1<<1); temp2 = horizontalMask2&(black2<<1);
-		temp1 |= horizontalMask1&(temp1<<1); temp2 |= horizontalMask2&(temp2<<1);
-		temp1 |= horizontalMask1&(temp1<<1); temp2 |= horizontalMask2&(temp2<<1);
-		temp1 |= horizontalMask1&(temp1<<1); temp2 |= horizontalMask2&(temp2<<1);
-		temp1 |= horizontalMask1&(temp1<<1); temp2 |= horizontalMask2&(temp2<<1);
-		temp1 |= horizontalMask1&(temp1<<1); temp2 |= horizontalMask2&(temp2<<1);
-		move1 |= blankBoard1&(temp1<<1);
-		move2 |= blankBoard2&(temp2<<1);
-		
-		//+1
-		temp1 = horizontalMask1&(black1>>>1); temp2 = horizontalMask2&(black2>>>1);
-		temp1 |= horizontalMask1&(temp1>>>1); temp2 |= horizontalMask2&(temp2>>>1);
-		temp1 |= horizontalMask1&(temp1>>>1); temp2 |= horizontalMask2&(temp2>>>1);
-		temp1 |= horizontalMask1&(temp1>>>1); temp2 |= horizontalMask2&(temp2>>>1);
-		temp1 |= horizontalMask1&(temp1>>>1); temp2 |= horizontalMask2&(temp2>>>1);
-		temp1 |= horizontalMask1&(temp1>>>1); temp2 |= horizontalMask2&(temp2>>>1);
-		move1 |= blankBoard1&(temp1>>>1);
-		move2 |= blankBoard2&(temp2>>>1);
-		
-		//-8
-		temp1 = verticalMask1&(black1<<8|black2>>>24); temp2 = verticalMask2&(black2<<8);
-		temp1 |= verticalMask1&(temp1<<8|temp2>>>24); temp2 |= verticalMask2&(temp2<<8);
-		temp1 |= verticalMask1&(temp1<<8|temp2>>>24); temp2 |= verticalMask2&(temp2<<8);
-		temp1 |= verticalMask1&(temp1<<8|temp2>>>24); temp2 |= verticalMask2&(temp2<<8);
-		temp1 |= verticalMask1&(temp1<<8|temp2>>>24); temp2 |= verticalMask2&(temp2<<8);
-		temp1 |= verticalMask1&(temp1<<8|temp2>>>24); temp2 |= verticalMask2&(temp2<<8);
-		move1 |= blankBoard1&(temp1<<8|temp2>>>24);
-		move2 |= blankBoard2&(temp2<<8);
-		
-		//+8
-		temp1 = verticalMask1&(black1>>>8); temp2 = verticalMask2&(black2>>>8|black1<<24);
-		temp1 |= verticalMask1&(temp1>>>8); temp2 |= verticalMask2&(temp2>>>8|temp1<<24);
-		temp1 |= verticalMask1&(temp1>>>8); temp2 |= verticalMask2&(temp2>>>8|temp1<<24);
-		temp1 |= verticalMask1&(temp1>>>8); temp2 |= verticalMask2&(temp2>>>8|temp1<<24);
-		temp1 |= verticalMask1&(temp1>>>8); temp2 |= verticalMask2&(temp2>>>8|temp1<<24);
-		temp1 |= verticalMask1&(temp1>>>8); temp2 |= verticalMask2&(temp2>>>8|temp1<<24);
-		move1 |= blankBoard1&(temp1>>>8);
-		move2 |= blankBoard2&(temp2>>>8|temp1<<24);
-		
-		//-7
-		temp1 = edgeMask1&(black1<<7|black2>>>25); temp2 = edgeMask2&(black2<<7);
-		temp1 |= edgeMask1&(temp1<<7|temp2>>>25); temp2 |= edgeMask2&(temp2<<7);
-		temp1 |= edgeMask1&(temp1<<7|temp2>>>25); temp2 |= edgeMask2&(temp2<<7);
-		temp1 |= edgeMask1&(temp1<<7|temp2>>>25); temp2 |= edgeMask2&(temp2<<7);
-		temp1 |= edgeMask1&(temp1<<7|temp2>>>25); temp2 |= edgeMask2&(temp2<<7);
-		temp1 |= edgeMask1&(temp1<<7|temp2>>>25); temp2 |= edgeMask2&(temp2<<7);
-		move1 |= blankBoard1&(temp1<<7|temp2>>>25);
-		move2 |= blankBoard2&(temp2<<7);
-		
-		//-9
-		temp1 = edgeMask1&(black1<<9| black2>>>23); temp2 = edgeMask2&(black2<<9);
-		temp1 |= edgeMask1&(temp1<<9| temp2>>>23); temp2 |= edgeMask2&(temp2<<9);
-		temp1 |= edgeMask1&(temp1<<9| temp2>>>23); temp2 |= edgeMask2&(temp2<<9);
-		temp1 |= edgeMask1&(temp1<<9| temp2>>>23); temp2 |= edgeMask2&(temp2<<9);
-		temp1 |= edgeMask1&(temp1<<9| temp2>>>23); temp2 |= edgeMask2&(temp2<<9);
-		temp1 |= edgeMask1&(temp1<<9| temp2>>>23); temp2 |= edgeMask2&(temp2<<9);
-		move1 |= blankBoard1&(temp1<<9| temp2>>>23);
-		move2 |= blankBoard2&(temp2<<9);
-		
-		//+7
-		temp1 = edgeMask1&(black1>>>7); temp2 = edgeMask2&(black2>>>7|black1<<25);
-		temp1 |= edgeMask1&(temp1>>>7); temp2 |= edgeMask2&(temp2>>>7|temp1<<25);
-		temp1 |= edgeMask1&(temp1>>>7); temp2 |= edgeMask2&(temp2>>>7|temp1<<25);
-		temp1 |= edgeMask1&(temp1>>>7); temp2 |= edgeMask2&(temp2>>>7|temp1<<25);
-		temp1 |= edgeMask1&(temp1>>>7); temp2 |= edgeMask2&(temp2>>>7|temp1<<25);
-		temp1 |= edgeMask1&(temp1>>>7); temp2 |= edgeMask2&(temp2>>>7|temp1<<25);
-		move1 |= blankBoard1&(temp1>>>7);
-		move2 |= blankBoard2&(temp2>>>7|temp1<<25);
-		
-		//+9
-		temp1 = edgeMask1&(black1>>>9); temp2 = edgeMask2&(black2>>>9| black1<<23);
-		temp1 |= edgeMask1&(temp1>>>9); temp2 |= edgeMask2&(temp2>>>9| temp1<<23);
-		temp1 |= edgeMask1&(temp1>>>9); temp2 |= edgeMask2&(temp2>>>9| temp1<<23);
-		temp1 |= edgeMask1&(temp1>>>9); temp2 |= edgeMask2&(temp2>>>9| temp1<<23);
-		temp1 |= edgeMask1&(temp1>>>9); temp2 |= edgeMask2&(temp2>>>9| temp1<<23);
-		temp1 |= edgeMask1&(temp1>>>9); temp2 |= edgeMask2&(temp2>>>9| temp1<<23);
-		move1 |= blankBoard1&(temp1>>>9);
-		move2 |= blankBoard2&(temp2>>>9| temp1<<23);
 
-		return [move1, move2];
+		let mob1 = 0;
+		let mob0 = 0;
+
+		let blank1 = ~(p1 | o1);
+		let blank0 = ~(p0 | o0);
+
+		let mo1 = o1 & 0x7e7e7e7e;
+		let mo0 = o0 & 0x7e7e7e7e;
+
+		// 右向き
+
+		let ps1 = p1 << 1;
+		let ps0 = p0 << 1;
+
+		mob1 = (mo1 + ps1) & blank1 & ~ps1;
+		mob0 = (mo0 + ps0) & blank0 & ~ps0;
+
+		// 左向き
+
+		let t0 = p0 >>> 1 & mo0;
+		t0 |= t0 >>> 1 & mo0;
+		t0 |= t0 >>> 1 & mo0;
+		t0 |= t0 >>> 1 & mo0;
+		t0 |= t0 >>> 1 & mo0;
+		t0 |= t0 >>> 1 & mo0;
+
+		mob0 |= t0 >>> 1 & blank0;
+
+		let t1 = p1 >>> 1 & mo1;
+		t1 |= t1 >>> 1 & mo1;
+		t1 |= t1 >>> 1 & mo1;
+		t1 |= t1 >>> 1 & mo1;
+		t1 |= t1 >>> 1 & mo1;
+		t1 |= t1 >>> 1 & mo1;
+
+		mob1 |= t1 >>> 1 & blank1;
+
+		// 上下
+
+		mo1 = o1 & 0x00ffffff;
+		mo0 = o0 & 0xffffff00;
+
+		// 下向き
+		t0 = p0 << 8 & mo0;
+		t0 |= t0 << 8 & mo0;
+		t0 |= t0 << 8 & mo0;
+
+		t1 = (p1 << 8 | (t0 | p0) >>> 24) & mo1;
+		t1 |= t1 << 8 & mo1;
+		t1 |= t1 << 8 & mo1;
+
+		mob1 |= (t1 << 8 | t0 >>> 24) & blank1;
+		mob0 |= t0 << 8 & blank0;
+
+		// 上
+		t1 = p1 >>> 8 & mo1;
+		t1 |= t1 >>> 8 & mo1;
+		t1 |= t1 >>> 8 & mo1;
+
+		t0 = (p0 >>> 8 | (t1 | p1) << 24) & mo0;
+		t0 |= t0 >>> 8 & mo0;
+		t0 |= t0 >>> 8 & mo0;
+
+		mob1 |= t1 >>> 8 & blank1;
+		mob0 |= (t0 >>> 8 | t1 << 24) & blank0;
+
+		// 斜め
+
+		mo1 = o1 & 0x007e7e7e;
+		mo0 = o0 & 0x7e7e7e00;
+
+		// 右下
+		t0 = p0 << 9 & mo0;
+		t0 |= t0 << 9 & mo0;
+		t0 |= t0 << 9 & mo0;
+
+		t1 = (p1 << 9 | (t0 | p0) >>> 23) & mo1;
+		t1 |= t1 << 9 & mo1;
+		t1 |= t1 << 9 & mo1;
+
+		mob1 |= (t1 << 9 | t0 >>> 23) & blank1;
+		mob0 |= t0 << 9 & blank0;
+
+		// 左上
+		t1 = p1 >>> 9 & mo1;
+		t1 |= t1 >>> 9 & mo1;
+		t1 |= t1 >>> 9 & mo1;
+
+		t0 = (p0 >>> 9 | (t1 | p1) << 23) & mo0;
+		t0 |= t0 >>> 9 & mo0;
+		t0 |= t0 >>> 9 & mo0;
+
+		mob1 |= t1 >>> 9 & blank1;
+		mob0 |= (t0 >>> 9 | t1 << 23) & blank0;
+
+		// 左下
+		t0 = p0 << 7 & mo0;
+		t0 |= t0 << 7 & mo0;
+		t0 |= t0 << 7 & mo0;
+
+		t1 = (p1 << 7 | (t0 | p0) >>> 25) & mo1;
+		t1 |= t1 << 7 & mo1;
+		t1 |= t1 << 7 & mo1;
+
+		mob1 |= (t1 << 7 | t0 >>> 25) & blank1;
+		mob0 |= t0 << 7 & blank0;
+
+		// 右上
+		t1 = p1 >>> 7 & mo1;
+		t1 |= t1 >>> 7 & mo1;
+		t1 |= t1 >>> 7 & mo1;
+
+		t0 = (p0 >>> 7 | (t1 | p1) << 25) & mo0;
+		t0 |= t0 >>> 7 & mo0;
+		t0 |= t0 >>> 7 & mo0;
+
+		mob1 |= t1 >>> 7 & blank1;
+		mob0 |= (t0 >>> 7 | t1 << 25) & blank0;
+
+		return [mob1, mob0];
 	}
 
 	expand(){
@@ -426,7 +451,7 @@ class BOARD {
 			const child = this.putStone(bit, 0);
 			children.push(child);
 			//
-			move1 = move1 ^ bit;
+			move1 ^= bit;
 		}
 		while(move2){
 			const bit = -move2 & move2;
@@ -434,7 +459,7 @@ class BOARD {
 			const child = this.putStone(0, bit);
 			children.push(child);
 			//
-			move2 = move2 ^ bit;
+			move2 ^= bit;
 		}
 		return children;
 	}
@@ -475,7 +500,7 @@ class BOARD {
 
 	black_white(){
 
-		let temp, sum=0;
+		let temp, sum = 0;
 
 		temp = this.black1;
 		temp = (temp&0x55555555) + ((temp>>>1)&0x55555555);
@@ -508,293 +533,18 @@ class BOARD {
 
 		return newNode;
 	}
-
-	horizontalLines(){
-		const lines = new Array(16);
-		let black1, black2, white1, white2;
-		if(this.turn===1){
-			black1 = this.black1;
-			black2 = this.black2;
-			white1 = this.white1;
-			white2 = this.white2;
-		}else{
-			black1 = this.white1;
-			black2 = this.white2;
-			white1 = this.black1;
-			white2 = this.black2;
-		}
-
-		lines[0] = (black1>>>24) & 0xff;
-		lines[1] = (black1>>>16) & 0xff;
-		lines[2] = (black1>>>8)  & 0xff;
-		lines[3] = (black1>>>0)  & 0xff;
-		lines[4] = (black2>>>24) & 0xff;
-		lines[5] = (black2>>>16) & 0xff;
-		lines[6] = (black2>>>8)  & 0xff;
-		lines[7] = (black2>>>0)  & 0xff;
-		lines[8] = (white1>>>24) & 0xff;
-		lines[9] = (white1>>>16) & 0xff;
-		lines[10] = (white1>>>8) & 0xff;
-		lines[11] = (white1>>>0) & 0xff;
-		lines[12] = (white2>>>24) & 0xff;
-		lines[13] = (white2>>>16) & 0xff;
-		lines[14] = (white2>>>8)  & 0xff;
-		lines[15] = (white2>>>0)  & 0xff;
-		
-		return lines
-	}
-
-	___shape(){
-		let black1, black2, white1, white2;
-		if(this.turn===1){
-			black1 = this.black1;
-			black2 = this.black2;
-			white1 = this.white1;
-			white2 = this.white2;
-		}else{
-			black1 = this.white1;
-			black2 = this.white2;
-			white1 = this.black1;
-			white2 = this.black2;
-		}
-		const b0 = (black1>>>24)&0xff;
-		const w0 = (white1>>>24)&0xff;
-		const b1 = (black1>>>16)&0xff;
-		const w1 = (white1>>>16)&0xff;
-		const b2 = (black1>>>8)&0xff;
-		const w2 = (white1>>>8)&0xff;
-		const b3 = (black1)&0xff;
-		const w3 = (white1)&0xff;
-		const b4 = (black2>>>24)&0xff;
-		const w4 = (white2>>>24)&0xff;
-		const b5 = (black2>>>16)&0xff;
-		const w5 = (white2>>>16)&0xff;
-		const b6 = (black2>>>8)&0xff;
-		const w6 = (white2>>>8)&0xff;
-		const b7 = (black2)&0xff;
-		const w7 = (white2)&0xff;
-
-		const list = new Array(80);
-		let lineb = 0;
-		let linew = 0;
-
-		const black3 = black1>>>4;
-		const black4 = black2>>>4;
-		const white3 = white1>>>4;
-		const white4 = white2>>>4;
-		const magic7R = 2151686160;
-		const mask7 = 0x01010101;
-		const magic6R = 1075843080;
-		const mask6 = 0x02020202;
-		const magic5R = 537921540;
-		const mask5 = 0x04040404;
-		const magic4R = 268960770;
-		const mask4 = 0x08080808;
-
-		//horizontal 1
-		//上辺
-		list[0] = b0;
-		list[1] = w0;
-		//下辺
-		list[2] = b7;
-		list[3] = w7;
-		//右辺
-		list[4] = ((((black1&mask7)*magic7R)>>>28)&0x0f)|((((black2&mask7)*magic7R)>>>24)&0xf0);
-		list[5] = ((((white1&mask7)*magic7R)>>>28)&0x0f)|((((white2&mask7)*magic7R)>>>24)&0xf0);
-		//左辺
-		list[6] = ((((black3&mask4)*magic4R)>>>28)&0x0f)|((((black4&mask4)*magic4R)>>>24)&0xf0);
-		list[7] = ((((white3&mask4)*magic4R)>>>28)&0x0f)|((((white4&mask4)*magic4R)>>>24)&0xf0);
-		
-		
-		
-		//horizontal 2
-		//上辺
-		list[8] = b1;
-		list[9] = w1;
-		//下辺
-		list[10] = b6;
-		list[11] = w6;
-		//右辺
-		list[12] = ((((black1&mask6)*magic6R)>>>28)&0x0f)|((((black2&mask6)*magic6R)>>>24)&0xf0);
-		list[13] = ((((white1&mask6)*magic6R)>>>28)&0x0f)|((((white2&mask6)*magic6R)>>>24)&0xf0);
-		//左辺
-		list[14] = ((((black3&mask5)*magic5R)>>>28)&0x0f)|((((black4&mask5)*magic5R)>>>24)&0xf0);
-		list[15] = ((((white3&mask5)*magic5R)>>>28)&0x0f)|((((white4&mask5)*magic5R)>>>24)&0xf0);
-		
 	
-		
-		//horizontal 3
-		//上辺
-		list[16] = b2;
-		list[17] = w2;
-		//下辺
-		list[18] = b5;
-		list[19] = w5;
-		//右辺
-		list[20] = ((((black1&mask5)*magic5R)>>>28)&0x0f)|((((black2&mask5)*magic5R)>>>24)&0xf0);
-		list[21] = ((((white1&mask5)*magic5R)>>>28)&0x0f)|((((white2&mask5)*magic5R)>>>24)&0xf0);
-		//左辺
-		list[22] = ((((black3&mask6)*magic6R)>>>28)&0x0f)|((((black4&mask6)*magic6R)>>>24)&0xf0);
-		list[23] = ((((white3&mask6)*magic6R)>>>28)&0x0f)|((((white4&mask6)*magic6R)>>>24)&0xf0);
-	
-	
-		
-		//horizontal 4
-		//上辺
-		list[24] = b3;
-		list[25] = w3;
-		//下辺
-		list[26] = b4;
-		list[27] = w4;
-		//右辺
-		list[28] = ((((black1&mask4)*magic4R)>>>28)&0x0f)|((((black2&mask4)*magic4R)>>>24)&0xf0);
-		list[29] = ((((white1&mask4)*magic4R)>>>28)&0x0f)|((((white2&mask4)*magic4R)>>>24)&0xf0);
-		//左辺
-		list[30] = ((((black3&mask7)*magic7R)>>>28)&0x0f)|((((black4&mask7)*magic7R)>>>24)&0xf0);
-		list[31] = ((((white3&mask7)*magic7R)>>>28)&0x0f)|((((white4&mask7)*magic7R)>>>24)&0xf0);
-		
-	
-		
-		//diagonal 8
-		//右肩上がり
-		lineb = (b7&128)|(b6&64)|(b5&32)|(b4&16)|(b3&8)|(b2&4)|(b1&2)|(b0&1);
-		linew = (w7&128)|(w6&64)|(w5&32)|(w4&16)|(w3&8)|(w2&4)|(w1&2)|(w0&1);
-		list[32] = lineb;
-		list[33] = linew;
-		list[34] = lineb;
-		list[35] = linew;
-		//右肩下がり
-		lineb = (b7&1)|(b6&2)|(b5&4)|(b4&8)|(b3&16)|(b2&32)|(b1&64)|(b0&128);
-		linew = (w7&1)|(w6&2)|(w5&4)|(w4&8)|(w3&16)|(w2&32)|(w1&64)|(w0&128);
-		list[36] = lineb;
-		list[37] = linew;
-		list[38] = lineb;
-		list[39] = linew;
-		
-		
-		
-		//corner 8
-		//upper left
-		lineb = ((b0&128))|((b1&128)>>>1)|((b0&64)>>>1)|((b2&128)>>>3)|((b1&64)>>>3)|((b0&32)>>>3)|((b3&128)>>>6)|((b0&16)>>>4);
-		linew = ((w0&128))|((w1&128)>>>1)|((w0&64)>>>1)|((w2&128)>>>3)|((w1&64)>>>3)|((w0&32)>>>3)|((w3&128)>>>6)|((w0&16)>>>4);
-		list[40] = lineb;
-		list[41] = linew;
-		//upper right
-		lineb = ((b0&1)<<7)|((b1&1)<<6)|((b0&2)<<4)|((b2&1)<<4)|((b1&2)<<2)|((b0&4)<<0)|((b3&1)<<1)|((b0&8)>>>3);
-		linew = ((w0&1)<<7)|((w1&1)<<6)|((w0&2)<<4)|((w2&1)<<4)|((w1&2)<<2)|((w0&4)<<0)|((w3&1)<<1)|((w0&8)>>>3);
-		list[42] = lineb;
-		list[43] = linew;
-		//lower left
-		lineb = ((b7&128))|((b6&128)>>>1)|((b7&64)>>>1)|((b5&128)>>>3)|((b6&64)>>>3)|((b7&32)>>>3)|((b4&128)>>>6)|((b7&16)>>>4);
-		linew = ((w7&128))|((w6&128)>>>1)|((w7&64)>>>1)|((w5&128)>>>3)|((w6&64)>>>3)|((w7&32)>>>3)|((w4&128)>>>6)|((w7&16)>>>4);
-		list[44] = lineb;
-		list[45] = linew;
-		//lower right
-		lineb = ((b7&1)<<7)|((b6&1)<<6)|((b7&2)<<4)|((b5&1)<<4)|((b6&2)<<2)|((b7&4)<<0)|((b4&1)<<1)|((b7&8)>>>3);
-		linew = ((w7&1)<<7)|((w6&1)<<6)|((w7&2)<<4)|((w5&1)<<4)|((w6&2)<<2)|((w7&4)<<0)|((w4&1)<<1)|((w7&8)>>>3);
-		list[46] = lineb;
-		list[47] = linew;
-		
-		
-		
-		//diagonal 7
-		//upper left
-		lineb = (b6&128)|(b5&64)|(b4&32)|(b3&16)|(b2&8)|(b1&4)|(b0&2);
-		linew = (w6&128)|(w5&64)|(w4&32)|(w3&16)|(w2&8)|(w1&4)|(w0&2);
-		list[48] = lineb>>>1;
-		list[49] = linew>>>1;
-		//lower right
-		lineb = (b1&1)|(b2&2)|(b3&4)|(b4&8)|(b5&16)|(b6&32)|(b7&64);
-		linew = (w1&1)|(w2&2)|(w3&4)|(w4&8)|(w5&16)|(w6&32)|(w7&64);
-		list[50] = lineb;
-		list[51] = linew;
-		//lower left
-		lineb = (b1&128)|(b2&64)|(b3&32)|(b4&16)|(b5&8)|(b6&4)|(b7&2);
-		linew = (w1&128)|(w2&64)|(w3&32)|(w4&16)|(w5&8)|(w6&4)|(w7&2);
-		list[52] = lineb>>>1;
-		list[53] = linew>>>1;
-		//upper right
-		lineb = (b6&1)|(b5&2)|(b4&4)|(b3&8)|(b2&16)|(b1&32)|(b0&64);
-		linew = (w6&1)|(w5&2)|(w4&4)|(w3&8)|(w2&16)|(w1&32)|(w0&64);
-		list[54] = lineb;
-		list[55] = linew;
-	
-		
-		
-		//diagonal 6
-		//upper left
-		lineb = (b5&128)|(b4&64)|(b3&32)|(b2&16)|(b1&8)|(b0&4);
-		linew = (w5&128)|(w4&64)|(w3&32)|(w2&16)|(w1&8)|(w0&4);
-		list[56] = lineb>>>2;
-		list[57] = linew>>>2;
-		//lower right
-		lineb = (b2&1)|(b3&2)|(b4&4)|(b5&8)|(b6&16)|(b7&32);
-		linew = (w2&1)|(w3&2)|(w4&4)|(w5&8)|(w6&16)|(w7&32);
-		list[58] = lineb;
-		list[59] = linew;
-		//lower left
-		lineb = (b2&128)|(b3&64)|(b4&32)|(b5&16)|(b6&8)|(b7&4);
-		linew = (w2&128)|(w3&64)|(w4&32)|(w5&16)|(w6&8)|(w7&4);
-		list[60] = lineb>>>2;
-		list[61] = linew>>>2;
-		//upper right
-		lineb = (b5&1)|(b4&2)|(b3&4)|(b2&8)|(b1&16)|(b0&32);
-		linew = (w5&1)|(w4&2)|(w3&4)|(w2&8)|(w1&16)|(w0&32);
-		list[62] = lineb;
-		list[63] = linew;
-	
-		
-		
-		//corner24
-		//horizontal upper left
-		lineb = (b0&0xf0)|((b1&0xf0)>>>4);
-		linew = (w0&0xf0)|((w1&0xf0)>>>4);
-		list[64] = lineb;
-		list[65] = linew;
-		//horizontal lower left
-		lineb = (b7&0xf0)|((b6&0xf0)>>>4);
-		linew = (w7&0xf0)|((w6&0xf0)>>>4);
-		list[66] = lineb;
-		list[67] = linew;
-		//horizontal upper right
-		lineb = ((b0&1)<<7)|((b0&2)<<5)|((b0&4)<<3)|((b0&8)<<1)|((b1&1)<<3)|((b1&2)<<1)|((b1&4)>>>1)|((b1&8)>>>3);
-		linew = ((w0&1)<<7)|((w0&2)<<5)|((w0&4)<<3)|((w0&8)<<1)|((w1&1)<<3)|((w1&2)<<1)|((w1&4)>>>1)|((w1&8)>>>3);
-		list[68] = lineb;
-		list[69] = linew;
-		//horizontal lower right
-		lineb = ((b7&1)<<7)|((b7&2)<<5)|((b7&4)<<3)|((b7&8)<<1)|((b6&1)<<3)|((b6&2)<<1)|((b6&4)>>>1)|((b6&8)>>>3);
-		linew = ((w7&1)<<7)|((w7&2)<<5)|((w7&4)<<3)|((w7&8)<<1)|((w6&1)<<3)|((w6&2)<<1)|((w6&4)>>>1)|((w6&8)>>>3);
-		list[70] = lineb;
-		list[71] = linew;
-
-
-		//vertical upper left
-		lineb = ((b0&128)>>>0)|((b1&128)>>>1)|((b2&128)>>>2)|((b3&128)>>>3)|((b0&64)>>>3)|((b1&64)>>>4)|((b2&64)>>>5)|((b3&64)>>>6);
-		linew = ((w0&128)>>>0)|((w1&128)>>>1)|((w2&128)>>>2)|((w3&128)>>>3)|((w0&64)>>>3)|((w1&64)>>>4)|((w2&64)>>>5)|((w3&64)>>>6);
-		list[72] = lineb;
-		list[73] = linew;
-		//vertical lower left
-		lineb = ((b7&128)>>>0)|((b6&128)>>>1)|((b5&128)>>>2)|((b4&128)>>>3)|((b7&64)>>>3)|((b6&64)>>>4)|((b5&64)>>>5)|((b4&64)>>>6);
-		linew = ((w7&128)>>>0)|((w6&128)>>>1)|((w5&128)>>>2)|((w4&128)>>>3)|((w7&64)>>>3)|((w6&64)>>>4)|((w5&64)>>>5)|((w4&64)>>>6);
-		list[74] = lineb;
-		list[75] = linew;
-		//vertical upper right
-		lineb = ((b0&1)<<7)|((b1&1)<<6)|((b2&1)<<5)|((b3&1)<<4)|((b0&2)<<2)|((b1&2)<<1)|((b2&2)<<0)|((b3&2)>>>1);
-		linew = ((w0&1)<<7)|((w1&1)<<6)|((w2&1)<<5)|((w3&1)<<4)|((w0&2)<<2)|((w1&2)<<1)|((w2&2)<<0)|((w3&2)>>>1);
-		list[76] = lineb;
-		list[77] = linew;
-		//vertical lower right
-		lineb = ((b7&1)<<7)|((b6&1)<<6)|((b5&1)<<5)|((b4&1)<<4)|((b7&2)<<2)|((b6&2)<<1)|((b5&2)<<0)|((b4&2)>>>1);
-		linew = ((w7&1)<<7)|((w6&1)<<6)|((w5&1)<<5)|((w4&1)<<4)|((w7&2)<<2)|((w6&2)<<1)|((w5&2)<<0)|((w4&2)>>>1);
-		list[78] = lineb;
-		list[79] = linew;
-		
-		return list;
-	}
 
 	shape(){
-		const [b0, b1, b2, b3, b4, b5, b6, b7, w0, w1, w2, w3, w4, w5, w6, w7] = this.horizontalLines();
-		const list = new Array(80);
+		const black1 = this.black1;
+		const black2 = this.black2;
+		const white1 = this.white1;
+		const white2 = this.white2;
+		const b0 = (black1>>>24)&0xff, b1 = (black1>>>16)&0xff, b2 = (black1>>>8)&0xff, b3 = (black1>>>0)&0xff;
+		const b4 = (black2>>>24)&0xff, b5 = (black2>>>16)&0xff, b6 = (black2>>>8)&0xff, b7 = (black2>>>0)&0xff;
+		const w0 = (white1>>>24)&0xff, w1 = (white1>>>16)&0xff, w2 = (white1>>>8)&0xff, w3 = (white1>>>0)&0xff;
+		const w4 = (white2>>>24)&0xff, w5 = (white2>>>16)&0xff, w6 = (white2>>>8)&0xff, w7 = (white2>>>0)&0xff;
+		const list = new Array(40);
 		let lineb = 0;
 		let linew = 0;
 
@@ -894,7 +644,7 @@ class BOARD {
 		list[38] = lineb;
 		list[39] = linew;
 		
-		
+		return list;
 		
 		//corner 8
 		//upper left
@@ -1022,35 +772,14 @@ class BOARD {
 			x = ((x&0b11110000)>>>4) | ((x&0b00001111)<<4);
 			return x;
 		};
-		
-		const black1 = this.black1;
-		const black2 = this.black2;
-		const white1 = this.white1;
-		const white2 = this.white2;
-		
-		const b0 = reverse((black1>>>24) & 0xff);
-		const b1 = reverse((black1>>>16) & 0xff);
-		const b2 = reverse((black1>>>8)  & 0xff);
-		const b3 = reverse((black1>>>0)  & 0xff);
-		const b4 = reverse((black2>>>24) & 0xff);
-		const b5 = reverse((black2>>>16) & 0xff);
-		const b6 = reverse((black2>>>8)  & 0xff);
-		const b7 = reverse((black2>>>0)  & 0xff);
-		const w0 = reverse((white1>>>24) & 0xff);
-		const w1 = reverse((white1>>>16) & 0xff);
-		const w2 = reverse((white1>>>8)  & 0xff);
-		const w3 = reverse((white1>>>0)  & 0xff);
-		const w4 = reverse((white2>>>24) & 0xff);
-		const w5 = reverse((white2>>>16) & 0xff);
-		const w6 = reverse((white2>>>8)  & 0xff);
-		const w7 = reverse((white2>>>0)  & 0xff);
 
+		const lines = this.shape().map(reverse);
 		const newNode = new BOARD(this);
 		
-		newNode.black1 = (b0<<24)|(b1<<16)|(b2<<8)|b3;
-		newNode.black2 = (b4<<24)|(b5<<16)|(b6<<8)|b7;
-		newNode.white1 = (w0<<24)|(w1<<16)|(w2<<8)|w3;
-		newNode.white2 = (w4<<24)|(w5<<16)|(w6<<8)|w7;
+		newNode.black1 = (lines[0]<<24)|(lines[8]<<16)|(lines[16]<<8)|lines[24];
+		newNode.black2 = (lines[26]<<24)|(lines[18]<<16)|(lines[10]<<8)|lines[2];
+		newNode.white1 = (lines[1]<<24)|(lines[9]<<16)|(lines[17]<<8)|lines[25];
+		newNode.white2 = (lines[27]<<24)|(lines[19]<<16)|(lines[11]<<8)|lines[3];
 
 		return newNode;
 	}
@@ -1063,63 +792,13 @@ class BOARD {
 			return x;
 		};
 
-		const b = new Array();
-		const w = new Array();
-		const black1 = this.black1;
-		const black2 = this.black2;
-		const white1 = this.white1;
-		const white2 = this.white2;
-	
-		b[0] = (black1>>>24)&0xff;
-		b[1] = (black1>>>16)&0xff;
-		b[2] = (black1>>>8) &0xff;
-		b[3] = (black1>>>0) &0xff;
-		b[4] = (black2>>>24)&0xff;
-		b[5] = (black2>>>16)&0xff;
-		b[6] = (black2>>>8) &0xff;
-		b[7] = (black2>>>0) &0xff;
-		w[0] = (white1>>>24)&0xff;
-		w[1] = (white1>>>16)&0xff;
-		w[2] = (white1>>>8) &0xff;
-		w[3] = (white1>>>0) &0xff;
-		w[4] = (white2>>>24)&0xff;
-		w[5] = (white2>>>16)&0xff;
-		w[6] = (white2>>>8) &0xff;
-		w[7] = (white2>>>0) &0xff;
-		let b1 = 0, b2 = 0, w1 = 0, w2 = 0;
-		let lineb, linew;
-
-		//vertical
-		lineb = ((b[0]&128)>>>0)|((b[1]&128)>>>1)|((b[2]&128)>>>2)|((b[3]&128)>>>3)|((b[4]&128)>>>4)|((b[5]&128)>>>5)|((b[6]&128)>>>6)|((b[7]&128)>>>7);
-		linew = ((w[0]&128)>>>0)|((w[1]&128)>>>1)|((w[2]&128)>>>2)|((w[3]&128)>>>3)|((w[4]&128)>>>4)|((w[5]&128)>>>5)|((w[6]&128)>>>6)|((w[7]&128)>>>7);
-		b1 |= reverse(lineb)<<24; w1 |= reverse(linew)<<24;
-		lineb = ((b[0]&64)<<1)|((b[1]&64)>>>0)|((b[2]&64)>>>1)|((b[3]&64)>>>2)|((b[4]&64)>>>3)|((b[5]&64)>>>4)|((b[6]&64)>>>5)|((b[7]&64)>>>6);
-		linew = ((w[0]&64)<<1)|((w[1]&64)>>>0)|((w[2]&64)>>>1)|((w[3]&64)>>>2)|((w[4]&64)>>>3)|((w[5]&64)>>>4)|((w[6]&64)>>>5)|((w[7]&64)>>>6);
-		b1 |= reverse(lineb)<<16; w1 |= reverse(linew)<<16;
-		lineb = ((b[0]&32)<<2)|((b[1]&32)<<1)|((b[2]&32)>>>0)|((b[3]&32)>>>1)|((b[4]&32)>>>2)|((b[5]&32)>>>3)|((b[6]&32)>>>4)|((b[7]&32)>>>5);
-		linew = ((w[0]&32)<<2)|((w[1]&32)<<1)|((w[2]&32)>>>0)|((w[3]&32)>>>1)|((w[4]&32)>>>2)|((w[5]&32)>>>3)|((w[6]&32)>>>4)|((w[7]&32)>>>5);
-		b1 |= reverse(lineb)<<8; w1 |= reverse(linew)<<8;
-		lineb = ((b[0]&16)<<3)|((b[1]&16)<<2)|((b[2]&16)<<1)|((b[3]&16)>>>0)|((b[4]&16)>>>1)|((b[5]&16)>>>2)|((b[6]&16)>>>3)|((b[7]&16)>>>4);
-		linew = ((w[0]&16)<<3)|((w[1]&16)<<2)|((w[2]&16)<<1)|((w[3]&16)>>>0)|((w[4]&16)>>>1)|((w[5]&16)>>>2)|((w[6]&16)>>>3)|((w[7]&16)>>>4);
-		b1 |= reverse(lineb); w1 |= reverse(linew);
-		lineb = ((b[0]&8)<<4)|((b[1]&8)<<3)|((b[2]&8)<<2)|((b[3]&8)<<1)|((b[4]&8)>>>0)|((b[5]&8)>>>1)|((b[6]&8)>>>2)|((b[7]&8)>>>3);
-		linew = ((w[0]&8)<<4)|((w[1]&8)<<3)|((w[2]&8)<<2)|((w[3]&8)<<1)|((w[4]&8)>>>0)|((w[5]&8)>>>1)|((w[6]&8)>>>2)|((w[7]&8)>>>3);
-		b2 |= reverse(lineb)<<24; w2 |= reverse(linew)<<24;
-		lineb = ((b[0]&4)<<5)|((b[1]&4)<<4)|((b[2]&4)<<3)|((b[3]&4)<<2)|((b[4]&4)<<1)|((b[5]&4)>>>0)|((b[6]&4)>>>1)|((b[7]&4)>>>2);
-		linew = ((w[0]&4)<<5)|((w[1]&4)<<4)|((w[2]&4)<<3)|((w[3]&4)<<2)|((w[4]&4)<<1)|((w[5]&4)>>>0)|((w[6]&4)>>>1)|((w[7]&4)>>>2);
-		b2 |= reverse(lineb)<<16; w2 |= reverse(linew)<<16;
-		lineb = ((b[0]&2)<<6)|((b[1]&2)<<5)|((b[2]&2)<<4)|((b[3]&2)<<3)|((b[4]&2)<<2)|((b[5]&2)<<1)|((b[6]&2)>>>0)|((b[7]&2)>>>1);
-		linew = ((w[0]&2)<<6)|((w[1]&2)<<5)|((w[2]&2)<<4)|((w[3]&2)<<3)|((w[4]&2)<<2)|((w[5]&2)<<1)|((w[6]&2)>>>0)|((w[7]&2)>>>1);
-		b2 |= reverse(lineb)<<8; w2 |= reverse(linew)<<8;
-		lineb = ((b[0]&1)<<7)|((b[1]&1)<<6)|((b[2]&1)<<5)|((b[3]&1)<<4)|((b[4]&1)<<3)|((b[5]&1)<<2)|((b[6]&1)<<1)|((b[7]&1)>>>0);
-		linew = ((w[0]&1)<<7)|((w[1]&1)<<6)|((w[2]&1)<<5)|((w[3]&1)<<4)|((w[4]&1)<<3)|((w[5]&1)<<2)|((w[6]&1)<<1)|((w[7]&1)>>>0);
-		b2 |= reverse(lineb); w2 |= reverse(linew);
-
+		const lines = this.shape().map(reverse);
 		const newNode = new BOARD(this);
-		newNode.black1 = b1;
-		newNode.black2 = b2;
-		newNode.white1 = w1;
-		newNode.white2 = w2;
+		
+		newNode.black1 = (lines[6]<<24)|(lines[14]<<16)|(lines[22]<<8)|lines[30];
+		newNode.black2 = (lines[28]<<24)|(lines[20]<<16)|(lines[12]<<8)|lines[4];
+		newNode.white1 = (lines[7]<<24)|(lines[15]<<16)|(lines[23]<<8)|lines[31];
+		newNode.white2 = (lines[29]<<24)|(lines[21]<<16)|(lines[13]<<8)|lines[5];
 
 		return newNode;
 	}
@@ -1157,28 +836,11 @@ class BOARD {
 
 
 
-function searchMagic(start, end){
-	const list1 = [7,6,5,4];
-	const list2 = list1.map(x=>31-x);
 
-	loop:for(let magic=start;magic<end;magic++){
-		for(const a of [0,1]){
-			for(const b of [0,1]){
-				for(const c of [0,1]){
-					for(const d of [0,1]){
-						const board = (d<<list2[3])|(c<<list2[2])|(b<<list2[1])|(a<<list2[0]);
-						if(((((board*magic)|0)>>>28)&0xf)!==((d<<0)|(c<<1)|(b<<2)|(a<<3))){
-							continue loop;
-						}
-					}
-				}
-			}
-		}
-
-		return magic;
-	}
-	return 'failed';
+var toDecimal = (x)=>{
+    if(x<0){
+        return "1" + (x&0x7fffffff).toString(2);
+    }else{
+        return x.toString(2);
+    }
 }
-
-
-

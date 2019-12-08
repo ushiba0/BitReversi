@@ -50,68 +50,46 @@ class EV {
 	
 	evaluation(board){
 		const shape = board.shape();
-		const weights = this.weights;
-		const indexb = this.indexb;
-		const indexw = this.indexw;
-		const num_shape = property.num_shape;
-		const phase = Math.min(Math.max(10, board.stones-4), 60);
-		let index = 0;
+		//最初20手は同じ重み、残りは4手ごと
+		const phase = board.stones<=24 ? 0 : Math.floor((board.stones-25)/4) + 1;
 		let score = 0;
-		let offset = num_shape*6561*phase;
+		let offset = property.num_shape*6561*phase;
 
-		for(let i=0;i<num_shape;i++){
-			const i8 = i*8;
-			index = indexb[shape[i8+0]] + indexw[shape[i8+1]];
-			score += weights[offset + index];
-			index = indexb[shape[i8+2]] + indexw[shape[i8+3]];
-			score += weights[offset + index];
-			index = indexb[shape[i8+4]] + indexw[shape[i8+5]];
-			score += weights[offset + index];
-			index = indexb[shape[i8+6]] + indexw[shape[i8+7]];
-			score += weights[offset + index];
+		for(let i=0;i<property.num_shape*8;i+=8){
+			score += this.weights[offset + this.indexb[shape[i+0]] + this.indexw[shape[i+1]]];
+			score += this.weights[offset + this.indexb[shape[i+2]] + this.indexw[shape[i+3]]];
+			score += this.weights[offset + this.indexb[shape[i+4]] + this.indexw[shape[i+5]]];
+			score += this.weights[offset + this.indexb[shape[i+6]] + this.indexw[shape[i+7]]];
 			offset += 6561;
-			//if(isNaN(score)){
-			//	window.errboard = board;
-			//	throw new Error(`error score is NaN\noffset+index=${offset+index}, i=${i}`);
-			//}
+			if(isNaN(score)){
+				window.errorboard=board;
+				throw ""
+			}
 		}
 		
-		//if(isNaN(score)){
-		//	window.errboard = board;
-		//	throw new Error(`error score is NaN\nindex=${index}, offset=${offset}`);
-		//}
 		return score/16;
 	}
 	
 	updateWeights(board, e){
 		const shape = board.shape();
-		const weights = this.weights;
-		const indexb = this.indexb;
-		const indexw = this.indexw;
-		const num_shape = property.num_shape;
-		const phase = Math.min(Math.max(10, board.stones-4), 60);
-		let index = 0;
-		let offset = num_shape*6561*phase;
+		//最初20手は同じ重み、残りは4手ごと
+		const phase = board.stones<=24 ? 0 : Math.floor((board.stones-25)/4) + 1;
+		let offset = property.num_shape*6561*phase;
 		
 		const y = e;//accurate evaluation of this node
 		const W = this.evaluation(board);//predicted evaluation of this node
 		const delta = (y - W)*property.learning_rate;
 
-		for(let i=0;i<num_shape;i++){
-			const i8 = i*8;
-			index = indexb[shape[i8+0]] + indexw[shape[i8+1]];
-			weights[offset + index] += delta;
-			index = indexb[shape[i8+2]] + indexw[shape[i8+3]];
-			weights[offset + index] += delta;
-			index = indexb[shape[i8+4]] + indexw[shape[i8+5]];
-			weights[offset + index] += delta;
-			index = indexb[shape[i8+6]] + indexw[shape[i8+7]];
-			weights[offset + index] += delta;
+		for(let i=0;i<property.num_shape*8;i+=8){
+			this.weights[offset + this.indexb[shape[i+0]] + this.indexw[shape[i+1]]] += delta;
+			this.weights[offset + this.indexb[shape[i+2]] + this.indexw[shape[i+3]]] += delta;
+			this.weights[offset + this.indexb[shape[i+4]] + this.indexw[shape[i+5]]] += delta;
+			this.weights[offset + this.indexb[shape[i+6]] + this.indexw[shape[i+7]]] += delta;
 			offset += 6561;
 		}
 	}
 	
-	trainOne(s=0, n=64, depth=-1){
+	async trainOne(s=0, n=64, depth=-1){
 		let count = 0, loss = 0;
 		// 重みを入れ替え
 		const temp = this.weights;
@@ -123,7 +101,7 @@ class EV {
 		
 		const startTime = performance.now();
 		while(true){
-			const node = develop.generateNode(n);
+			const node = await develop.generateNode(n);
 			const nodes = new Array(8);
 			nodes[0] = node;
 			nodes[1] = nodes[0].rotate();
@@ -137,8 +115,8 @@ class EV {
 			const true_value = ai.negaScout(node, -100, 100, depth);
 			const pred_value = this.evaluation(node);
 
-			for(const node_ of nodes){
-				this.updateWeights(node_, true_value);
+			for(const n of nodes){
+				this.updateWeights(n, true_value);
 			}
 			
 			loss += (true_value - pred_value)**2;
@@ -149,9 +127,6 @@ class EV {
 		}
 		
 		for(let i=0;i<this.weights.length;i++){
-			if(this.weights===0){
-				continue;
-			}
 			this.weights[i] = Math.min(Math.max(this.weights[i], -128), 127);
 		}
 		temp.set(this.weights);
