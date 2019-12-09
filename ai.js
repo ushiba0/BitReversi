@@ -96,7 +96,7 @@ class AI extends EV {
 			child.hand1 = (node.black1|node.white1)^(child.black1|child.white1);
 			child.hand2 = (node.black2|node.white2)^(child.black2|child.white2);
 			// calc eval of child
-			child.e = -this.negaScout(child, alpha, beta, depth)*master.now.turn;
+			child.e = -this.negaScout(child, alpha, beta, depth)//*master.now.turn;
 
 			if(showSearching){
 				await master.showSearchingCell(child.hand1, child.hand2);

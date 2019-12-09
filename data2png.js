@@ -10,7 +10,7 @@
 class data2png {
     constructor(){
         this.width = 100;
-        this.height = 100;
+        this.height = 10;
 		this.array = [];
 		this.cvs;
 		this.weightsVersion = "2.5";
@@ -21,7 +21,7 @@ class data2png {
         document.body.appendChild(cvs);
 		const ctx = cvs.getContext('2d');
 		cvs.width = this.width;
-        cvs.height = Math.max(this.height, 2 + ~~(arr.length/3/this.width));
+        cvs.height = Math.max(this.height, 1 + ~~(arr.length/3/this.width));
         const imagedata = ctx.getImageData(0, 0 , cvs.width, cvs.height);
 		const data = imagedata.data;
         

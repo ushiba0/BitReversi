@@ -844,3 +844,7 @@ var toDecimal = (x)=>{
         return x.toString(2);
     }
 }
+
+
+const ffo0 = new BOARD();
+Object.assign(ffo0, {black1: -66011956, black2: -726335776, white1: 14696499, white2: 709361678, turn: 1, stones: 50})

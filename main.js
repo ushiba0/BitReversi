@@ -209,7 +209,7 @@ display.switch = document.getElementById("switch_colors");
 
 	//evaluate boardd
 	document.getElementById("evaluate").addEventListener(property.eventName, e=>{
-		master.showEval(master.now, property.alpha, property.beta, -1);
+		master.showEval(master.now, property.alpha, property.beta);
 	});
 })();
 

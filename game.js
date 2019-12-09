@@ -269,6 +269,7 @@ class MASTER extends GRAPHIC {
 
 					const move = await ai.cpuHand(this.now, property.alpha, property.beta, search_depth, true, true);
 					this.record.push(move[0]);
+					console.log(move)
 				}
 				if(this.now.state()===2){
 					const newNode = new BOARD(this.now);
