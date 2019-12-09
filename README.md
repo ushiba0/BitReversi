@@ -2,6 +2,7 @@
 JavaScriptで動くりばーし
 
 https://lychnus372.github.io/BitReversi/
+
 ![QRcode](https://lychnus372.github.io/BitReversi/qrcode.png "qr")
 
 ## 画面の説明
