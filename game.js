@@ -333,7 +333,6 @@ class DEVELOP extends MASTER{
     getSelfPlayGame(){
 		const nodes = [];
 		const history = [new BOARD()];
-		let c = 0;
 		
 		while(true){
             const state = history.slice(-1)[0].state();

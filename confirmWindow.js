@@ -1,6 +1,6 @@
 const confirmWindow = (res=()=>{}, rej=()=>{}, text_="are you sure?")=>{
 	const background = document.createElement("div");
-	background.style.position = "fixed";
+	background.style.position = "absolute";
 	background.style.top = "0px";
 	background.style.left = "0px";
 	background.style.width = "100%";

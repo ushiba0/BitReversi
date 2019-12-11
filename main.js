@@ -99,7 +99,7 @@ for(let i=0;i<8;i++){
 display.comment.addEventListener(property.eventName, e=>{
 	e.preventDefault();
 	property.touchcount++;
-	setTimeout(()=>{property.touchcount=0;}, 600);
+	setTimeout(()=>{property.touchcount--;}, 600);
 	if(property.touchcount>=3){
 		const comment_text = display.comment.innerText;
 		display.comment.innerText = "開発モード";
@@ -109,7 +109,7 @@ display.comment.addEventListener(property.eventName, e=>{
 			property.touchcount = 0;
 		}, 3000);
 
-		document.getElementById("footer3").style.display = "inline-block";
+		document.getElementById("footer3").style.display = "block";
 	}
 });
 
