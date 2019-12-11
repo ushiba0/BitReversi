@@ -1,4 +1,5 @@
 
+
 class GRAPHIC {
 	constructor(){}
 
@@ -154,36 +155,34 @@ class GRAPHIC {
 		}
 	}
 
-	showSearchingCell(hand1, hand2){
-		return new Promise(resolve=>{
-			let x, y;
-			if(hand1<0){
-				y = 0;
-				x = 0;
-			}else if(hand1>0){
-				const e = 31 - Math.log2(hand1);
-				y = ~~(e/8);
-				x = e%8;
-			}
-			if(hand2<0){
-				y = 4;
-				x = 0;
-			}else if(hand2>0){
-				const e = 63 - Math.log2(hand2);
-				y = ~~(e/8);
-				x = e%8;
-			}
-			
-			//handが定義されていない場合
-			if(isNaN(x*y)){
-				throw new Error("okasii yo");
-			}
-	
-			display.circles[y*8+x].classList.add("searching");
-			setTimeout(() => {
-				resolve();
-			}, 0);
-		});
+	async showSearchingCell(hand1, hand2){
+		let x, y;
+		if(hand1<0){
+			y = 0;
+			x = 0;
+		}else if(hand1>0){
+			const e = 31 - Math.log2(hand1);
+			y = ~~(e/8);
+			x = e%8;
+		}
+		if(hand2<0){
+			y = 4;
+			x = 0;
+		}else if(hand2>0){
+			const e = 63 - Math.log2(hand2);
+			y = ~~(e/8);
+			x = e%8;
+		}
+		
+		//handが定義されていない場合
+		if(isNaN(x*y)){
+			throw new Error("okasii yo");
+		}
+		display.circles[y*8+x].classList.add("searching");
+		
+		await new Promise(resolve=>{setTimeout(()=>{
+			resolve();
+		}, 0);});
 	}
 	
 	showHand(node=this.now){
@@ -243,59 +242,54 @@ class MASTER extends GRAPHIC {
 	async play(hand1=0, hand2=0){
 		const [move1, move2] = this.now.getMove();
 		//handle illegal hand
-		if(!(hand1===0 && hand2===0)){
-			if(!(move1&hand1)&&!(move2&hand2)){
-				console.error(`error (${hand1}, ${hand2}) is illegal hand`);
-				return;
-			}
+		if((hand1|hand2) && !(move1&hand1) && !(move2&hand2)){
+			console.error(`error (${hand1}, ${hand2}) is illegal hand`);
+			return;
 		}
 
-		const player_turn = ()=>{
-			return new Promise(resolve=>{
-				if(this.now.turn!==property.colorOfCpu){
-					const newNode = this.now.putStone(hand1, hand2);
-					newNode.hand1 = hand1;
-					newNode.hand2 = hand2;
-					this.record.push(newNode);
-				}
+		const player_turn = async ()=>{
+			if(this.now.turn!==property.colorOfCpu){
+				const newNode = this.now.putStone(hand1, hand2);
+				newNode.hand1 = hand1;
+				newNode.hand2 = hand2;
+				this.record.push(newNode);
+			}
+			await new Promise(resolve=>{setTimeout(()=>{
 				resolve();
-			});
+			}, 0);});
 		};
 		
-		const cpu_turn = ()=>{
-			return new Promise(async (resolve, reject)=>{
-				if(this.now.state()===1){
-					const search_depth = property.depth_last>=64-this.now.stones ? -1 : property.depth;
+		const cpu_turn = async ()=>{
+			if(this.now.state()===1){
+				const search_depth = property.depth_last>=64-this.now.stones ? -1 : property.depth;
 
-					const move = await ai.cpuHand(this.now, property.alpha, property.beta, search_depth, true, true);
-					this.record.push(move[0]);
-					console.log(move)
+				const move = await ai.cpuHand(this.now, property.alpha, property.beta, search_depth, true, true);
+				this.record.push(move[0]);
+			}
+			if(this.now.state()===2){
+				const newNode = new BOARD(this.now);
+				newNode.hand1 = this.now.hand1;
+				newNode.hand2 = this.now.hand2;
+				newNode.turn *= -1;
+				this.record.push(newNode);
+				if(this.now.turn===property.colorOfCpu){
+					property.player_state_pass = true;
+					display.pass.style.display = "block";
+					window.stop();
 				}
-				if(this.now.state()===2){
-					const newNode = new BOARD(this.now);
-					newNode.hand1 = this.now.hand1;
-					newNode.hand2 = this.now.hand2;
-					newNode.turn *= -1;
-					this.record.push(newNode);
-					if(this.now.turn===property.colorOfCpu){
-						property.player_state_pass = true;
-						display.pass.style.display = "block";
-						window.stop();
-					}
-				}
+			}
+			await new Promise(resolve=>{setTimeout(()=>{
 				resolve();
-			});
+			}, 0);});
 		};
 		
-		const render = ()=>{
-			return new Promise((resolve)=>{
-				this.render(this.now);
-				this.showMove(this.now);
-				this.showHand(this.now);
-				setTimeout(() => {
-					resolve();
-				}, 5);
-			});
+		const render = async ()=>{
+			this.render(this.now);
+			this.showMove(this.now);
+			this.showHand(this.now);
+			await new Promise(resolve=>{setTimeout(()=>{
+				resolve();
+			}, 20);});
 		};
 		
 		await player_turn();
