@@ -147,7 +147,13 @@ document.getElementById("restart").addEventListener(property.eventName, e=>{
 //switch button
 document.getElementById("switch").addEventListener(property.eventName, ()=>{
 	if(property.mode==="black"){
+		property.mode = "white";
 		property.colorOfCpu = 1;
+		master.play();
+	}
+	else if(property.mode==="white"){
+		property.mode = "black";
+		property.colorOfCpu = -1;
 		master.play();
 	}
 });

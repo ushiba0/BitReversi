@@ -3,8 +3,8 @@ const confirmWindow = (res=()=>{}, rej=()=>{}, text_="are you sure?")=>{
 	background.style.position = "fixed";
 	background.style.top = "0px";
 	background.style.left = "0px";
-	background.style.width = innerWidth + "px";
-	background.style.height = innerHeight + "px";
+	background.style.width = "100%";
+	background.style.height = "100%";
 	background.style.background = "#555555";
 	background.style.opacity = "0.9";
 

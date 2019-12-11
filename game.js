@@ -268,10 +268,8 @@ class MASTER extends GRAPHIC {
 			}
 			if(this.now.state()===2){
 				const newNode = new BOARD(this.now);
-				newNode.hand1 = this.now.hand1;
-				newNode.hand2 = this.now.hand2;
 				newNode.turn *= -1;
-				this.record.push(newNode);
+				this.record[this.record.length-1] = newNode;
 				if(this.now.turn===property.colorOfCpu){
 					property.player_state_pass = true;
 					display.pass.style.display = "block";
@@ -289,7 +287,7 @@ class MASTER extends GRAPHIC {
 			this.showHand(this.now);
 			await new Promise(resolve=>{setTimeout(()=>{
 				resolve();
-			}, 20);});
+			}, 40);});
 		};
 		
 		await player_turn();
