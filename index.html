@@ -1,335 +1,206 @@
 <!DOCTYPE html>
 
 <html>
-	<head>
-		
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width,user-scalable=no">
-		<title>BitReversi</title>
-		
-		
-		<style>
-			*{
-				margin: 0px;
-				padding: 0px;
-				-webkit-touch-callout:none;
-				-webkit-user-select:none;
-			}
-
-			body{
-				background:#ffffff;
-				font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', '游ゴシック  Medium', meiryo, sans-serif;
-				text-align:center;
-				margin: 0px auto;
-
-				width: 95vw;
-				
-				/* マスのmax-widthの9倍*/
-				max-width: 450px;
-			}
-
-			select{
-				-webkit-appearance: none;
-				appearance: none;
-				padding: 0em 0.5em ;
-				border-radius: 9px;
-				border: solid 0.5px #aaa;
-				background: transparent;
-				font-size: 14px;
-                height: 31px;
-				width: 32%;
-				margin: 0px;
-				text-align: center;
-                box-sizing:border-box;
-			}
-
-            div{
-                /*inline-blockのすきまをなくす*/
-                font-size: 0px;
-                box-sizing: border-box;
+    <head>
+        
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,user-scalable=no">
+        <title>BitReversi</title>
+        
+        
+        <style>
+            body{
+                font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', '游ゴシック  Medium', meiryo, sans-serif;
             }
-			
-			.black{
-                width: 100%;
-                height: 100%;
-				border-radius: 50%;
-				background: #202020;
-				border: solid 0.5px #202020;
-                transform: scale(0.8, 0.8);
-			}
-
-			.white{
-                width: 100%;
-                height: 100%;
-				border-radius: 50%;
-				background: #f8f8f8;
-				border: solid 0.5px #a0a0a0;
-                transform: scale(0.8, 0.8);
-			}
-
-			.blank{
-				width: 100%;
-				height: 100%;
-			}
-
-			.eval_plus{
-				width: 100%;
-				height: 100%;
-				font-size: 8px;
-				color: #ff0000;
-			}
-			
-			.eval_minus{
-				width: 100%;
-				height: 100%;
-				font-size: 8px;
-				color: #000000;
-			}
-
-			.legal{
-				width: 100%;
-				height: 100%;
-				background: #9f9fff;
-				border-radius: 50%;
-				transform: scale(0.12, 0.12);
-			}
-
-			.lastput{
-				background: #9fff9f;
-			}
-
-			.searching{
-				width: 100%;
-				height: 100%;
-				background: #9f9fff;
-				border-radius: 50%;
-				transform: scale(0.18, 0.18);
-			}
-            
-			
-            #header{
-                margin: 2% auto;
-            }
-            #black_wrap{
-                display: inline-block;
-                vertical-align: top;
-                background: #daffda;
-                border-radius: 9px;
-                margin: 0% 2% 0% 0%;
-
-				width: 20%;
-            }
-			#black_stone{
-                display: inline-block;
-                vertical-align: top;
-				width: 30px;
-				height: 30px;
-				border-radius: 50%;
-				background: #202020;
-				border: solid 0.5px #202020;
-                
-                transform: scale(0.8, 0.8);
-			}
-			#black_score{
-                display: inline-block;
-                line-height: 31px;
-				width: 30px;
-				height: 30px;
-                vertical-align: top;
-                font-size: 14px;
-			}
-            #white_wrap{
-                display: inline-block;
-                vertical-align: top;
-                background: #daffda;
-                border-radius: 9px;
-                margin: 0% 2% 0% 0%;
-				
-				width: 20%;
-            }
-			#white_stone{
-                display: inline-block;
-                vertical-align: top;
-				width: 30px;
-				height: 30px;
-				border-radius: 50%;
-				background: #f8f8f8;
-				border: solid 0.5px #a0a0a0;
-                
-                transform: scale(0.8, 0.8);
-			}
-			#white_score{
-                display: inline-block;
-                line-height: 31px;
-				width: 30px;
-				height: 30px;
-                vertical-align: top;
-                font-size: 14px;
-			}
-			#comment{
-				background: #daffda;
-				display: inline-block;
-                border-radius: 9px;
-                line-height: 30px;
-                width: 56%;
-				padding: 0px;
-                font-size: 14px;
-                margin: 0px auto;
-			}
-
-			#board{
-				background: #fff;
-			}
-
-			#pass{
-				width: 100%;
-				background: #9fff9f;
-			}
-
-            #test{
-                display: inline-block;
-                width: 95%;
-                margin: 2% auto;
-				position: relative;
-            }
-			.board_box{
-				border: solid 0.5px #aaa;
-                width: 11vw;
-                height: 11vw;
-				vertical-align: top;
-
-				max-width: 50px;
-				max-height: 50px;
-            }
-
-            #footer1{
-                margin: 4px auto;
-            }
-            #switch{
-				width: 32%;
-            }
-            #restart{
-				margin: 2px 2% 2px 2%;
-				width: 32%;
-            }
-            #undo{
-				width: 32%;
-            }
-
-			#footer2{
+            .header_wrapper{
+                display: grid;
+                grid-template-columns: 3fr 3fr 3fr;
+                max-width: 500px;
                 margin: auto;
             }
-			#setup{
-				margin: 2px 2% 2px 2%;
-				width: 32%;
-			}
-			#disp_reset{
-				width: 32%;
-			}
 
-			#footer3{
-                margin: 4px auto;
-				display: none;
-            }
-            #evaluate{
-				width: 32%;
-            }
-            #loadFromPicture{
-				margin: 2px 2% 2px 2%;
-				width: 32%;
-            }
-            #multiThread{
-				width: 32%;
+            .header_box {
+                display: flex;
+                /*background: #ededed;*/
+                border-radius: min(1vw, 5px);
+                margin: min(1vw, 5px);
+                padding: min(1vw, 5px);
+                text-align: center;
+                font-size: min(3vw, 16px);
+                height: min(4vw, 30px);
             }
 
-            .button{
-				display: inline-block;
-                border-radius: 9px;
-				font-size: 14px;
-				border: solid 0.5px #aaa;
-                line-height: 31px;
-				width: 32%;
-				height: 30px;
-                margin: 0px;
-                
+            .footer_wrapper{
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                max-width: 500px;
+                margin: auto;
             }
-            
-		</style>
-		
-	</head>
-	
-	
-	<body>
+
+
+            .notification_field{
+                display: grid;
+                grid-template-columns: 1fr;
+                max-width: 500px;
+                margin: auto;
+            }
+
+
+            .notification_box{
+                background: #9fffa7;
+                border-radius: min(1vw, 5px);
+                border: none;
+                margin: min(1vw, 5.2px);
+                padding: min(1vw, 5.2px);
+                text-align: center;
+                font-size: min(3vw, 16px);
+            }
+
+            .footer_box {
+                background: #ededed;
+                border-radius: min(1vw, 5px);
+                border: none;
+                margin: min(1vw, 5.2px);
+                padding: min(1vw, 5.2px);
+                text-align: center;
+                font-size: min(3vw, 16px);
+            }
+
+            .board_wrapper{
+                display: grid;
+                grid-template-columns: repeat(8, 1fr);
+                grid-template-rows: repeat(8, 1fr);
+                max-width: 500px;
+                /*max-height: 500px;*/
+                margin: auto;
+            }
+
+            .board_cell{
+                position: relative;
+                display: block;
+                border: solid 0.5px #aaa;
+                width: 100%;
+                padding-bottom: 100%; /* same height as the width */
+            }
+        </style>
         
-        <div id="header">
-            <div id="black_wrap">
-                <div id="black_stone"></div>
-                <div id="black_score"></div>
+    </head>
+    
+    
+    <body>
+        
+        <div class="header_wrapper">
+            <div class="header_box" style="position: relative;" id="comment">
+                <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px">
+                    <rect x="0" y="0" width="100" height="25" fill="#ededed" rx="8" ry="8"></rect>
+                    <text x="50" y="16" font-size="12" text-anchor="middle" fill="black">
+                        {{text}}
+                    </text>
+                </svg>
             </div>
-            <div id="white_wrap">
-                <div id="white_stone"></div>
-                <div id="white_score"></div>
+
+            <div class="header_box" style="position: relative;" id="black_score">
+                <template>
+                    <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px">
+                        <rect x="0" y="0" width="100" height="25" fill="#9fffa7" rx="8" ry="8" opacity="0.8" v-if="turn"></rect>
+                        <rect x="0" y="0" width="100" height="25" fill="#ededed" rx="8" ry="8" v-else></rect>
+                        <circle cx="25" cy="12.5" r="8" stroke="#202020" stroke-width="1" fill="#202020"></circle>
+                        <text x="63" y="17" font-size="14" text-anchor="middle" fill="black">
+                            {{score}}
+                        </text>
+                    </svg>
+                </template>
             </div>
-            <div id="comment"></div>
+
+            <div class="header_box" style="position: relative;" id="white_score">
+                <template>
+                    <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px">
+                        <rect x="0" y="0" width="100" height="25" fill="#9fffa7" rx="8" ry="8" opacity="0.8" v-if="turn"></rect>
+                        <rect x="0" y="0" width="100" height="25" fill="#ededed" rx="8" ry="8" v-else></rect>
+                        <circle cx="25" cy="12.5" r="8" stroke="#a0a0a0" stroke-width="1" fill="#f8f8f8"></circle>
+                        <text x="63" y="17" font-size="14" text-anchor="middle" fill="black">
+                            {{score}}
+                        </text>
+                    </svg>
+                </template>
+            </div>
         </div>
 
-        <div id="test">
-		</div>
+        <div class="board_wrapper" id="htmlboard" style="background-color: #fff;">
+            <template>
+                <div class="board_cell" v-for="cell in cells" v-bind:id="cell.id" v-on:click="onCellClick">
+                    <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px" v-show="cell.white">
+                        <circle cx="50" cy="50" r="40" stroke="#a0a0a0" stroke-width="2" fill="#f8f8f8"></circle>
+                    </svg>
+                    <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px;" v-show="cell.black">
+                        <circle cx="50" cy="50" r="40" stroke="#202020" stroke-width="2" fill="#202020"></circle>
+                    </svg>
+                    <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px;" v-show="cell.legal">
+                        <circle cx="50" cy="50" r="7" stroke="#9f9fff" stroke-width="1" fill="#9f9fff"></circle>
+                    </svg>
 
-        <div>
-            <div id="pass" class="button" style="display:none;">pass</div>
+                    <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px;" v-show="cell.move">
+                        <circle cx="12" cy="88" r="7" stroke="#9fffa7" stroke-width="1" fill="#9fffa7"></circle>
+                    </svg>
+                    <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px;">
+                        <text x="50%" y="60%" font-size="200%" text-anchor="middle" fill="black">
+                            {{cell.text}}
+                        </text>
+                    </svg>
+                </div>
+            </template>
         </div>
-		
 
-        <div id="footer1">
-            <div id="switch" class="button">switch</div>
-            <div id="restart" class="button">restart</div>
-            <div id="undo" class="button">undo</div>
-		</div>
-		
+        <div class="notification_field">
+            <div class="notification_box" id="notification" v-show="pass"
+            v-on:click="onClickHandler">
+                {{text}}
+            </div>
+        </div>
+        
+        <div class="footer_wrapper">
+            <div class="footer_box" id="reset" v-on:click="onClickResetHandler">Reset</div>
 
-
-		<div id="footer2">
-			<select id="search_depth">
-				<optgroup label="読みの深さ">
-				<option value="1/1/-100/100">1 moves</option>
-				<option value="2/2/-100/100">2 moves</option>
-				<option value="4/4/-100/100">4 moves</option>
-				<option value="4/12/-100/100" selected>4/12 moves</option>
-				<option value="6/12/-100/100">6/12 moves</option>
-				<option value="8/16/-100/100">8/16 moves</option>
-				<option value="8/16/-1/1">8*/16* moves</option>
-				<option value="10/20/-1/1">10*/20* moves</option>
-				</optgroup>
-			</select>
-            <div id="setup" class="button">setup</div>
-            <div id="disp_reset" class="button">reset</div>
-		</div>
-		
-		<div id="footer3">
-			<div id="evaluate" class="button">analyze</div>
-			<div id="loadFromPicture" class="button">load pic</div>
-			<div id="multiThread" class="button">multi</div>
-		</div>
-		
-		<br>
-		<a style="font-size: 12px" target=_blank href="https://github.com/lychnus372/BitReversi#bitreversi">
-		- about Bit Reversi -
-		</a>
-		
-		<script src="thread.js"></script>
-		<script src="confirmWindow.js"></script>
-		<script src="data2png.js"></script>
-		<script src="main.js"></script>
-		<script src="board.js"></script>
-		<script src="display.js"></script>
-		<script src="eval.js"></script>
-		<script src="ai.js"></script>
-		<script src="game.js"></script>
-		<script src="initializer.js"></script>
+            <div class="footer_box" id="undo" v-on:click="onClickResetHandler">Undo</div>
+        </div>
+        
+        <div class="footer_wrapper">
+            <select class="footer_box" id="search_depth" v-on:change="onChangeHandler">
+                <option v-for="option in options" :selected="option.selected"
+                v-bind:value="option.name">
+                    {{ option.name }}
+                </option>
+            </select>
+            
+            <select class="footer_box" id="player_color" v-on:change="onChangeHandler">
+                <option v-for="option in options"
+                v-bind:value="option.name">
+                    {{ option.name }}
+                </option>
+            </select>
+        </div>
 
 
-		<script src="temp.js"></script>
-		<script src="temp1.js"></script>
-	</body>
+        <div class="footer_wrapper ">
+            <select class="footer_box" id="mode" v-on:change="onChangeHandler">
+                <option v-for="option in options" :disabled="option.disabled"
+                v-bind:value="option.name">
+                    {{ option.name }}
+                </option>
+            </select>
+            
+            <select class="footer_box" id="advance" v-on:change="onChangeHandler">
+                <option v-for="option in options" :disabled="option.disabled"
+                v-bind:value="option.name">
+                    {{ option.name }}
+                </option>
+            </select>
+        </div>
+
+        
+        <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+        <script type= "module" src="./history.mjs"></script>
+        <script type= "module" src="./main.mjs"></script>
+
+    </body>
 </html>
