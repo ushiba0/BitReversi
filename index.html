@@ -134,8 +134,12 @@
                     <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px;" v-show="cell.black">
                         <circle cx="50" cy="50" r="40" stroke="#202020" stroke-width="2" fill="#202020"></circle>
                     </svg>
-                    <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px;" v-show="cell.legal">
-                        <circle cx="50" cy="50" r="7" stroke="#9f9fff" stroke-width="1" fill="#9f9fff"></circle>
+                    
+                    <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px;" v-show="cell.legalblack">
+                        <circle cx="50" cy="50" r="7" stroke="#333333" stroke-width="1" fill="#333333"></circle>
+                    </svg>
+                    <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px;" v-show="cell.legalwhite">
+                        <circle cx="50" cy="50" r="7" stroke="#333333" stroke-width="1" fill="#ffffff"></circle>
                     </svg>
 
                     <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px;" v-show="cell.move">

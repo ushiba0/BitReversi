@@ -33,7 +33,8 @@ class H5Cell {
         this.id = id;
         this.black = 0;
         this.white = 0;
-        this.legal = 0;
+        this.legalblack = 0;
+        this.legalwhite = 0;
         this.text = '';
         this.move = 0;
     }
@@ -42,7 +43,7 @@ class H5Cell {
         if((this.black !== 0 && this.black !== 1) || 
             (this.white !== 0 && this.white !== 1) || 
             (this.black === 1 && this.white === 1) ||
-            ((this.black === 1 || this.white === 1) && this.legal === 1)) {
+            ((this.black === 1 || this.white === 1) && (this.legalblack === 1 || this.legalwhite === 1))) {
             throw `Validation error: legal is 1 at cell #${this.id}. 
             #${this.id}.black = ${this.black}, #${this.id}.white = ${this.white}`
         }
@@ -106,7 +107,8 @@ const refreshDisplay_helper = async (h5board, showlegalmove=0, move_id=-1) =>{
         const cell = h5board.getCell(i);
         cell.black = 0;
         cell.white = 0;
-        cell.legal = 0;
+        cell.legalblack = 0;
+        cell.legalwhite = 0;
         cell.text = '';
         cell.move = 0;
 
@@ -173,9 +175,16 @@ const showLegalMove_helper = (h5board) => {
         const cell = h5board.getCell(i);
         const bit = 1n << BigInt(i);
         if(legal_move&bit){
-            cell.legal = 1;
+            if (h5board.bitboard.turn === 1) {
+                cell.legalblack = 1;
+                cell.legalwhite = 0;
+            } else {
+                cell.legalblack = 0;
+                cell.legalwhite = 1;
+            }
         }else{
-            cell.legal = 0;
+            cell.legalblack = 0;
+            cell.legalwhite = 0;
         }
     }
 }
