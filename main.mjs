@@ -1,7 +1,7 @@
 
 import { BitBoard } from "./bitboard.mjs";
 import {HistoryManager} from "./history.mjs";
-import init, { 
+import init, {
     initialize, 
     clear_btree,
     print_stats,
@@ -121,8 +121,9 @@ const refreshDisplay_helper = async (h5board, showlegalmove=0, move_id=-1) =>{
     if(showlegalmove) h5board.showLegalMove();
 
     // Show last move.
-    if (h5board.histmgr.last().last_move >= 0) {
-        h5board.getCell(h5board.histmgr.last().last_move).move = 1;
+    const last_move = h5board.histmgr.last_board().board.get_last_move();
+    if (last_move >= 0) {
+        h5board.getCell(last_move).move = 1;
     }
 
     // Update score.
@@ -241,7 +242,7 @@ const BITBOARD_STATE_END = 2;
 const proceed_game = async (h5board, id=null) => {
     console.debug("proceed_game");
     if (id!==null && h5board.bitboard.isLegalMove(idToBit(id))){
-        h5board.histmgr.push(h5board.bitboard);
+        h5board.histmgr.push_board(h5board);
         await h5board.putStone(id, 1);
     }
 
@@ -253,6 +254,7 @@ const proceed_game = async (h5board, id=null) => {
             case BITBOARD_STATE_NEXT:
                 if (h5board.bitboard.turn == h5board.player_color) {
                     console.debug("Next: player turn.");
+                    await h5board.refreshDisplay(true);
                     return;
                 } else {
                     console.debug("Next: AI turn.");
@@ -260,7 +262,8 @@ const proceed_game = async (h5board, id=null) => {
                     const id = bitToID(aimove);
                     console.debug(`AI move: cell #${id}. move = (${aimove})`);
                     await h5board.putStone(id, true);
-                    h5board.histmgr.last().last_move = id;
+                    h5board.histmgr.last_board().board.last_move = id;
+                    await h5board.refreshDisplay(true);
                     break;
                 }
             
@@ -270,10 +273,12 @@ const proceed_game = async (h5board, id=null) => {
                     h5Notification.pass = true;
                     await refresh_dom();
                     h5board.bitboard.turn *= -1;
+                    await h5board.refreshDisplay(true);
                     return;
                 } else {
                     console.debug("AI pass. Next: player turn.");
                     h5board.bitboard.turn *= -1;
+                    await h5board.refreshDisplay(true);
                     return;
                 }
                 
@@ -283,7 +288,7 @@ const proceed_game = async (h5board, id=null) => {
             default:
                 throw 'We should not reach here.';
         }
-        await h5board.refreshDisplay(1);
+        await h5board.refreshDisplay(true);
     }
 
 };
@@ -358,7 +363,6 @@ const h5board = new Vue({
         },
 
         async putStone(id, showlegalmove){
-            // this.histmgr.push(this.bitboard);
             putStone_helper(this, id);
             await this.refreshDisplay(showlegalmove, id);
             return;
@@ -446,7 +450,6 @@ const h5SearchDepth = new Vue({
             {name:'6/16 moves', selected: false},
             {name:'8/16 moves', selected: false},
             {name:'8/18 moves', selected: false},
-            {name:'8/20 moves', selected: false},
         ],
     },
     methods: {
@@ -579,9 +582,9 @@ const h5_reset_button = new Vue({
     methods: {
         onClickResetHandler(){
             console.log(`Reset button pressed.`);
-            h5board.histmgr.push(h5board.bitboard);
             h5board.bitboard = new BitBoard();
             h5board.gamemode = GAMEMODE_GAME;
+            h5board.histmgr.push_board(h5board);
             gamemode_onchanged_helper("Proceed as Black");
             h5board.refreshDisplay(true);
             proceed_game(h5board, null);
@@ -596,7 +599,13 @@ const h5_undo_button = new Vue({
     methods: {
         onClickResetHandler(){
             console.log(`Undo button pressed.`);
-            h5board.bitboard = h5board.histmgr.pop();
+            const last_board = h5board.histmgr.pop_board();
+            h5board.bitboard = last_board.board.clone();
+            h5board.gamemode = last_board.data.gamemode;
+            h5board.player_color = last_board.data.player_color;
+            h5board.search_depth = last_board.data.search_depth;
+            h5board.search_depth_last = last_board.data.search_depth_last;
+
             h5board.refreshDisplay(true);
         },
     }

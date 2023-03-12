@@ -51,6 +51,16 @@ export class BitBoard {
         return BigInt(`0x${res_str}`);
     }
 
+    get_last_move() {
+        let last_move;
+        try {
+            last_move = this.last_move;
+        } catch (error) {
+            last_move = -1;
+        }
+        return last_move;
+    }
+
     putStone(hand = 0n){
         const board_str = this.toString();
         const res_str = put_stone_wrapper(board_str, hand.toString(16));
