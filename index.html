@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,user-scalable=no">
+        <title>BitReversi</title>
+        
+        
+        <style>
+            body{
+                font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', '游ゴシック  Medium', meiryo, sans-serif;
+            }
+            .header_wrapper{
+                display: grid;
+                grid-template-columns: 3fr 3fr 3fr;
+                max-width: 500px;
+                margin: auto;
+            }
+
+            .header_box {
+                display: flex;
+                /*background: #ededed;*/
+                border-radius: min(1vw, 5px);
+                margin: min(1vw, 5px);
+                padding: min(1vw, 5px);
+                text-align: center;
+                font-size: min(3vw, 16px);
+                height: min(6vw, 30px);
+            }
+
+            .footer_wrapper{
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                max-width: 500px;
+                margin: auto;
+            }
+
+            .footer_box {
+                background: #ededed;
+                border-radius: min(1vw, 5px);
+                border: none;
+                margin: min(1vw, 5.2px);
+                padding: min(2.5vw, 10px);
+                text-align: center;
+                font-size: min(3vw, 16px);
+            }
+
+
+            .notification_field{
+                display: grid;
+                grid-template-columns: 1fr;
+                max-width: 500px;
+                margin: auto;
+            }
+
+
+            .notification_box{
+                background: #9fffa7;
+                border-radius: min(1vw, 5px);
+                border: none;
+                margin: min(1vw, 5.2px);
+                padding: min(1vw, 5.2px);
+                text-align: center;
+                font-size: min(3vw, 16px);
+            }
+
+            .board_wrapper{
+                display: grid;
+                grid-template-columns: repeat(8, 1fr);
+                grid-template-rows: repeat(8, 1fr);
+                max-width: 500px;
+                /*max-height: 500px;*/
+                margin: auto;
+            }
+
+            .board_cell{
+                position: relative;
+                display: block;
+                border: solid 0.5px #aaa;
+                width: 100%;
+                padding-bottom: 100%; /* same height as the width */
+            }
+        </style>
+        
+    </head>
+    
+    
+    <body>
+        <div class="header_wrapper">
+            <div class="header_box" style="position: relative;" id="comment">
+                <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px">
+                    <rect x="0" y="0" width="100" height="25" fill="#ededed" rx="8" ry="8"></rect>
+                    <text x="50" y="16" font-size="12" text-anchor="middle" fill="black">
+                        {{text}}
+                    </text>
+                </svg>
+            </div>
+
+            <div class="header_box" style="position: relative;" id="black_score">
+                <template>
+                    <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px">
+                        <rect x="0" y="0" width="100" height="25" fill="#9fffa7" rx="8" ry="8" opacity="0.8" v-if="turn"></rect>
+                        <rect x="0" y="0" width="100" height="25" fill="#ededed" rx="8" ry="8" v-else></rect>
+                        <circle cx="25" cy="12.5" r="8" stroke="#202020" stroke-width="1" fill="#202020"></circle>
+                        <text x="63" y="17" font-size="14" text-anchor="middle" fill="black">
+                            {{score}}
+                        </text>
+                    </svg>
+                </template>
+            </div>
+
+            <div class="header_box" style="position: relative;" id="white_score">
+                <template>
+                    <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px">
+                        <rect x="0" y="0" width="100" height="25" fill="#9fffa7" rx="8" ry="8" opacity="0.8" v-if="turn"></rect>
+                        <rect x="0" y="0" width="100" height="25" fill="#ededed" rx="8" ry="8" v-else></rect>
+                        <circle cx="25" cy="12.5" r="8" stroke="#a0a0a0" stroke-width="1" fill="#f8f8f8"></circle>
+                        <text x="63" y="17" font-size="14" text-anchor="middle" fill="black">
+                            {{score}}
+                        </text>
+                    </svg>
+                </template>
+            </div>
+        </div>
+
+        <div class="board_wrapper" id="htmlboard" style="background-color: #fff;">
+            <template>
+                <div class="board_cell" v-for="cell in cells" v-bind:id="cell.id" v-on:click="onCellClick">
+                    <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px" v-show="cell.white">
+                        <circle cx="50" cy="50" r="40" stroke="#a0a0a0" stroke-width="2" fill="#f8f8f8"></circle>
+                    </svg>
+                    <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px;" v-show="cell.black">
+                        <circle cx="50" cy="50" r="40" stroke="#202020" stroke-width="2" fill="#202020"></circle>
+                    </svg>
+                    
+                    <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px;" v-show="cell.legalblack">
+                        <circle cx="50" cy="50" r="7" stroke="#333333" stroke-width="1" fill="#333333"></circle>
+                    </svg>
+                    <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px;" v-show="cell.legalwhite">
+                        <circle cx="50" cy="50" r="7" stroke="#333333" stroke-width="1" fill="#ffffff"></circle>
+                    </svg>
+
+                    <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px;" v-show="cell.move">
+                        <circle cx="12" cy="88" r="7" stroke="#9fffa7" stroke-width="1" fill="#9fffa7"></circle>
+                    </svg>
+                    <svg viewBox="0 0 100 100" fill="none" style="position: absolute; top: 0px; left: 0px;">
+                        <text x="50%" y="60%" font-size="200%" text-anchor="middle" fill="black">
+                            {{cell.text}}
+                        </text>
+                    </svg>
+                </div>
+            </template>
+        </div>
+
+        <div class="notification_field">
+            <div class="notification_box" id="notification" v-show="pass"
+            v-on:click="onClickHandler">
+                {{text}}
+            </div>
+        </div>
+        
+        <div class="footer_wrapper">
+            <div class="footer_box" id="reset" v-on:click="onClickResetHandler">Reset</div>
+
+            <div class="footer_box" id="undo" v-on:click="onClickResetHandler">Undo</div>
+        </div>
+        
+        <div class="footer_wrapper">
+            <select class="footer_box" id="search_depth" v-on:change="onChangeHandler">
+                <option v-for="option in options" :selected="option.selected"
+                v-bind:value="option.name">
+                    {{ option.name }}
+                </option>
+            </select>
+            
+            <select class="footer_box" id="player_color" v-on:change="onChangeHandler">
+                <option v-for="option in options"
+                v-bind:value="option.name">
+                    {{ option.name }}
+                </option>
+            </select>
+        </div>
+
+
+        <div class="footer_wrapper ">
+            <select class="footer_box" id="mode" v-on:change="onChangeHandler">
+                <option v-for="option in options" :disabled="option.disabled"
+                v-bind:value="option.name">
+                    {{ option.name }}
+                </option>
+            </select>
+            
+            <select class="footer_box" id="advance" v-on:change="onChangeHandler">
+                <option v-for="option in options" :disabled="option.disabled"
+                v-bind:value="option.name">
+                    {{ option.name }}
+                </option>
+            </select>
+        </div>
+
+        
+        <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+        <script type= "module" src="./history.mjs"></script>
+        <script type= "module" src="./main.mjs"></script>
+
+    </body>
+</html>
+
