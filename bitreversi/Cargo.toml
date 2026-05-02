@@ -1,0 +1,33 @@
+[package]
+name = "bitreversi"
+version = "0.1.1"
+edition = "2024"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+rand = "0.7"
+console_error_panic_hook = { version = "0.1.7", optional = true }
+once_cell = "1.15.0"
+base64 = "0.13.0"
+chrono = "0.4.44"
+log = "0.4.29"
+flate2 = "1.1.9"
+
+[features]
+default = ["console_error_panic_hook"]
+test = []
+
+[dependencies.web-sys]
+version = "0.3.60"
+features = [ 'console' ]
+
+[profile.release]
+opt-level = 3
+
+[package.metadata.wasm-pack.profile.profiling]
+wasm-opt = ['-O4']

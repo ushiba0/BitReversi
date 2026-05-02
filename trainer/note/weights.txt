@@ -1,0 +1,10 @@
+# FFO#40
+$ cargo run -q --release -- --log debug solve -w ../eval_data.bin -b 'O--OOOOX-OOOOOOXOOXXOOOXOOXOOOXXOOOOOOXX---OOOOX----O--X--------' --algo ab 
+[2026-05-02T07:57:59Z INFO  trainer] Loaded weight data from file ../eval_data.bin.
+[2026-05-02T07:57:59Z INFO  trainer] Evaluating board {"eval":0, "last_move":0, "board":"101312303010100,9e7ecedcfc1e0800,1"}
+[2026-05-02T07:57:59Z INFO  trainer] Using algorithm Ab (alpha, beta) = (-64, 64)
+Eval value: 38.
+Stones: 44 (blank = 20).
+Read 37.67 M nodes, 9781 K nodes / s
+Cache hit = 158267
+Took 3850 ms

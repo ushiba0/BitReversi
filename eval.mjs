@@ -1,33 +1,26 @@
-import { 
-	export_weight_data_wrapper,
-	load_weight_data_wrapper,
-	} from "./bitreversi-wasm/pkg/bitreversi_wasm.js";
+import {
+	import_weight,
+} from "./bitreversi/pkg/bitreversi.js";
 
 
+/// Fetches and loads the evaluation weight data into the application.
+///
+/// This function performs the following operations:
+/// 1. Fetches the weight data file (`weight_data.txt`).
+/// 2. Converts the response into a text string.
+/// 3. Invokes import_weight() to initialize the weights in memory.
 export const loadWeightData = async () => {
-	const path_to_eval_data = "./eval_data.bin";
-	const response = await fetch(path_to_eval_data);
-	if(!response.ok) {
-		throw `Failed to load ${path_to_eval_data}`;
+	const path_to_weight_data = "./weight_data.txt";
+	console.time("FETCH_WEIGHT_DATA");
+	const response = await fetch(path_to_weight_data);
+	if (!response.ok) {
+		throw `Failed to fetch ${path_to_weight_data}`;
 	}
-	const blob = await response.blob();
-	const str = await blob.text();
-	console.debug("Fetched weight data.");
-	load_weight_data_wrapper(str);
-	console.debug("Loaded weight data.");
-};
+	console.timeEnd("FETCH_WEIGHT_DATA");
 
+	console.time("LOAD_WEIGHT_DATA");
+	const weight_data_str = await response.text();
 
-export const exportWeightDataAsBlob = () => {
-	const data_str = export_weight_data_wrapper();
-	const blob = new Blob([data_str]);
-	return blob;
-};
-
-
-window.exportweight = () =>{
-	return exportWeightDataAsBlob();
-};
-window.loadweight = () =>{
-	return loadWeightData();
+	import_weight(weight_data_str);
+	console.timeEnd("LOAD_WEIGHT_DATA");
 };

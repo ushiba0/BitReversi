@@ -1,705 +1,526 @@
-
 import { BitBoard } from "./bitboard.mjs";
-import {HistoryManager} from "./history.mjs";
+import { HistoryManager } from "./history.mjs";
 import init, {
-    initialize, 
+    initialize,
     clear_btree,
     print_stats,
-} from "./bitreversi-wasm/pkg/bitreversi_wasm.js";
-import {loadWeightData, exportWeightDataAsBlob} from "./eval.mjs";
-
-(async ()=>{
-    await init();
-    initialize();
-    await loadWeightData();
-    h5board.refreshDisplay(true);
-})();
-
+} from "./bitreversi/pkg/bitreversi.js";
+import { loadWeightData } from "./eval.mjs";
 
 /*
-    cell id:
-    [63] [62] [61] [60] [59] [58] [57] [56]
-    [55] [54] [53] [52] [51] [50] [49] [48]
-    [47] [46] [45] [44] [43] [42] [41] [40]
-    [39] [38] [37] [36] [35] [34] [33] [32]
-    [31] [30] [29] [28] [27] [26] [25] [24]
-    [23] [22] [21] [20] [19] [18] [17] [16]
-    [15] [14] [13] [12] [11] [10] [ 9] [ 8]
-    [ 7] [ 6] [ 5] [ 4] [ 3] [ 2] [ 1] [ 0]
+    Cell IDs Map:
+    63 62 61 60 59 58 57 56
+    55 54 53 52 51 50 49 48
+    47 46 45 44 43 42 41 40
+    39 38 37 36 35 34 33 32
+    31 30 29 28 27 26 25 24
+    23 22 21 20 19 18 17 16
+    15 14 13 12 11 10  9  8
+     7  6  5  4  3  2  1  0
 */
-const cells = Array(64);
+
+/**
+ * Converts a single bit to a cell ID (0-63). Returns 64 if no bit is set.
+ */
+const bit2CellID = (x = 0n) => {
+    if (x === 0n) return 64;
+    // Fast way to get bit position using string length of binary representation
+    return x.toString(2).length - 1;
+};
+
+const CellIdToBit = (id = 0) => {
+    return 1n << BigInt(id);
+};
+
+/**
+ * Represents a single cell on the board for the UI.
+ */
 class H5Cell {
-    constructor(id = 0){
+    constructor(id = 0) {
         this.id = id;
         this.black = 0;
         this.white = 0;
-        this.legalblack = 0;
-        this.legalwhite = 0;
+        this.legalblack = false;
+        this.legalwhite = false;
         this.text = '';
-        this.move = 0;
-    }
-    
-    validate(){
-        if((this.black !== 0 && this.black !== 1) || 
-            (this.white !== 0 && this.white !== 1) || 
-            (this.black === 1 && this.white === 1) ||
-            ((this.black === 1 || this.white === 1) && (this.legalblack === 1 || this.legalwhite === 1))) {
-            throw `Validation error: legal is 1 at cell #${this.id}. 
-            #${this.id}.black = ${this.black}, #${this.id}.white = ${this.white}`
-        }
+        this.highlight_last_move = false;
     }
 
-    isEmpty(){
+    isEmpty() {
         return this.black === 0 && this.white === 0;
     }
 }
 
-for(let i=0; i<64; i++){
-    cells[63 - i] = new H5Cell(i);
-}
-
-
-
-const bitToID = (x = 0n) => {
-    for(let i=0n; i<64n; i += 1n){
-        if(x & (1n<<i)){
-            return Number(i)
-        }
+// Initialize cells array (0-63)
+const createInitialCells = () => {
+    const arr = Array(64);
+    for (let i = 0; i < 64; i++) {
+        arr[63 - i] = new H5Cell(i);
     }
+    return arr;
 };
 
-const idToBit = (id = 0) => {
-    return 1n << BigInt(id);
-};
-
-const parseCellID = e =>{
+/**
+ * Parses the cell ID from a Click Event.
+ */
+const parseCellID = e => {
     if (e === null) {
-        console.assert(h5board.gamemode === GAMEMODE_ANALYZER);
         return 64;
     }
-    let id = e.target.id;
-    if(id === ''){
-        // Target id is null. Use parent element id instead.
-        id = e.target.parentElement.id;
-        if(id === ''){
-            id = e.target.parentElement.parentElement.id;
-            if(id === ''){
-                throw 'id is null.';
-            }
-        }
+    let target = e.target;
+    // Traverse up to find the element with an ID (handling nested icons or labels)
+    while (target && target.id === '') {
+        target = target.parentElement;
     }
-    return parseInt(id, 10);
+    if (!target || target.id === '') {
+        throw new Error('Could not parse Cell ID from target');
+    }
+    return parseInt(target.id, 10);
 };
 
-// Wait 2 frames to refresh dom.
-const refresh_dom = async () => {
-    for (const i in [0, 0]) {
-        await new Promise(resolve => requestAnimationFrame(resolve));
-    }
-    return;
+/**
+ * Tells Vue to wait until the DOM is updated.
+ */
+const refresh_dom = async (vm) => {
+    await vm.$nextTick();
 };
 
-const refreshDisplay_helper = async (h5board, showlegalmove=0, move_id=-1) =>{
+const refreshDisplay_helper = async (h5board, show_legal_move = false) => {
     h5board.bitboard.validate();
 
-    // Clear cells first.
-    for(let i=0; i<64; i+=1){
+    const blackBits = h5board.bitboard.black;
+    const whiteBits = h5board.bitboard.white;
+
+    // Synchronize H5Cell states with BitBoard
+    for (let i = 0; i < 64; i += 1) {
         const cell = h5board.getCell(i);
-        cell.black = 0;
-        cell.white = 0;
-        cell.legalblack = 0;
-        cell.legalwhite = 0;
+        const bit = CellIdToBit(i);
+
+        cell.black = (blackBits & bit) ? 1 : 0;
+        cell.white = (whiteBits & bit) ? 1 : 0;
+        cell.legalblack = false;
+        cell.legalwhite = false;
         cell.text = '';
-        cell.move = 0;
-
-        const bit = idToBit(i);
-        if(h5board.bitboard.black&bit){
-            cell.black = 1;
-        }else if(h5board.bitboard.white&bit){
-            cell.white = 1;
-        }
+        cell.highlight_last_move = false;
     }
 
-    if(showlegalmove) h5board.showLegalMove();
+    if (show_legal_move) show_legal_move_in_dom(h5board);
 
-    // Show last move.
-    const last_move = h5board.histmgr.last_board().board.get_last_move();
-    if (last_move >= 0) {
-        h5board.getCell(last_move).move = 1;
+    // Show last move
+    const last_move = h5board.bitboard.get_last_move();
+    if (last_move >= 0 && last_move < 64) {
+        h5board.getCell(last_move).highlight_last_move = true;
     }
 
-    // Update score.
-    h5BlackScore.score = h5board.bitboard.numOfBlack();
-    h5WhiteScore.score = h5board.bitboard.numOfWhite();
-    h5BlackScore.turn = h5board.bitboard.turn === 1 ? true : false;
-    h5WhiteScore.turn = h5board.bitboard.turn === -1 ? true : false;
+    // Update global score displays
+    h5board.blackScore.score = h5board.bitboard.numOfBlack();
+    h5board.whiteScore.score = h5board.bitboard.numOfWhite();
+    h5board.blackScore.turn = h5board.bitboard.turn === 1;
+    h5board.whiteScore.turn = h5board.bitboard.turn === -1;
 
-    // Update comment.
-    switch (h5board.bitboard.getState()){
-        case 0:
-            if(h5board.player_color === h5board.bitboard.turn){
-                h5Comment.text = "Your Turn";
-            }else{
-                h5Comment.text = "AI Turn";
-            }
+    // Update game status comment
+    switch (h5board.bitboard.getState()) {
+        case 0: // Next move
+            h5board.commentText = (h5board.player_color === h5board.bitboard.turn) ? "Your Turn" : "AI Turn";
             break;
-        case 1:
-            h5Comment.text = "Pass";
+        case 1: // Pass
+            h5board.commentText = "Pass";
             break;
-        case 2:
-            const num_black = h5board.bitboard.numOfBlack();
-            const num_white = h5board.bitboard.numOfWhite();
-            if(num_black === num_white){
-                h5Comment.text = "Draw";
-            }else if(num_black > num_white){
-                h5Comment.text = "Black Win";
-            }else{
-                h5Comment.text = "White Win";
-            }
+        case 2: // End
+            const nb = h5board.bitboard.numOfBlack();
+            const nw = h5board.bitboard.numOfWhite();
+            if (nb === nw) h5board.commentText = "Draw";
+            else if (nb > nw) h5board.commentText = "Black Win";
+            else h5board.commentText = "White Win";
             break;
         default:
-            throw 'Unreachable';
+            throw new Error('Unreachable state');
     }
-    
 
-    await refresh_dom();
-    return;
-}
+    await h5board.$nextTick();
+    await new Promise(resolve => setTimeout(resolve, 50));
+};
 
-
-const showLegalMove_helper = (h5board) => {
+const show_legal_move_in_dom = (h5board) => {
     const legal_move = h5board.bitboard.getLegalMove();
-    console.debug(`legal_move = ${legal_move}`);
+    const turn = h5board.bitboard.turn;
 
-    for(let i=0; i<64; i++){
+    for (let i = 0; i < 64; i++) {
         const cell = h5board.getCell(i);
-        const bit = 1n << BigInt(i);
-        if(legal_move&bit){
-            if (h5board.bitboard.turn === 1) {
-                cell.legalblack = 1;
-                cell.legalwhite = 0;
+        const bit = CellIdToBit(i);
+        if (legal_move & bit) {
+            if (turn === 1) {
+                cell.legalblack = true;
+            } else if (turn === -1) {
+                cell.legalwhite = true;
             } else {
-                cell.legalblack = 0;
-                cell.legalwhite = 1;
+                throw new Error('Unreachable');
             }
-        }else{
-            cell.legalblack = 0;
-            cell.legalwhite = 0;
         }
     }
-}
+};
 
 const putStone_helper = (h5board, id) => {
-    console.debug(`putStone_helper(id = ${id})`);
-    const move = idToBit(id);
-
+    const move = CellIdToBit(id);
     if (h5board.bitboard.isLegalMove(move)) {
-        h5board.bitboard = h5board.bitboard.putStone(move);
+        const nextBoard = h5board.bitboard.putStone(move);
+        nextBoard.last_move = id;
+        h5board.bitboard = nextBoard;
     } else {
-        throw 'You cannot put stone here.';
+        throw new Error('Illegal move: Cannot put stone at #' + id);
     }
 };
 
-
-const showEvaluation_helper = (h5board, alpha=-100, beta=100) => {
-    let evals = h5board.bitboard.expand_children_orderby_complete_read();
-    for (const child of evals){
-        const id = bitToID(BigInt(child.last_move));
-        h5board.getCell(id).text = child.eval;
+const showEvaluation_helper = (h5board) => {
+    const evals = h5board.bitboard.expand_children_orderby_complete_read();
+    for (const child of evals) {
+        const id = bit2CellID(BigInt(child.last_move));
+        if (id < 64) h5board.getCell(id).text = child.eval;
     }
 };
 
-
-const showEvaluation_approx_helper = (h5board, alpha=-0xff, beta=0xff, depth=0) => {
-    let evals = h5board.bitboard.expand_children_orderby_eval(depth);
-    for (const child of evals){
-        const id = bitToID(BigInt(child.last_move));
-        h5board.getCell(id).text = child.eval;
+const showEvaluation_approx_helper = (h5board, depth = 0) => {
+    const evals = h5board.bitboard.expand_children_orderby_eval(depth);
+    for (const child of evals) {
+        const id = bit2CellID(BigInt(child.last_move));
+        if (id < 64) h5board.getCell(id).text = child.eval;
     }
 };
 
-
-const ai_helper = (h5board)=> {
+const ai_helper = (h5board) => {
     const board = h5board.bitboard;
     const num_stones = board.numOfStones();
     let children;
 
-    if (64-num_stones <= h5board.search_depth_last) {
-        // Complete read.
-        if (num_stones >= 50) {
-            // Complete read.
-            children = h5board.bitboard.expand_children_orderby_mtdf();
-        } else {
-            // mtdf read
-            children = h5board.bitboard.expand_children_orderby_mtdf();
-        }
+    // Choose search strategy based on remaining squares
+    if (64 - num_stones <= h5board.search_depth_last) {
+        children = h5board.bitboard.expand_children_orderby_mtdf();
     } else {
-        // Approx read.
         children = h5board.bitboard.expand_children_orderby_eval(h5board.search_depth);
     }
 
-    console.debug(children);
-    return new Promise(resolve => {
-        resolve(BigInt(children[0].last_move));
-    });
+    return Promise.resolve(BigInt(children[0].last_move));
 };
 
 const BITBOARD_STATE_NEXT = 0;
 const BITBOARD_STATE_PASS = 1;
 const BITBOARD_STATE_END = 2;
 
-const proceed_game = async (h5board, id=null) => {
-    console.debug("proceed_game");
-    if (id!==null && h5board.bitboard.isLegalMove(idToBit(id))){
+/**
+ * Main game flow logic. Handles player/AI turns and passes.
+ */
+const proceed_game = async (h5board, id = null) => {
+    // Player's move
+    if (id !== null && h5board.bitboard.isLegalMove(CellIdToBit(id))) {
         h5board.histmgr.push_board(h5board);
-        await h5board.putStone(id, 1);
+        await h5board.putStone(id, false); // Don't show legal moves for AI turn yet
     }
 
-    while(true) {
+    // Game Loop
+    while (true) {
         const state = h5board.bitboard.getState();
-        console.debug(`BitBoard state is ${state}.`);
 
-        switch(state){
+        switch (state) {
             case BITBOARD_STATE_NEXT:
-                if (h5board.bitboard.turn == h5board.player_color) {
-                    console.debug("Next: player turn.");
+                if (h5board.bitboard.turn === h5board.player_color) {
                     await h5board.refreshDisplay(true);
-                    return;
+                    return; // Wait for user input
                 } else {
-                    console.debug("Next: AI turn.");
+                    await h5board.refreshDisplay(true);
                     const aimove = await ai_helper(h5board);
-                    const id = bitToID(aimove);
-                    console.debug(`AI move: cell #${id}. move = (${aimove})`);
-                    await h5board.putStone(id, true);
-                    h5board.histmgr.last_board().board.last_move = id;
-                    await h5board.refreshDisplay(true);
-                    break;
+                    const aimove_id = bit2CellID(aimove);
+                    await h5board.putStone(aimove_id, true);
+                    h5board.histmgr.last_board().board.last_move = aimove_id;
+                    break; // Check next state
                 }
-            
+
             case BITBOARD_STATE_PASS:
-                if (h5board.bitboard.turn == h5board.player_color) {
-                    console.debug("Player pass. Continue while loop.");
-                    h5Notification.pass = true;
-                    await refresh_dom();
+                if (h5board.bitboard.turn === h5board.player_color) {
+                    h5board.notification.pass = true;
+                    await refresh_dom(h5board);
                     h5board.bitboard.turn *= -1;
                     await h5board.refreshDisplay(true);
                     return;
                 } else {
-                    console.debug("AI pass. Next: player turn.");
+                    // AI Pass
                     h5board.bitboard.turn *= -1;
                     await h5board.refreshDisplay(true);
+                    // If AI passes, it's player's turn again.
+                    if (h5board.bitboard.getLegalMove() === 0n) continue;
                     return;
                 }
-                
-            case BITBOARD_STATE_END: 
-                console.debug("Game end.");
+
+            case BITBOARD_STATE_END:
+                await h5board.refreshDisplay(false);
                 return;
+
             default:
-                throw 'We should not reach here.';
+                throw new Error('Invalid BitBoard state: ' + state);
         }
         await h5board.refreshDisplay(true);
     }
-
 };
-
 
 const GAMEMODE_GAME = 0;
 const GAMEMODE_SETUP = 1;
 const GAMEMODE_ANALYZER = 2;
 
+/**
+ * Vue Instance for the Entire Application (Vue 3 Single App)
+ */
+const app = Vue.createApp({
+    data() {
+        return {
+            // board data
+            cells: createInitialCells(),
+            bitboard: new BitBoard(),
+            histmgr: new HistoryManager(),
+            gamemode: GAMEMODE_GAME,
+            player_color: 1,
+            search_depth: 4,
+            search_depth_last: 12,
+            isBusy: false,
 
-const h5board = new Vue({
-    el: '#htmlboard',
-    data: {
-        // cells should not be accessed directly.
-        // Use this.getCell(id)
-        cells: cells,
-        bitboard: new BitBoard(),
-        histmgr: new HistoryManager(),
-        gamemode: GAMEMODE_GAME,
-        player_color: 1, // 1: black, -1: white
-        search_depth: 4,
-        search_depth_last: 12,
+            // header data
+            commentText: "Initializing...",
+            blackScore: { score: 2, turn: false },
+            whiteScore: { score: 2, turn: false },
+
+            // notification data
+            notification: { text: "Pass (Tap to Proceed)", pass: false },
+
+            // footer options
+            depthOptions: [
+                { name: '1/1 move', selected: false },
+                { name: '2/2 moves', selected: false },
+                { name: '4/4 moves', selected: false },
+                { name: '4/12 moves', selected: true },
+                { name: '6/12 moves', selected: false },
+                { name: '6/16 moves', selected: false },
+                { name: '8/16 moves', selected: false },
+                { name: '8/18 moves', selected: false },
+            ],
+            colorOptions: [
+                { name: 'Player: Black' },
+                { name: 'Player: White' },
+            ],
+            modeOptions: [
+                { name: 'Game Mode', disabled: false },
+                { name: 'Proceed as Black', disabled: true },
+                { name: 'Proceed as White', disabled: true },
+                { name: 'Setup Mode', disabled: false },
+                { name: 'Analyzer Mode', disabled: false },
+            ],
+            advanceOptions: [
+                { name: 'Advance' },
+                { name: 'Show Evaluation' },
+                { name: 'Clear BTree' },
+                { name: 'Dump Stats' },
+            ]
+        }
     },
-
+    async mounted() {
+        // Global initialization
+        try {
+            await init();
+            initialize();
+            await loadWeightData();
+            this.commentText = "Ready";
+            this.refreshDisplay(true);
+        } catch (e) {
+            console.error("Initialization failed:", e);
+            this.commentText = "Init Failed";
+        }
+    },
     methods: {
-        async onCellClick(e){
-            const id = parseCellID(e);
-            console.assert(id>=0 && id<=64, `id = ${id}`);
-            console.debug(`Invoking #${id} click event.`);
+        async onCellClick(e) {
+            if (this.isBusy) return;
+            this.isBusy = true;
 
-            switch(this.gamemode){
-            case GAMEMODE_GAME:
-                console.assert(this.bitboard.turn === this.player_color);
-                proceed_game(this, id);
-                await this.refreshDisplay(true);
-                return;
+            try {
+                const id = parseCellID(e);
 
-            case GAMEMODE_SETUP:
-                const bit = 1n << BigInt(id);
-                if(this.bitboard.black&bit){
-                    this.bitboard.black ^= bit;
-                    this.bitboard.white ^= bit;
-                    await this.refreshDisplay();
-                    return;
-                }
-                if(this.bitboard.white&bit){
-                    this.bitboard.white ^= bit;
-                    await this.refreshDisplay();
-                    return;
-                }
-                // If we reach here, cell#id is empty.
-                this.bitboard.black ^= bit;
-                await this.refreshDisplay();
-                return;
+                switch (this.gamemode) {
+                    case GAMEMODE_GAME:
+                        if (this.bitboard.turn !== this.player_color) return;
+                        await proceed_game(this, id);
+                        break;
 
-            case GAMEMODE_ANALYZER: {
-                this.putStone(id);
-                const num_stones = h5board.bitboard.numOfStones();
-                if (64-num_stones <= h5board.search_depth_last){
-                    // Complete read.
-                    h5board.showEvaluation(-0xff, 0xff);
-                }else{
-                    // Approx read.
-                    h5board.showEvaluation_approx(-0xff, 0xff, h5board.search_depth)
+                    case GAMEMODE_SETUP:
+                        const bit = CellIdToBit(id);
+                        if (this.bitboard.black & bit) {
+                            this.bitboard.black ^= bit;
+                            this.bitboard.white ^= bit;
+                        } else if (this.bitboard.white & bit) {
+                            this.bitboard.white ^= bit;
+                        } else {
+                            this.bitboard.black ^= bit;
+                        }
+                        await this.refreshDisplay();
+                        break;
+
+                    case GAMEMODE_ANALYZER:
+                        this.putStone(id);
+                        const num_stones = this.bitboard.numOfStones();
+                        if (64 - num_stones <= this.search_depth_last) {
+                            this.showEvaluation();
+                        } else {
+                            this.showEvaluation_approx(this.search_depth);
+                        }
+                        break;
                 }
-                break;
-            }
-                
-            default:
-                throw 'We should not reach here.';
+            } catch (err) {
+                console.error(err);
+            } finally {
+                this.isBusy = false;
             }
         },
 
-        async putStone(id, showlegalmove){
+        // board methods
+        async putStone(id, show_legal_move = false) {
             putStone_helper(this, id);
-            await this.refreshDisplay(showlegalmove, id);
-            return;
+            await this.refreshDisplay(show_legal_move);
         },
-
-        async refreshDisplay(showlegalmove, move_id){
-            console.log(`Refreshing display. showlegalmove = ${showlegalmove}`);
-            await refreshDisplay_helper(this, showlegalmove, move_id);
+        async refreshDisplay(show_legal_move = false) {
+            await refreshDisplay_helper(this, show_legal_move);
         },
-
-        showLegalMove(){
-            console.log('Calc legal move and refresh display.');
-            showLegalMove_helper(this);
-        },
-
-        async showEvaluation(alpha=-100, beta=100){
-            console.log('showEvaluation');
+        async showEvaluation() {
             await this.refreshDisplay();
-            showEvaluation_helper(this, alpha, beta);
+            showEvaluation_helper(this);
         },
-
-        async showEvaluation_approx(alpha=-0xff, beta=0xff, depth=0){
-            console.log('showEvaluation_approx');
+        async showEvaluation_approx(depth = 0) {
             await this.refreshDisplay();
-            //this.bitboard.expand_children_orderby_eval(0);
-            showEvaluation_approx_helper(this, alpha, beta, depth);
+            showEvaluation_approx_helper(this, depth);
         },
-
-        getCell(id){
+        getCell(id) {
             return this.cells[63 - id];
-        }
-    },
-});
-
-
-
-const h5Notification = new Vue({
-    el: '#notification',
-    data: {
-        text: "Pass (Tap to Proceed)",
-        pass: false,
-    },
-    methods: {
-        async onClickHandler(){
-            this.pass = false;
-            await refresh_dom();
-            proceed_game(h5board);
-        }
-    }
-});
-
-
-const h5Comment = new Vue({
-    el: '#comment',
-    data: {
-        text: ""
-    }
-});
-const h5BlackScore = new Vue({
-    el: '#black_score',
-    data: {
-        score: 2,
-        turn: false,
-    }
-});
-window.h5BlackScore = h5BlackScore;
-const h5WhiteScore = new Vue({
-    el: '#white_score',
-    data: {
-        score: 2,
-        turn: false,
-    }
-});
-
-
-const h5SearchDepth = new Vue({
-    el: '#search_depth',
-    data: {
-        options: [
-            {name:'1/1 move', selected: false},
-            {name:'2/2 moves', selected: false},
-            {name:'4/4 moves', selected: false},
-            {name:'4/12 moves', selected: true},
-            {name:'6/12 moves', selected: false},
-            {name:'6/16 moves', selected: false},
-            {name:'8/16 moves', selected: false},
-            {name:'8/18 moves', selected: false},
-        ],
-    },
-    methods: {
-        onChangeHandler(e){
-            const str = e.target.value;
-            const depth = str.split(' ')[0]
-                            .split('/')
-                            .map(x => parseInt(x, 10));
-            h5board.search_depth = depth[0];
-            h5board.search_depth_last = depth[1];
-            document.getElementById('search_depth').blur();
-            console.log(`Search depth changed. search_depth = ${depth[0]}, search_depth_last = ${depth[1]}`);
-        },
-    }
-});
-
-
-const h5Advance = new Vue({
-    el: '#advance',
-    data: {
-        options: [
-            {name:'Advance'},
-            {name:'Show Evaluation'},
-            {name:'Clear BTree'},
-            {name:'Download Data'},
-            {name:'Dump Stats'},
-        ],
-    },
-    methods: {
-        onChangeHandler(e){
-            console.log(`Advanced option: ${e.target.value}`);
-            
-            switch(e.target.value){
-                case 'Show Evaluation':
-                    const num_stones = h5board.bitboard.numOfStones();
-                    if (64-num_stones <= h5board.search_depth_last){
-                        // Complete read.
-                        h5board.showEvaluation(-0xff, 0xff);
-                    }else{
-                        // Approx read.
-                        h5board.showEvaluation_approx(-0xff, 0xff, h5board.search_depth)
-                    }
-                    break;
-                case 'Download Data':
-                    this.downloadData();
-                    break;
-                case 'Clear BTree':
-                    this.clearBTree();
-                    break;
-                case 'Dump Stats':
-                    this.dumpSettings();
-                    break;
-                default:
-                    throw 'Unreachable';
-            }
-            
-            document.getElementById('advance').selectedIndex = 0;
-            document.getElementById('advance').blur();
         },
 
-        downloadData(){
-            const blob = exportWeightDataAsBlob();
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = "eval_data.bin";
-            a.click();
-            a.remove();
+        // notification methods
+        async onPassNotificationClick() {
+            this.notification.pass = false;
+            await refresh_dom(this);
+            proceed_game(this);
         },
 
-        clearBTree(){
-            const btree_length = clear_btree();
-            console.log(`BTree size = ${btree_length}`);
-        },
-
-        dumpSettings(){
-            const div = document.createElement('div');
-            document.body.append(div);
-            div.innerText = `
-            gamemode: ${h5board.gamemode},
-            player_color: ${h5board.player_color},
-            search_depth: ${h5board.search_depth},
-            search_depth_last: ${h5board.search_depth_last},
-            stats: ${print_stats()},
-            `;
-
-            // Clear setting in 10 secs.
-            window.setTimeout(()=>{
-                div.remove();
-            }, 1000 * 10);
-        }
-    }
-});
-
-
-const h5ColorButton = new Vue({
-    el: '#player_color',
-    data: {
-        options: [
-            {name:'Player: Black'},
-            {name:'Player: White'},
-        ],
-    },
-    methods: {
-        onChangeHandler(e){
-            console.log(`Player color changed: ${e.target.value}`);
-            
-            switch(e.target.value){
-                case 'Player: Black':
-                    h5board.player_color = 1;
-                    break;
-                case 'Player: White':
-                    h5board.player_color = -1;
-                    break;
-                default:
-                    throw 'Unreachable';
-            }
-            document.getElementById('player_color').blur();
-            
-            if(h5board.gamemode === GAMEMODE_GAME){
-                proceed_game(h5board, null);
-            }
-        },
-    }
-});
-
-
-const h5_reset_button = new Vue({
-    el: '#reset',
-    date: {},
-    methods: {
-        onClickResetHandler(){
+        // footer methods
+        async onClickReset() {
+            if (this.isBusy) return;
             console.log(`Reset button pressed.`);
-            h5board.bitboard = new BitBoard();
-            h5board.gamemode = GAMEMODE_GAME;
-            h5board.histmgr.push_board(h5board);
-            gamemode_onchanged_helper("Proceed as Black");
-            h5board.refreshDisplay(true);
-            proceed_game(h5board, null);
+            this.bitboard = new BitBoard();
+            this.gamemode = GAMEMODE_GAME;
+            this.histmgr.clear();
+            this.histmgr.push_board(this);
+            gamemode_onchanged_helper(this, "Proceed as Black");
+            await this.refreshDisplay(true);
+            await proceed_game(this, null);
         },
+
+        async onClickUndo() {
+            if (this.isBusy) return;
+            const last_h5board = this.histmgr.pop_board();
+            if (!last_h5board) return;
+
+            const restoredBoard = last_h5board.board.clone();
+            restoredBoard.last_move = last_h5board.data.last_move;
+            this.bitboard = restoredBoard;
+
+            this.gamemode = last_h5board.data.gamemode;
+            this.player_color = last_h5board.data.player_color;
+            this.search_depth = last_h5board.data.search_depth;
+            this.search_depth_last = last_h5board.data.search_depth_last;
+
+            await this.refreshDisplay(true);
+        },
+
+        onDepthChange(e) {
+            const parts = e.target.value.split(' ')[0].split('/');
+            this.search_depth = parseInt(parts[0], 10);
+            this.search_depth_last = parseInt(parts[1], 10);
+            e.target.blur();
+        },
+
+        async onColorChange(e) {
+            this.player_color = (e.target.value === 'Player: Black') ? 1 : -1;
+            e.target.blur();
+            if (this.gamemode === GAMEMODE_GAME) {
+                await proceed_game(this, null);
+            }
+        },
+
+        onModeChange(e) {
+            e.target.blur();
+            gamemode_onchanged_helper(this, e.target.value);
+        },
+
+        onAdvanceChange(e) {
+            const val = e.target.value;
+            switch (val) {
+                case 'Show Evaluation':
+                    const rem = 64 - this.bitboard.numOfStones();
+                    if (rem <= this.search_depth_last) this.showEvaluation();
+                    else this.showEvaluation_approx(this.search_depth);
+                    break;
+                case 'Clear BTree': clear_btree(); break;
+                case 'Dump Stats': this.dumpSettings(); break;
+            }
+            e.target.selectedIndex = 0;
+            e.target.blur();
+        },
+
+        dumpSettings() {
+            const div = document.createElement('div');
+            div.style.position = 'fixed';
+            div.style.bottom = '10px';
+            div.style.background = 'rgba(0,0,0,0.8)';
+            div.style.color = 'white';
+            div.style.padding = '10px';
+            document.body.append(div);
+            div.innerText = `Mode: ${this.gamemode}, Depth: ${this.search_depth}/${this.search_depth_last}, Stats: ${print_stats()}`;
+            setTimeout(() => div.remove(), 10000);
+        }
     }
 });
 
+const h5board = app.mount('#app');
 
-const h5_undo_button = new Vue({
-    el: '#undo',
-    date: {},
-    methods: {
-        onClickResetHandler(){
-            console.log(`Undo button pressed.`);
-            const last_board = h5board.histmgr.pop_board();
-            h5board.bitboard = last_board.board.clone();
-            h5board.gamemode = last_board.data.gamemode;
-            h5board.player_color = last_board.data.player_color;
-            h5board.search_depth = last_board.data.search_depth;
-            h5board.search_depth_last = last_board.data.search_depth_last;
-
-            h5board.refreshDisplay(true);
-        },
-    }
-});
-
-
-
-const gamemode_onchanged_helper = (value) => {
-    console.log(`Mode changed: ${value}`);
-            
-    switch(value){
-        case 'Geme Mode':
-            h5board.gamemode = GAMEMODE_GAME;
-            h5board.refreshDisplay(true);
+/**
+ * Gamemode Helper
+ */
+const gamemode_onchanged_helper = (vm, value) => {
+    switch (value) {
+        case 'Game Mode':
+            vm.gamemode = GAMEMODE_GAME;
+            vm.refreshDisplay(true);
             break;
         case 'Proceed as Black':
-            h5board.gamemode = GAMEMODE_GAME;
-            h5board.bitboard.turn = 1;
-            // Disable "Proceed as" option.
-            h5ModeButton.options[1].disabled = true;
-            h5ModeButton.options[2].disabled = true;
-            // Enable 'Game Mode'
-            h5ModeButton.options[0].disabled = false;
-            // Select 'Game Mode'
-            document.getElementById('mode').selectedIndex = 0;
-            proceed_game(h5board, null);
-            h5board.refreshDisplay(true);
-            break;
         case 'Proceed as White':
-            h5board.gamemode = GAMEMODE_GAME;
-            h5board.bitboard.turn = -1;
-            // Disable "Proceed as" option.
-            h5ModeButton.options[1].disabled = true;
-            h5ModeButton.options[2].disabled = true;
-            // Enable 'Game Mode'
-            h5ModeButton.options[0].disabled = false;
-            // Select 'Game Mode'
+            vm.gamemode = GAMEMODE_GAME;
+            vm.bitboard.turn = (value === 'Proceed as Black') ? 1 : -1;
+            vm.modeOptions[1].disabled = true;
+            vm.modeOptions[2].disabled = true;
+            vm.modeOptions[0].disabled = false;
             document.getElementById('mode').selectedIndex = 0;
-            proceed_game(h5board, null);
-            h5board.refreshDisplay(true);
+            proceed_game(vm, null);
+            vm.refreshDisplay(true);
             break;
         case 'Setup Mode':
-            h5board.gamemode = GAMEMODE_SETUP;
-            // Enable "Proceed as" option.
-            h5ModeButton.options[1].disabled = false;
-            h5ModeButton.options[2].disabled = false;
-            // Disable 'Game Mode'
-            h5ModeButton.options[0].disabled = true;
-            h5board.refreshDisplay();
+            vm.gamemode = GAMEMODE_SETUP;
+            vm.modeOptions[1].disabled = false;
+            vm.modeOptions[2].disabled = false;
+            vm.modeOptions[0].disabled = true;
+            vm.refreshDisplay();
             break;
         case 'Analyzer Mode':
-            h5board.gamemode = GAMEMODE_ANALYZER;
-            // Enable "Proceed as" option.
-            h5ModeButton.options[1].disabled = false;
-            h5ModeButton.options[2].disabled = false;
-            // Disable 'Game Mode'
-            h5ModeButton.options[0].disabled = true;
-            h5board.onCellClick(null);
+            vm.gamemode = GAMEMODE_ANALYZER;
+            vm.modeOptions[1].disabled = false;
+            vm.modeOptions[2].disabled = false;
+            vm.modeOptions[0].disabled = true;
+            vm.onCellClick(null);
             break;
-        default:
-        
     }
 };
 
-
-const h5ModeButton = new Vue({
-    el: '#mode',
-    data: {
-        options: [
-            {name:'Geme Mode', disabled: false},
-            {name:'Proceed as Black', disabled: true},
-            {name:'Proceed as White', disabled: true},
-            {name:'Setup Mode', disabled: false},
-            {name:'Analyzer Mode', disabled: false},
-        ],
-    },
-
-    methods: {
-        onChangeHandler(e){
-            document.getElementById('mode').blur();
-            gamemode_onchanged_helper(e.target.value);
-        },
-    }
-});
-
-
+// Export to window for debugging.
 window.h5board = h5board;
 window.BitBoard = BitBoard;

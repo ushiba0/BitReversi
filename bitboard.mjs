@@ -1,5 +1,6 @@
 
-import {get_legal_move_wrapper, 
+import {
+    get_legal_move_wrapper,
     put_stone_wrapper, get_state_wrapper,
     get_next_random_move_wrapper,
     expand_children_wraper,
@@ -7,10 +8,10 @@ import {get_legal_move_wrapper,
     expand_children_orderby_complete_read_wrapper,
     expand_children_orderby_mtdf_wrapper,
 
-} from "./bitreversi-wasm/pkg/bitreversi_wasm.js";
+} from "./bitreversi/pkg/bitreversi.js";
 
 export class BitBoard {
-    constructor(node){
+    constructor(node) {
         this.black = 0x0000000810000000n;
         this.white = 0x0000001008000000n;
         this.turn = 1;
@@ -18,14 +19,14 @@ export class BitBoard {
         this.eval = 0;
         this.last_move = -1;
 
-        if(node instanceof BitBoard){
+        if (node instanceof BitBoard) {
             this.black = node.black;
             this.white = node.white;
             this.turn = node.turn;
             this.stones = node.stones;
             this.eval = node.eval;
             this.last_move = node.last_move;
-        }else if(typeof node === 'string'){
+        } else if (typeof node === 'string') {
             const arr = node.split(',');
             console.assert(arr.length === 3);
             this.black = BigInt(`0x${arr[0]}`);
@@ -33,19 +34,19 @@ export class BitBoard {
             this.turn = parseInt(arr[2], 10);
         }
 
-        console.assert((this.black&this.white) === 0n);
+        console.assert((this.black & this.white) === 0n);
         console.assert(this.turn === 1 || this.turn === -1);
     }
 
-    toString(){
-        return [this.black, this.white, this.turn].map(e=>e.toString(16)).join(',');
-    }
-    
-    validate(){
-        console.assert((this.black&this.white) === 0n);
+    toString() {
+        return [this.black, this.white, this.turn].map(e => e.toString(16)).join(',');
     }
 
-    getLegalMove(){
+    validate() {
+        console.assert((this.black & this.white) === 0n);
+    }
+
+    getLegalMove() {
         const board_str = this.toString();
         const res_str = get_legal_move_wrapper(board_str);
         return BigInt(`0x${res_str}`);
@@ -61,7 +62,7 @@ export class BitBoard {
         return last_move;
     }
 
-    putStone(hand = 0n){
+    putStone(hand = 0n) {
         const board_str = this.toString();
         const res_str = put_stone_wrapper(board_str, hand.toString(16));
         const new_board = new BitBoard(res_str);
@@ -69,18 +70,18 @@ export class BitBoard {
         return new_board;
     }
 
-    getState(){
+    getState() {
         const board_str = this.toString();
         return get_state_wrapper(board_str);
     }
 
-    getNextRandomMove(){
+    getNextRandomMove() {
         const board_str = this.toString();
         const res_str = get_next_random_move_wrapper(board_str);
         return BigInt(`0x${res_str}`)
     }
 
-    expandChildren(){
+    expandChildren() {
         const board_str = this.toString();
         const res_str = expand_children_wraper(board_str);
         const children_str = res_str.split(';');
@@ -90,23 +91,19 @@ export class BitBoard {
         return children;
     }
 
-    numOfStones(){
-        return countBits(this.black|this.white);
+    numOfStones() {
+        return countBits(this.black | this.white);
     }
 
-    numOfBlack(){
+    numOfBlack() {
         return countBits(this.black);
     }
 
-    numOfWhite(){
+    numOfWhite() {
         return countBits(this.white);
     }
 
-    mtdf(){
-        
-    }
-
-    clone(){
+    clone() {
         return new BitBoard(this);
     }
 
@@ -114,28 +111,28 @@ export class BitBoard {
         console.assert(countBits(move) === 1);
         const legal_move = this.getLegalMove();
 
-        if((legal_move&move) === 0n){
+        if ((legal_move & move) === 0n) {
             return false;
         } else {
             return true;
         }
     }
 
-    expand_children_orderby_eval(depth = 0){
+    expand_children_orderby_eval(depth = 0) {
         let board_str = this.toString();
         let res = expand_children_orderby_eval_wrapper(board_str, depth);
         let obj = JSON.parse(res);
         return obj;
     }
 
-    expand_children_orderby_complete_read(){
+    expand_children_orderby_complete_read() {
         let board_str = this.toString();
         let res = expand_children_orderby_complete_read_wrapper(board_str);
         let obj = JSON.parse(res);
         return obj;
     }
 
-    expand_children_orderby_mtdf(){
+    expand_children_orderby_mtdf() {
         let board_str = this.toString();
         let res = expand_children_orderby_mtdf_wrapper(board_str);
         let obj = JSON.parse(res);
@@ -144,12 +141,12 @@ export class BitBoard {
 }
 
 
-const countBits = x =>{
-    x = (x & 0x5555555555555555n) + (x>>1n  & 0x5555555555555555n);
-    x = (x & 0x3333333333333333n) + (x>>2n  & 0x3333333333333333n);
-    x = (x & 0x0f0f0f0f0f0f0f0fn) + (x>>4n  & 0x0f0f0f0f0f0f0f0fn);
-    x = (x & 0x00ff00ff00ff00ffn) + (x>>8n  & 0x00ff00ff00ff00ffn);
-    x = (x & 0x0000ffff0000ffffn) + (x>>16n & 0x0000ffff0000ffffn);
-    x = (x & 0x00000000ffffffffn) + (x>>32n & 0x00000000ffffffffn);
+const countBits = x => {
+    x = (x & 0x5555555555555555n) + (x >> 1n & 0x5555555555555555n);
+    x = (x & 0x3333333333333333n) + (x >> 2n & 0x3333333333333333n);
+    x = (x & 0x0f0f0f0f0f0f0f0fn) + (x >> 4n & 0x0f0f0f0f0f0f0f0fn);
+    x = (x & 0x00ff00ff00ff00ffn) + (x >> 8n & 0x00ff00ff00ff00ffn);
+    x = (x & 0x0000ffff0000ffffn) + (x >> 16n & 0x0000ffff0000ffffn);
+    x = (x & 0x00000000ffffffffn) + (x >> 32n & 0x00000000ffffffffn);
     return Number(x);
 };

@@ -1,0 +1,15 @@
+{
+  "name": "bitreversi",
+  "type": "module",
+  "version": "0.1.1",
+  "files": [
+    "bitreversi_bg.wasm",
+    "bitreversi.js",
+    "bitreversi.d.ts"
+  ],
+  "main": "bitreversi.js",
+  "types": "bitreversi.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
