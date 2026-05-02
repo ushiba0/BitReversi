@@ -16,15 +16,19 @@ https://ushiba0.github.io/BitReversi/
 | Analyzer Mode | 常に評価値が表示される研究モード                                   |
 | Setup Mode    | 盤面を編集するモード                                               |
 
-## フロントエンド
-Vue.js + Wasm (Rust) を使用しています。Wasm は石を返す・合法手を求める・評価値を計算する機能を担います。
+## ビルド
+```
+cd bitreversi/
+source build.sh
+```
 
 ## 使用している技術
 
-### 評価関数
-Logistello で使用されている石の配置でのパターン評価を使用しています。
-v0.1.1 では 10 通りのパターン x 10 段階のフェーズで 100 通りの Vec\<f32> を格納しています。
-学習したデータはある程度量子化 + Gzip 圧縮した状態で保存しており、軽量化していない場合と比較して約 4 分の 1 の 4.1 MB となっています。
+## フロントエンド
+Vue.js + Wasm (Rust) を使用しています。Wasm は石を返す・合法手を求める・評価値を計算する機能を担います。
+
+### 盤面表現
+**Bitboard**: 盤面を `u64` の変数 2 つで表現します。石の反転・合法手の生成はビット演算で行っています。
 
 ### 評価関数
 Logistello で使用されている石の配置でのパターン評価を使用しています。
@@ -32,7 +36,8 @@ v0.1.1 では 10 通りのパターン x 10 段階のフェーズで 100 通り�
 学習したデータはある程度量子化 + Gzip 圧縮した状態で保存しており、軽量化していない場合と比較して約 4 分の 1 の 4.1 MB となっています。
 
 ### 盤面の探索
-中盤は [NegaAlpha](https://ja.wikipedia.org/wiki/%E3%82%A2%E3%83%AB%E3%83%95%E3%82%A1%E3%83%BB%E3%83%99%E3%83%BC%E3%82%BF%E6%B3%95) + Move Ordering, 終盤は NegaAlpha 法ベースの [MTF-f](https://ja.wikipedia.org/wiki/MTD-f) としています。
+**序盤・中盤**: シンプルな [NegaAlpha](https://ja.wikipedia.org/wiki/%E3%82%A2%E3%83%AB%E3%83%95%E3%82%A1%E3%83%BB%E3%83%99%E3%83%BC%E3%82%BF%E6%B3%95) + Move Ordering で実装しています。
+**終盤**: 置換表付き AlphaBeta 法ベースの [MTD-f](https://ja.wikipedia.org/wiki/MTD-f) としています。
 
 ### 評価関数の教師データ
 [Egaroucid の制作者の方が公開している教師データ](https://www.egaroucid.nyanyan.dev/ja/technology/train-data/)のうち 0000000.txt ~ 0000019.txt, 合計 2000 万局面のみ学習しています。 (良質な学習データを公開いただき感謝いたします。)
