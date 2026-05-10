@@ -8,8 +8,8 @@ use std::io::prelude::*;
 #[cfg(test)]
 mod test;
 
-use bitreversi::bitboard;
 use bitreversi::bitboard::BitBoard;
+use bitreversi::minimax::{STAT_CACHE_HIT, STAT_READ_NODES};
 
 #[derive(Debug)]
 enum Algo {
@@ -18,10 +18,11 @@ enum Algo {
     Ab,
     NegaScout,
     NegaAlphaEval,
+    Ids,
 }
 
-#[derive(Parser, Debug)]
-struct ClapEvalArgs {
+#[derive(Parser, Debug, Clone)]
+struct ClapSolveArgs {
     /// Reversi board to solve (f5d6 format.)
     #[arg(short, long, allow_hyphen_values = true)]
     board: String,
@@ -33,6 +34,10 @@ struct ClapEvalArgs {
     /// Search depth.
     #[arg(short, long, default_value_t = 0)]
     depth: u32,
+
+    /// Turn.
+    #[arg(short, long, default_value = "black")]
+    turn: String,
 
     /// Search algorithm.
     #[arg(short, long, default_value = "NegaAlphaEval")]
@@ -83,6 +88,10 @@ struct ClapShowEvalArgs {
     /// Search depth.
     #[arg(short, long, default_value_t = 0)]
     depth: u32,
+
+    /// Turn.
+    #[arg(short, long, default_value = "black")]
+    turn: String,
 }
 
 #[derive(Parser, Debug)]
@@ -128,7 +137,7 @@ enum ClapSubcommand {
     Assess(ClapAssessArgs),
 
     /// Calculate the evaluation value for the input board.
-    Solve(ClapEvalArgs),
+    Solve(ClapSolveArgs),
 
     /// Calculate the evaluation value for the input board.
     ShowEval(ClapShowEvalArgs),
@@ -165,6 +174,25 @@ fn set_loglevel(loglevel: &str) {
     }
 }
 
+/// 入力文字列をもとに 1 (黒手番) か -1 (白手番) を返す.
+fn str_to_turn(turn: &str) -> i32 {
+    match turn.to_lowercase().as_str() {
+        "black" | "b" | "1" => 1,
+        "white" | "w" | "-1" => -1,
+        _ => panic!("Invalid turn string: {turn}"),
+    }
+}
+
+/// 大きな数字を SI 接頭辞で表す
+fn to_si(num: u128) -> String {
+    match num {
+        0..1000 => format!("{num}"),
+        1000..1_000_000 => format!("{:.2} K", num as f32 / 1000.0),
+        1_000_000..1_000_000_000 => format!("{:.2} M", num as f32 / 1_000_000.0),
+        _ => format!("{:.2} G", num as f32 / 1_000_000_000.0),
+    }
+}
+
 fn print_board(board: &BitBoard) {
     let mut result = "  a b c d e f g h\n".to_string();
     result += "  ---------------\n";
@@ -190,14 +218,27 @@ fn print_board(board: &BitBoard) {
         result += "\n";
     }
     print!("{result}");
+    match board.turn {
+        1 => print!("Turn = Black, "),
+        -1 => print!("Turn = White, "),
+        _ => panic!("Invalid turn: {board:?}"),
+    }
+    println!("Stones = {} (Blank = {})", board.count_stones(), 64 - board.count_stones());
+
+    let eval = board.get_eval();
+    let light_eval = board.get_eval_light();
+    println!("Eval = {eval}, Eval (simple) = {light_eval}");
 }
 
 fn load_weight_data(path_to_file: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let start_time = std::time::Instant::now();
     let mut file = File::open(path_to_file)?;
     let mut content = String::new();
     file.read_to_string(&mut content)?;
-    bitreversi::bitboard::eval::import_weight(&content)?;
-    log::info!("Loaded weight data from file {path_to_file}.");
+    bitreversi::eval::import_weight(&content)?;
+
+    let took_ms = start_time.elapsed().as_micros() as f32 / 1000.0;
+    log::info!("Loaded weight data from file {path_to_file}. (took {took_ms:.3} ms)");
     Ok(())
 }
 
@@ -227,7 +268,7 @@ fn assess_weight(args: &ClapAssessArgs) -> Result<(), Box<dyn std::error::Error>
         let loss = (stats.total_diff as f32) / (stats.total_count as f32);
         let wrong_rate = (stats.wrong_count as f32) / (stats.wrong_count_base as f32 + 1.0);
         let elapsed_ms = std::cmp::max(start_time.elapsed().as_millis(), 1);
-        let read_nodes_count = bitboard::READ_NODE_COUNT.load(Ordering::Relaxed) as u128;
+        let read_nodes_count = STAT_READ_NODES.load(Ordering::Relaxed) as u128;
         let node_per_ms = read_nodes_count / elapsed_ms;
         println!(
             "Number of data = {total_count}, loss = {loss}, wrong_rate = {wrong_rate}, \
@@ -251,7 +292,7 @@ fn assess_weight(args: &ClapAssessArgs) -> Result<(), Box<dyn std::error::Error>
         let Some(m5t6) = parts.next() else {
             continue;
         };
-        let board = BitBoard::from_f5d6(m5t6);
+        let board = BitBoard::from_f5d6(m5t6, 1);
         let score = if let Some(score_str) = parts.next() {
             score_str.parse::<i64>().unwrap_or_default()
         } else {
@@ -259,7 +300,13 @@ fn assess_weight(args: &ClapAssessArgs) -> Result<(), Box<dyn std::error::Error>
         };
 
         // let eval = board.nega_alpha_eval(-64, 64, depth, 0) as i64;
-        let eval = board.nega_alpha_eval(args.alpha, args.beta, args.depth) as i64;
+        let mut eval = board.nega_alpha_eval(args.alpha, args.beta, args.depth) as i64;
+        if eval > 0xff {
+            eval -= 0xff;
+        } else if eval < -0xff {
+            eval += 0xff;
+        }
+
         log::trace!("{m5t6} Score: {score}, Estimated: {eval}");
         let d = score - eval;
         stats.total_diff += d.unsigned_abs();
@@ -316,8 +363,8 @@ fn train_weight(training_data: &str, max_train_num: u64) -> Result<(), Box<dyn s
         let Some(m5t6) = parts.next() else {
             continue;
         };
-        let board = BitBoard::from_f5d6(m5t6);
-        let evalboard = bitreversi::bitboard::eval::EvalBoard::new(board.black, board.white);
+        let board = BitBoard::from_f5d6(m5t6, 1);
+        let evalboard = bitreversi::eval::EvalBoard::new(board.black, board.white);
         let old_eval = evalboard.get_eval();
         let score = if let Some(score_str) = parts.next() {
             score_str.parse::<i64>().unwrap_or_default()
@@ -341,7 +388,7 @@ fn train_weight(training_data: &str, max_train_num: u64) -> Result<(), Box<dyn s
 
 /// 各特徴量の重みデータの統計を表示。
 pub fn weights_stats() {
-    let weights = bitreversi::bitboard::eval::WEIGHTS.lock().unwrap();
+    let weights = bitreversi::eval::WEIGHTS.lock().unwrap();
 
     let array_stats = |arr: &[f32]| {
         let mut v = arr.to_vec();
@@ -377,15 +424,19 @@ pub fn weights_stats() {
         array_stats(&weight.edge1);
         print!("Phase {phase} diaghalf       ");
         array_stats(&weight.diaghalf);
+        print!("Phase {phase} edge2          ");
+        array_stats(&weight.edge2);
 
         println!();
     }
 }
 
-fn solve(args: &ClapEvalArgs) -> Result<(), Box<dyn std::error::Error>> {
+fn solve(args: &ClapSolveArgs) -> Result<(), Box<dyn std::error::Error>> {
     load_weight_data(&args.weight)?;
 
-    let board = BitBoard::from_f5d6(&args.board);
+    let turn = str_to_turn(&args.turn);
+    let board = BitBoard::from_f5d6(&args.board, turn);
+
     log::info!("Evaluating board {board:?}");
     print_board(&board);
 
@@ -395,6 +446,7 @@ fn solve(args: &ClapEvalArgs) -> Result<(), Box<dyn std::error::Error>> {
         "mtdf" => Algo::Mtdf,
         "ab" => Algo::Ab,
         "eval" | "negaalphaeval" => Algo::NegaAlphaEval,
+        "ids" => Algo::Ids,
         _ => Algo::NegaAlphaEval,
     };
 
@@ -404,28 +456,49 @@ fn solve(args: &ClapEvalArgs) -> Result<(), Box<dyn std::error::Error>> {
     let eval = match algo {
         Algo::NegaAlpha => board.nega_alpha(args.alpha, args.beta),
         Algo::Mtdf => board.mtdf_with_window(args.alpha, args.beta),
-        Algo::Ab => board.ab_with_map(args.alpha, args.beta),
-        Algo::NegaScout => board.negascout(args.alpha, args.beta),
+        Algo::Ab => board.alpha_beta_with_map(args.alpha, args.beta, 0),
+        Algo::NegaScout => board.nega_scout(args.alpha, args.beta, 0),
         Algo::NegaAlphaEval => board.nega_alpha_eval(args.alpha, args.beta, args.depth),
+        Algo::Ids => board.iterative_deepening_search(args.alpha, args.beta, args.depth),
     };
     let elapsed_ns = start_time.elapsed().as_nanos() + 1;
     let elapsed_ms = elapsed_ns / 1_000_000;
 
-    let read_node_count = bitboard::READ_NODE_COUNT.load(Ordering::Relaxed) as u128;
-    let knps = read_node_count * 1_000_000 / elapsed_ns;
-    let cache_hit = bitboard::BTREE_USED_COUNT.load(Ordering::Relaxed);
-    let cache_len = bitreversi::get_cache_count();
+    let read_node_count = STAT_READ_NODES.load(Ordering::Relaxed) as u128;
+    let cache_hit = STAT_CACHE_HIT.load(Ordering::Relaxed);
+    let cache_len = bitreversi::table::get_cache_size();
 
     println!("Eval value: {eval}.");
-    println!("Stones: {} (blank = {}).", board.count_stones(), 64 - board.count_stones());
-    match read_node_count {
-        0..1000 => println!("Read {read_node_count} nodes, {knps} K nodes / s"),
-        1000..1_000_000 => println!("Read {:.2} K nodes, {knps} K nodes / s", read_node_count as f32 / 1000.0),
-        1_000_000..1_000_000_000 => println!("Read {:.2} M nodes, {knps} K nodes / s", read_node_count as f32 / 1_000_000.0),
-        _ => println!("Read {:.2} G nodes, {knps} K nodes / s", read_node_count as f32 / 1_000_000_000.0),
-    }
+    println!(
+        "Read {} nodes ({} nodes / sec)",
+        to_si(read_node_count),
+        to_si(read_node_count * 1_000_000_000 / elapsed_ns)
+    );
     println!("Cache hit = {cache_hit}, Cache size = {cache_len}");
     println!("Took {elapsed_ms} ms");
+
+    Ok(())
+}
+
+fn show_eval(args: &ClapShowEvalArgs) -> Result<(), Box<dyn std::error::Error>> {
+    load_weight_data(&args.weight)?;
+
+    let turn = str_to_turn(&args.turn);
+    let board = BitBoard::from_f5d6(&args.board, turn);
+
+    log::info!("Evaluating board {board:?}");
+    print_board(&board);
+
+    for i in 0..=args.depth {
+        let start_time = std::time::Instant::now();
+        let eval = board.nega_alpha_eval(-0xff, 0xff, i);
+        let took_us = std::cmp::max(start_time.elapsed().as_micros(), 1);
+        let took_ms = took_us / 1000;
+        let read_nodes = STAT_READ_NODES.load(Ordering::Relaxed) as u128;
+        let read_nodes_si = to_si(read_nodes);
+        let nps = to_si(read_nodes * 1_000_000 / took_us);
+        println!("Search depth = {i}, Eval = {eval}, Read = {read_nodes_si} nodes, Took = {took_ms} ms, ({nps} nodes / s)");
+    }
 
     Ok(())
 }
@@ -447,14 +520,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             return Ok(());
         }
 
-        ClapSubcommand::Solve(args) => {
-            solve(&args)?;
-        }
+        ClapSubcommand::Solve(args) => solve(&args)?,
 
-        ClapSubcommand::ShowEval(args) => {
-            _ = args;
-            log::info!("Currently do nothing");
-        }
+        ClapSubcommand::ShowEval(args) => show_eval(&args)?,
 
         ClapSubcommand::Train(args) => {
             let filename = &args.outfile;
@@ -468,7 +536,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             train_weight(&args.training_data, max_train_num)?;
 
             log::info!("Exporting weight data to {filename}");
-            let weight_str = bitboard::eval::export_weight()?;
+            let weight_str = bitreversi::eval::export_weight()?;
             let mut file = std::fs::File::create(filename)?;
             write!(file, "{}", weight_str)?;
             file.flush()?;
@@ -479,21 +547,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         ClapSubcommand::Generate => {
             let filename = "weight_data.txt";
-            bitreversi::bitboard::eval::init_weight()?;
-            let weight_str = bitboard::eval::export_weight()?;
+            bitreversi::eval::init_weight()?;
+            let weight_str = bitreversi::eval::export_weight()?;
             let mut file = std::fs::File::create(filename)?;
             write!(file, "{}", weight_str)?;
             file.flush()?;
-            println!("Generate {filename}");
+            println!("Generated {filename}");
         }
 
         ClapSubcommand::Print(args) => {
-            let input_board = BitBoard::from_f5d6(&args.board);
-            let board = match args.turn.as_str() {
-                "black" => input_board,
-                "white" => BitBoard::new(input_board.white, input_board.black, -1),
-                _ => return Err("Invalid argument (--turn)".into()),
-            };
+            let turn = str_to_turn(&args.turn);
+            let board = BitBoard::from_f5d6(&args.board, turn);
+
             print_board(&board);
         }
 

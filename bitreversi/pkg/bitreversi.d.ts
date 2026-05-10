@@ -34,7 +34,6 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
-    readonly clear_btree: () => number;
     readonly expand_children_orderby_complete_read_wrapper: (a: number, b: number) => [number, number];
     readonly expand_children_orderby_eval_wrapper: (a: number, b: number, c: number) => [number, number];
     readonly expand_children_orderby_mtdf_wrapper: (a: number, b: number) => [number, number];
@@ -47,6 +46,7 @@ export interface InitOutput {
     readonly print_stats: () => [number, number];
     readonly put_stone_wrapper: (a: number, b: number, c: number, d: number) => [number, number];
     readonly initialize: () => void;
+    readonly clear_btree: () => number;
     readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

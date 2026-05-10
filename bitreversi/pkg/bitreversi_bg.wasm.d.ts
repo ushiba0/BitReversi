@@ -1,7 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
-export const clear_btree: () => number;
 export const expand_children_orderby_complete_read_wrapper: (a: number, b: number) => [number, number];
 export const expand_children_orderby_eval_wrapper: (a: number, b: number, c: number) => [number, number];
 export const expand_children_orderby_mtdf_wrapper: (a: number, b: number) => [number, number];
@@ -14,6 +13,7 @@ export const import_weight: (a: number, b: number) => void;
 export const print_stats: () => [number, number];
 export const put_stone_wrapper: (a: number, b: number, c: number, d: number) => [number, number];
 export const initialize: () => void;
+export const clear_btree: () => number;
 export const __wbindgen_free: (a: number, b: number, c: number) => void;
 export const __wbindgen_malloc: (a: number, b: number) => number;
 export const __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

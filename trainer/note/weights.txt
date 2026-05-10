@@ -1,6 +1,5 @@
-# FFO#40
-$ cargo run -q --release -- --log debug solve -w ../eval_data.bin -b 'O--OOOOX-OOOOOOXOOXXOOOXOOXOOOXXOOOOOOXX---OOOOX----O--X--------' --algo ab 
-[2026-05-02T07:57:59Z INFO  trainer] Loaded weight data from file ../eval_data.bin.
+$ cargo run -q --release -- --log debug solve -w ../weight_data.txt -b 'O--OOOOX-OOOOOOXOOXXOOOXOOXOOOXXOOOOOOXX---OOOOX----O--X--------' --algo ab 
+[2026-05-02T07:57:59Z INFO  trainer] Loaded weight data from file ../weight_data.txt.
 [2026-05-02T07:57:59Z INFO  trainer] Evaluating board {"eval":0, "last_move":0, "board":"101312303010100,9e7ecedcfc1e0800,1"}
 [2026-05-02T07:57:59Z INFO  trainer] Using algorithm Ab (alpha, beta) = (-64, 64)
 Eval value: 38.
@@ -8,3 +7,78 @@ Stones: 44 (blank = 20).
 Read 37.67 M nodes, 9781 K nodes / s
 Cache hit = 158267
 Took 3850 ms
+
+
+終盤のヒープ不使用最適化
+$ cargo run -q --release -- --log debug solve -w ../weight_data.txt -b 'O--OOOOX-OOOOOOXOOXXOOOXOOXOOOXXOOOOOOXX---OOOOX----O--X--------' --algo ab 
+[2026-05-03T14:11:49Z INFO  trainer] Loaded weight data from file ../weight_data.txt.
+[2026-05-03T14:11:49Z INFO  trainer] Evaluating board {"eval":0, "last_move":0, "board":"101312303010100,9e7ecedcfc1e0800,1"}
+[2026-05-03T14:11:49Z INFO  trainer] Using algorithm Ab (alpha, beta) = (-64, 64)
+Eval value: 38.
+Stones: 44 (blank = 20).
+Read 36.70 M nodes, 15375 K nodes / s
+Cache hit = 150933, Cache size = 1787512
+Took 2386 ms
+
+
+$ cargo run -q --release -- --log debug solve -w ../weight_data.txt -b '-OOOOO----OOOOX--OOOOOO-XXXXXOO--XXOOX--OOXOXX----OXXO---OOO--O-' --algo ab 
+[2026-05-03T14:12:41Z INFO  trainer] Loaded weight data from file ../weight_data.txt.
+[2026-05-03T14:12:41Z INFO  trainer] Evaluating board {"eval":0, "last_move":0, "board":"200f8642c1800,7c3c7e0618d02472,1"}
+[2026-05-03T14:12:41Z INFO  trainer] Using algorithm Ab (alpha, beta) = (-64, 64)
+Eval value: 0.
+Stones: 42 (blank = 22).
+Read 60.42 M nodes, 12945 K nodes / s
+Cache hit = 558879, Cache size = 3893575
+Took 4667 ms
+
+
+$ cargo run -q --release -- --log debug solve -w ../weight_data.txt -b '---XXXX-X-XXXO--XXOXOO--XXXOXO--XXOXXO---OXXXOO-O-OOOO------OO-- ' --algo ab 
+[2026-05-03T14:15:59Z INFO  trainer] Loaded weight data from file ../weight_data.txt.
+[2026-05-03T14:15:59Z INFO  trainer] Evaluating board {"eval":0, "last_move":0, "board":"1eb8d0e8d8380000,42c142446bc0c,1"}
+[2026-05-03T14:15:59Z INFO  trainer] Using algorithm Ab (alpha, beta) = (-64, 64)
+Eval value: 6.
+Stones: 40 (blank = 24).
+Read 1.37 G nodes, 10631 K nodes / s
+Cache hit = 15086430, Cache size = 83342781
+Took 129088 ms
+
+
+
+
+学習実施前
+$ cargo run -q --release -- --log trace generate
+Generated weight_data.txt
+$ for i in `seq 0 5`; do echo ===== file $i =====; cargo run -q --release -- --log debug assess -w weight_data.txt -t  ~/Downloads/Egaroucid_Train_Data/000002$i.txt ; done
+Number of data = 1000000, loss = 18.004494, wrong_rate = 631075, Elapsed = 1283 ms, read = 1000000 nodes, Speed = 779 Knodes/s.
+diff > 10: 0.694262
+Number of data = 1000000, loss = 17.98338, wrong_rate = 633335, Elapsed = 1276 ms, read = 1000000 nodes, Speed = 783 Knodes/s.
+diff > 10: 0.696301
+Number of data = 1000000, loss = 17.95727, wrong_rate = 636026, Elapsed = 1275 ms, read = 1000000 nodes, Speed = 784 Knodes/s.
+diff > 10: 0.698862
+Number of data = 1000000, loss = 17.696678, wrong_rate = 632617, Elapsed = 1271 ms, read = 1000000 nodes, Speed = 786 Knodes/s.
+diff > 10: 0.696106
+Number of data = 1000000, loss = 17.135637, wrong_rate = 623212, Elapsed = 1274 ms, read = 1000000 nodes, Speed = 784 Knodes/s.
+diff > 10: 0.688222
+Number of data = 514097, loss = 16.267113, wrong_rate = 311499, Elapsed = 679 ms, read = 514097 nodes, Speed = 757 Knodes/s.
+diff > 10: 0.673546
+
+
+学習実施
+$ for i in `seq 0 9`; do cargo run -q --release -- --log debug train -w weight_data.txt -o weight_data.txt -t ~/Downloads/Egaroucid_Train_Data/000000$i.txt ; done
+$ for i in `seq 0 9`; do cargo run -q --release -- --log debug train -w weight_data.txt -o weight_data.txt -t ~/Downloads/Egaroucid_Train_Data/000001$i.txt ; done
+
+一回目学習後
+$ for i in `seq 0 5`; do echo ===== file $i =====; cargo run -q --release -- --log debug assess -w weight_data.txt -t  ~/Downloads/Egaroucid_Train_Data/000002$i.txt ; done
+Number of data = 1000000, loss = 5.342557, wrong_rate = 0.03154214, Elapsed = 1310 ms, read = 1000000 nodes, Speed = 763 Knodes/s.
+diff > 10: 0.158074
+Number of data = 1000000, loss = 5.464335, wrong_rate = 0.035410143, Elapsed = 1309 ms, read = 1000000 nodes, Speed = 763 Knodes/s.
+diff > 10: 0.167826
+Number of data = 1000000, loss = 5.529075, wrong_rate = 0.039369866, Elapsed = 1304 ms, read = 1000000 nodes, Speed = 766 Knodes/s.
+diff > 10: 0.173397
+Number of data = 1000000, loss = 5.486992, wrong_rate = 0.041879468, Elapsed = 1329 ms, read = 1000000 nodes, Speed = 752 Knodes/s.
+diff > 10: 0.171212
+Number of data = 1000000, loss = 5.252419, wrong_rate = 0.040929645, Elapsed = 1307 ms, read = 1000000 nodes, Speed = 765 Knodes/s.
+diff > 10: 0.156201
+Number of data = 514097, loss = 4.0820255, wrong_rate = 0.022087177, Elapsed = 656 ms, read = 514097 nodes, Speed = 783 Knodes/s.
+diff > 10: 0.089784615
+

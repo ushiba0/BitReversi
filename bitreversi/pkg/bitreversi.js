@@ -218,27 +218,11 @@ function __wbg_get_imports() {
                 wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
             }
         },
-        __wbg_getTime_e599bee315e19eba: function(arg0) {
-            const ret = arg0.getTime();
-            return ret;
-        },
-        __wbg_getTimezoneOffset_d843b3968046e734: function(arg0) {
-            const ret = arg0.getTimezoneOffset();
-            return ret;
-        },
         __wbg_log_37e0c445f9b78367: function(arg0) {
             console.log(arg0);
         },
-        __wbg_new_0_e486ec9936f7edbf: function() {
-            const ret = new Date();
-            return ret;
-        },
         __wbg_new_227d7c05414eb861: function() {
             const ret = new Error();
-            return ret;
-        },
-        __wbg_new_b47e026ba742fe65: function(arg0) {
-            const ret = new Date(arg0);
             return ret;
         },
         __wbg_stack_3b0d974bbf31e44f: function(arg0, arg1) {
@@ -248,12 +232,7 @@ function __wbg_get_imports() {
             getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
             getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
         },
-        __wbindgen_cast_0000000000000001: function(arg0) {
-            // Cast intrinsic for `F64 -> Externref`.
-            const ret = arg0;
-            return ret;
-        },
-        __wbindgen_cast_0000000000000002: function(arg0, arg1) {
+        __wbindgen_cast_0000000000000001: function(arg0, arg1) {
             // Cast intrinsic for `Ref(String) -> Externref`.
             const ret = getStringFromWasm0(arg0, arg1);
             return ret;

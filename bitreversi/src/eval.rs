@@ -1,16 +1,58 @@
 use once_cell::sync::Lazy;
 use std::{io::Write, sync::Mutex};
 
-use board_patterns::INDEX_BLACK as INDEXB;
-use board_patterns::INDEX_WHITE as INDEXW;
-
-mod board_patterns;
-mod eval_test;
-
-const NUM_PHASE: usize = 10;
+const NUM_PHASE: usize = 20;
 const LEARNING_RATE: f32 = 0.0005;
+const WEIGHT_SCALE_FACTOR: f32 = 128.0;
+
+#[cfg(test)]
+use std::sync::atomic::AtomicBool;
+
+#[cfg(test)]
+static BLOCK_TEST: AtomicBool = AtomicBool::new(true);
 
 pub static WEIGHTS: Lazy<Mutex<Vec<Weights>>> = Lazy::new(|| Mutex::new(Vec::new()));
+
+pub static INDEX_BLACK: Lazy<[usize; 1024]> = Lazy::new(|| {
+    let mut arr = [0; 1024];
+
+    for i in 0..1024 {
+        arr[i] = INDEX_WHITE[i] * 2;
+    }
+
+    arr
+});
+
+pub static INDEX_WHITE: Lazy<[usize; 1024]> = Lazy::new(|| {
+    let mut arr = [0; 1024];
+
+    for (i, elem) in arr.iter_mut().enumerate() {
+        let binary = format!("{i:b}");
+        let decimal = usize::from_str_radix(&binary, 3).expect("(BUG) Invalid ternary string");
+        *elem = decimal;
+    }
+    arr
+});
+
+#[test]
+pub fn test_to_ternary() -> Result<(), Box<dyn std::error::Error>> {
+    let index_black = [0usize, 2, 6, 8, 18, 20, 24, 26, 54, 56, 60, 62, 72];
+    let index_white = [0usize, 1, 3, 4, 9, 10, 12, 13, 27, 28, 30, 31, 36];
+
+    assert_eq!(&index_black[..], &INDEX_BLACK[0..13]);
+    assert_eq!(&index_white[..], &INDEX_WHITE[0..13]);
+
+    let index_black = [
+        58976usize, 58986, 58988, 58992, 58994, 59022, 59024, 59028, 59030, 59040, 59042, 59046, 59048,
+    ];
+    let index_white = [
+        29488usize, 29493, 29494, 29496, 29497, 29511, 29512, 29514, 29515, 29520, 29521, 29523, 29524,
+    ];
+    assert_eq!(&index_black[..], &INDEX_BLACK[(1024 - 13)..]);
+    assert_eq!(&index_white[..], &INDEX_WHITE[(1024 - 13)..]);
+
+    Ok(())
+}
 
 #[derive(Clone)]
 pub struct Weights {
@@ -24,6 +66,7 @@ pub struct Weights {
     pub diagonal3: Vec<f32>,
     pub edge1: Vec<f32>,
     pub diaghalf: Vec<f32>,
+    pub edge2: Vec<f32>,
 }
 
 #[derive(Clone, Copy)]
@@ -98,7 +141,7 @@ impl EvalBoard {
     // 0 X 0 0 0 0 X 0
     // X X X X X X X X
     pub fn get_horizontal1_index(&self) -> usize {
-        INDEXB[Self::_u64_horizontal1(self.black)] + INDEXW[Self::_u64_horizontal1(self.white)]
+        INDEX_BLACK[Self::_u64_horizontal1(self.black)] + INDEX_WHITE[Self::_u64_horizontal1(self.white)]
     }
 
     // 0 0 0 0 0 0 0 0
@@ -110,7 +153,7 @@ impl EvalBoard {
     // X X X X X X X X
     // 0 0 0 0 0 0 0 0
     pub fn get_horizontal2_index(&self) -> usize {
-        INDEXB[((self.black >> 8) & 0xff) as usize] + INDEXW[((self.white >> 8) & 0xff) as usize]
+        INDEX_BLACK[((self.black >> 8) & 0xff) as usize] + INDEX_WHITE[((self.white >> 8) & 0xff) as usize]
     }
 
     // 0 0 0 0 0 0 0 0
@@ -122,7 +165,7 @@ impl EvalBoard {
     // 0 0 0 0 0 0 0 0
     // 0 0 0 0 0 0 0 0
     pub fn get_horizontal3_index(&self) -> usize {
-        INDEXB[((self.black >> 16) & 0xff) as usize] + INDEXW[((self.white >> 16) & 0xff) as usize]
+        INDEX_BLACK[((self.black >> 16) & 0xff) as usize] + INDEX_WHITE[((self.white >> 16) & 0xff) as usize]
     }
 
     // 0 0 0 0 0 0 0 0
@@ -134,7 +177,7 @@ impl EvalBoard {
     // 0 0 0 0 0 0 0 0
     // 0 0 0 0 0 0 0 0
     pub fn get_horizontal4_index(&self) -> usize {
-        INDEXB[((self.black >> 24) & 0xff) as usize] + INDEXW[((self.white >> 24) & 0xff) as usize]
+        INDEX_BLACK[((self.black >> 24) & 0xff) as usize] + INDEX_WHITE[((self.white >> 24) & 0xff) as usize]
     }
 
     #[inline(always)]
@@ -155,7 +198,7 @@ impl EvalBoard {
     // 0 0 0 0 0 X X X
     // 0 0 0 0 X X X X
     pub fn get_triangle_index(&self) -> usize {
-        INDEXB[Self::_u64_triangle(self.black)] + INDEXW[Self::_u64_triangle(self.white)]
+        INDEX_BLACK[Self::_u64_triangle(self.black)] + INDEX_WHITE[Self::_u64_triangle(self.white)]
     }
 
     #[inline(always)]
@@ -176,7 +219,7 @@ impl EvalBoard {
     // 0 X 0 0 0 0 0 0
     // X 0 0 0 0 0 0 0
     pub fn get_diagonal1_index(&self) -> usize {
-        INDEXB[Self::_u64_diagonal1(self.black)] + INDEXW[Self::_u64_diagonal1(self.white)]
+        INDEX_BLACK[Self::_u64_diagonal1(self.black)] + INDEX_WHITE[Self::_u64_diagonal1(self.white)]
     }
 
     #[inline(always)]
@@ -196,7 +239,7 @@ impl EvalBoard {
     // 0 0 7 0 0 0 0 0
     // 9 8 0 0 0 0 0 0      -> 987654321
     pub fn get_diagonal2_index(&self) -> usize {
-        INDEXB[Self::_u64_diagonal2(self.black)] + INDEXW[Self::_u64_diagonal2(self.white)]
+        INDEX_BLACK[Self::_u64_diagonal2(self.black)] + INDEX_WHITE[Self::_u64_diagonal2(self.white)]
     }
 
     #[inline(always)]
@@ -216,7 +259,7 @@ impl EvalBoard {
     // 0 0 0 X 0 0 0 0
     // X X X 0 0 0 0 0
     pub fn get_diagonal3_index(&self) -> usize {
-        INDEXB[Self::_u64_diagonal3(self.black)] + INDEXW[Self::_u64_diagonal3(self.white)]
+        INDEX_BLACK[Self::_u64_diagonal3(self.black)] + INDEX_WHITE[Self::_u64_diagonal3(self.white)]
     }
 
     #[inline(always)]
@@ -237,7 +280,7 @@ impl EvalBoard {
     // 0 0 0 0 0 0 1 1
     // 0 0 0 1 1 1 1 1
     pub fn get_edge1_index(&self) -> usize {
-        INDEXB[Self::_u64_edge1(self.black)] + INDEXW[Self::_u64_edge1(self.white)]
+        INDEX_BLACK[Self::_u64_edge1(self.black)] + INDEX_WHITE[Self::_u64_edge1(self.white)]
     }
 
     #[inline(always)]
@@ -258,7 +301,26 @@ impl EvalBoard {
     // 0 0 0 0 0 1 1 1
     // 0 0 0 0 0 0 1 1
     pub fn get_diaghalf_index(&self) -> usize {
-        INDEXB[Self::_u64_diaghalf(self.black)] + INDEXW[Self::_u64_diaghalf(self.white)]
+        INDEX_BLACK[Self::_u64_diaghalf(self.black)] + INDEX_WHITE[Self::_u64_diaghalf(self.white)]
+    }
+
+    #[inline(always)]
+    fn _u64_edge2(num: u64) -> usize {
+        let mut result = num & 0x03e7;
+        result |= (num & 0xc000) >> 11;
+        result as usize
+    }
+
+    // 0 0 0 0 0 0 0 0
+    // 0 0 0 0 0 0 0 0
+    // 0 0 0 0 0 0 0 0
+    // 0 0 0 0 0 0 0 0
+    // 0 0 0 0 0 0 0 0
+    // 0 0 0 0 0 0 0 0
+    // 1 1 0 0 0 0 1 1
+    // 1 1 1 0 0 1 1 1
+    pub fn get_edge2_index(&self) -> usize {
+        INDEX_BLACK[Self::_u64_edge2(self.black)] + INDEX_WHITE[Self::_u64_edge2(self.white)]
     }
 
     pub fn get_eval(&self) -> f32 {
@@ -268,7 +330,8 @@ impl EvalBoard {
 
         let mut result: f32 = 0.0;
 
-        let mut nodes = [*self; 8];
+        let mut nodes: [EvalBoard; 8] = unsafe { std::mem::zeroed() };
+        nodes[0] = *self;
         nodes[1] = nodes[0].rotate_90();
         nodes[2] = nodes[1].rotate_90();
         nodes[3] = nodes[2].rotate_90();
@@ -288,9 +351,35 @@ impl EvalBoard {
             result += weight.diagonal3[node.get_diagonal3_index()];
             result += weight.edge1[node.get_edge1_index()];
             result += weight.diaghalf[node.get_diaghalf_index()];
+            result += weight.edge2[node.get_edge2_index()];
         }
 
         result
+    }
+
+    pub fn get_eval_light(&self) -> f32 {
+        let weights = WEIGHTS.lock().unwrap();
+        let phase = calc_phase(self.black, self.white);
+        let weight = &weights[phase];
+
+        let mut result: f32 = 0.0;
+
+        let mut nodes: [EvalBoard; 4] = unsafe { std::mem::zeroed() };
+        nodes[0] = *self;
+        nodes[1] = nodes[0].rotate_90();
+        nodes[2] = nodes[1].rotate_90();
+        nodes[3] = nodes[2].rotate_90();
+
+        for node in nodes {
+            result += weight.horizontal1[node.get_horizontal1_index()];
+            result += weight.horizontal2[node.get_horizontal2_index()];
+            result += weight.horizontal3[node.get_horizontal3_index()];
+            result += weight.triangle[node.get_triangle_index()];
+            result += weight.diagonal1[node.get_diagonal1_index()];
+            result += weight.diaghalf[node.get_diaghalf_index()];
+        }
+
+        result * 8.0
     }
 
     pub fn train(&self, score: i32) {
@@ -301,12 +390,12 @@ impl EvalBoard {
 /// 現在の石数から phase (0..NUM_PHASE) を求める。
 fn calc_phase(black: u64, white: u64) -> usize {
     let stones = black.count_ones() + white.count_ones();
-    // stones == 64 は phase == NUM_PHASE - 1 に分類したいので 64 ではなく 65 で割る。
+    // stones == 64 は phase NUM_PHASE - 1 に分類したいので 64 ではなく 65 で割る。
     (stones as usize * NUM_PHASE) / 65
 }
 
 #[test]
-pub fn test_board_patterns() -> Result<(), Box<dyn std::error::Error>> {
+fn test_board_patterns() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(EvalBoard::_u64_horizontal1(0xffff), 0x3ff);
     assert_eq!(EvalBoard::_u64_horizontal1(0xff00), 0x300);
     assert_eq!(EvalBoard::_u64_triangle(0xffffffff), 0x3ff);
@@ -326,6 +415,7 @@ pub fn test_board_patterns() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(EvalBoard::_u64_diaghalf(0xffffffffffffffff), 0x3ff);
     assert_eq!(EvalBoard::_u64_diaghalf(0x0c0e0703), 0x3ff);
     assert_eq!(EvalBoard::_u64_diaghalf(0xffff), 0b11111);
+    assert_eq!(EvalBoard::_u64_edge2(0xc3e7), 0x3ff);
     Ok(())
 }
 
@@ -348,6 +438,7 @@ pub fn init_weight() -> Result<(), Box<dyn std::error::Error>> {
         diagonal3: zeros_3_10.clone(),
         edge1: zeros_3_10.clone(),
         diaghalf: zeros_3_10.clone(),
+        edge2: zeros_3_10.clone(),
     };
 
     for _ in 0..NUM_PHASE {
@@ -356,8 +447,6 @@ pub fn init_weight() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-
-const WEIGHT_SCALE_FACTOR: f32 = 2048.0;
 
 /// Takes a Vec<f32>, compresses it using Gzip, and converts it into a Base64-encoded string.
 /// This function is the inverse of b64_to_f32vec().
@@ -391,7 +480,7 @@ fn b64_to_f32vec(s: &str) -> Vec<f32> {
 }
 
 #[test]
-pub fn test_b64_f32_conversion() -> Result<(), Box<dyn std::error::Error>> {
+fn test_b64_f32_conversion() -> Result<(), Box<dyn std::error::Error>> {
     let input = [0.0, 1.1, 2.2, 3.3, 4.4, 5.5, 100.0];
     let output = b64_to_f32vec(&f32vec_to_b64(&input));
     for i in 0..input.len() {
@@ -446,6 +535,10 @@ pub fn export_weight() -> Result<String, Box<dyn std::error::Error>> {
 
         result += "diaghalf ";
         result += f32vec_to_b64(&weights.diaghalf).as_str();
+        result += "\n";
+
+        result += "edge2 ";
+        result += f32vec_to_b64(&weights.edge2).as_str();
         result += "\n";
     }
 
@@ -507,6 +600,10 @@ pub fn import_weight(data: &str) -> Result<(), Box<dyn std::error::Error>> {
         if line.starts_with("diaghalf") {
             weight_list[phase].diaghalf = b64_to_f32vec(&line[line.find(' ').unwrap() + 1..]);
         }
+
+        if line.starts_with("edge2") {
+            weight_list[phase].edge2 = b64_to_f32vec(&line[line.find(' ').unwrap() + 1..]);
+        }
     }
 
     Ok(())
@@ -516,8 +613,8 @@ fn update_weight(board: &EvalBoard, score: i32) {
     let phase = calc_phase(board.black, board.white);
 
     let eval_accurate = score as f32;
-    let eval_approx = board.get_eval();
-    let delta = (eval_accurate - eval_approx) * LEARNING_RATE;
+    let eval_old = board.get_eval();
+    let delta = (eval_accurate - eval_old) * LEARNING_RATE;
     let weights = &mut WEIGHTS.lock().unwrap()[phase];
 
     let mut nodes = [*board; 8];
@@ -579,10 +676,74 @@ fn update_weight(board: &EvalBoard, score: i32) {
         if index > 0 {
             weights.diaghalf[index] += delta;
         }
+
+        let index = node.get_edge2_index();
+        if index > 0 {
+            weights.edge2[index] += delta;
+        }
     }
 }
 
+/// 静的評価関数
 pub fn evaluate(black: u64, white: u64) -> f32 {
     let board = EvalBoard::new(black, white);
     board.get_eval()
+}
+
+/// move ordering 用の軽量版価関数
+pub fn evaluate_light(black: u64, white: u64) -> f32 {
+    let board = EvalBoard::new(black, white);
+    board.get_eval_light()
+}
+
+/// 重みの学習で評価値が教師データに近づいていくことを確認する。
+#[test]
+fn test_learning() -> Result<(), Box<dyn std::error::Error>> {
+    while BLOCK_TEST.load(std::sync::atomic::Ordering::Acquire) {
+        println!("Waiting for test_import_export() to complete.");
+        std::thread::sleep(std::time::Duration::from_millis(500));
+    }
+    init_weight()?;
+
+    let board = EvalBoard::new(0x181b030b123030, 0x7e2464fcf4ec0000);
+    let eval_answer = 30;
+
+    let mut previous_eval = 0.0;
+
+    println!("{}", &format!("Learning eval answer = {}", eval_answer));
+    for i in 0..10 {
+        update_weight(&board, eval_answer);
+        let eval = board.get_eval();
+        assert!(eval > previous_eval);
+        assert!(eval < eval_answer as f32);
+        println!("After {i} training, eval is {}", board.get_eval());
+        previous_eval = eval;
+    }
+
+    Ok(())
+}
+
+/// 重みデータのインポート・エクスポートのテスト
+#[test]
+fn test_import_export() -> Result<(), Box<dyn std::error::Error>> {
+    let start_time = std::time::Instant::now();
+    init_weight()?;
+
+    {
+        let mut weights = WEIGHTS.lock()?;
+        weights[0].horizontal1[0] = 10.0;
+        weights[2].edge1[2] = 10.0;
+    }
+
+    let data_str = export_weight()?;
+    init_weight()?;
+    import_weight(&data_str)?;
+
+    let weights = WEIGHTS.lock()?;
+    assert_eq!(weights[0].horizontal1[0], 10.0);
+    assert_eq!(weights[2].edge1[2], 10.0);
+
+    println!("[test_import_export] Took {} ms.", start_time.elapsed().as_millis());
+    BLOCK_TEST.store(false, std::sync::atomic::Ordering::Release);
+    Ok(())
 }
